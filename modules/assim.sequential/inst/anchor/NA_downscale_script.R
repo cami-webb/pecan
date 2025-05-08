@@ -225,18 +225,17 @@ for (y in 2012:2024) {
 
 # setup.
 base.map.dir <- "/projectnb/dietzelab/dongchen/anchorSites/downscale/MODIS_NLCD_LC.tif"
-load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA/sda.all.forecast.analysis.Rdata")
+load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_100ens_gedi_2025_5_4/sda.all.forecast.analysis.Rdata")
 variables <- c("AbvGrndWood", "LAI", "SoilMoistFrac", "TotSoilCarb")
-# settings <- "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_50ens_2025_4_12/pecanIC.xml"
-settings <- "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_25ens_2024_11_25/ShapeFile/pts.shp"
-outdir <- "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA/"
+settings <- "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/AGU_2024/pts.shp"
+outdir <- "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_100ens_gedi_2025_5_4/"
 cores <- 28
 date <- seq(as.Date("2012-07-15"), as.Date("2024-07-15"), "1 year")
 # loop over years.
 for (i in seq_along(date)) {
   print(i)
   # Assemble covariates.
-  covariates.dir <- file.path("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/covariates_lc_ts", paste0("covariates_", lubridate::year(date[i]), ".tiff"))
+  covariates.dir <- file.path("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/covariates", paste0("covariates_", lubridate::year(date[i]), ".tiff"))
   # grab analysis.
   analysis.yr <- analysis.all[[i]]
   time <- date[i]
@@ -244,7 +243,7 @@ for (i in seq_along(date)) {
   for (j in seq_along(variables)) {
     # setup folder.
     variable <- variables[j]
-    folder.path <- file.path(file.path(outdir, "downscale_maps_analysis_lc_ts"), paste0(variables[j], "_", date[i]))
+    folder.path <- file.path(file.path(outdir, "downscale_maps_analysis"), paste0(variables[j], "_", date[i]))
     dir.create(folder.path)
     saveRDS(list(settings = settings, 
                  analysis.yr = analysis.yr, 
@@ -254,7 +253,7 @@ for (i in seq_along(date)) {
                  folder.path = folder.path, 
                  base.map.dir = base.map.dir, 
                  cores = cores, 
-                 outdir = file.path(outdir, "downscale_maps_analysis_lc_ts")),
+                 outdir = file.path(outdir, "downscale_maps_analysis")),
          file = file.path(folder.path, "dat.rds"))
     # prepare for qsub.
     jobsh <- c("#!/bin/bash -l", 
