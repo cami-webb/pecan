@@ -50,4 +50,12 @@ PEcAn.MA::runModule.run.meta.analysis(settings)
 PEcAn.settings::write.settings(settings, outputfile = "pecan.TRAIT.xml")
 ```
 
+# Write Model Configuration Files
+
+Generate model configuration files before simulation runs.
+
+```{r run.write.configs}
+settings <-PEcAn.workflow::runModule.run.write.configs(settings)
+PEcAn.settings::write.settings(settings, outputfile = "pecan.CONFIGS.xml")
+```
 
