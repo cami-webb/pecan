@@ -43,8 +43,7 @@ gSSURGO.Query <- function(mukeys,
                <RunQuery xmlns="http://SDMDataAccess.nrcs.usda.gov/Tabular/SDMTabularService.asmx">
                <Query>
                SELECT ',
-                 paste(fixed_fields, collapse = ", "),
-                 paste(qry_fields, collapse = ", "),
+                 paste(c(fixed_fields, qry_fields), collapse = ", "),
                  ' from mapunit
                join muaggatt on mapunit.mukey=muaggatt.mukey
                join component on mapunit.mukey=component.mukey
