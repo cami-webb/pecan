@@ -4,37 +4,27 @@
 \alias{get.site.info}
 \title{Extract and validate site information from settings or CSV file}
 \usage{
-get.site.info(settings = NULL, csv_path = NULL, strict_checking = TRUE)
+get.site.info(input, validate = TRUE, verbose = FALSE)
 }
 \arguments{
-\item{settings}{PEcAn settings list containing site information (optional)}
+\item{input}{Settings object, path to settings XML, or path to CSV file.
+For settings objects, both single sites and MultiSettings are supported.}
 
-\item{csv_path}{Path to a CSV file containing site information (optional)}
+\item{validate}{Logical. If TRUE (default), performs strict validation of coordinates.
+When FALSE, skips coordinate validation checks.}
 
-\item{strict_checking}{Logical. If TRUE, will validate coordinates more strictly}
+\item{verbose}{Logical. If TRUE, prints progress messages (default: FALSE).}
 }
 \value{
-A data frame with site_id, site_name, lat, lon, and str_id
+A data frame containing site information with columns:
+\describe{
+\item{site_id}{Numeric site identifier}
+\item{site_name}{Character site name (defaults to site_id if not provided)}
+\item{lat}{Numeric latitude in decimal degrees}
+\item{lon}{Numeric longitude in decimal degrees}
+\item{str_id}{Character version of site_id for display purposes}
+}
 }
 \description{
 Extract and validate site information from settings or CSV file
-}
-\details{
-This function extracts and validates site information from either a PEcAn settings
-object or a CSV file. At least one input must be provided. If both are provided,
-the settings object takes precedence.
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{     If using a CSV file, it must contain at minimum the columns: site_id, lat, and lon.
-     The column site_name is optional and will default to site_id if not provided.
-}\if{html}{\out{</div>}}
-}
-\examples{
-\dontrun{
-# From settings object
-settings <- PEcAn.settings::read.settings("pecan.xml")
-site_info <- PEcAn.settings::get.site.info(settings)
-
-# From CSV file
-site_info <- PEcAn.settings::get.site.info(csv_path = "sites.csv")
-}
 }
