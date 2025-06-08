@@ -24,9 +24,14 @@ settings_path <- "~/pecan.xml"
 
 PEcAn provides utilities to process and validate settings before execution, ensuring that all required fields are correctly configured.
 
-```{r prepare-settings}
+```{r read-prepare-settings}
 settings <- PEcAn.settings::read.settings(settings_path)
 settings <- PEcAn.settings::prepare.settings(settings)
+```
+
+Exploring the settings objects
+```{r explore-settings}
+str(settings, max.level = 2)
 ```
 
 # Convert Settings for Ecosystem Model
@@ -37,18 +42,6 @@ Converts settings into the format required by the selected ecosystem model
 settings <- PEcAn.workflow::do_conversions(settings)
 ```
 
-# Trait and Meta Analysis
-
-Retrieve trait data and generate probabilistic model parameter distributions.
-
-```{r meta-analysis}
-# Retrieve trait data and prior distributions for the specified Plant Functional Types (PFTs)
-settings <- PEcAn.workflow::runModule.get.trait.data(settings)
-# Perform meta-analysis to derive probabilistic distributions for model parameters
-PEcAn.MA::runModule.run.meta.analysis(settings)
-# Save the updated settings, including the retrieved trait data, to an XML file
-PEcAn.settings::write.settings(settings, outputfile = "pecan.TRAIT.xml")
-```
 
 # Write Model Configuration Files
 
