@@ -29,9 +29,10 @@ settings <- PEcAn.settings::read.settings(settings_path)
 settings <- PEcAn.settings::prepare.settings(settings)
 ```
 
-Exploring the settings objects
+ 
+# Exploring the settings objects
 ```{r explore-settings}
-str(settings, max.level = 2)
+str(settings)
 ```
 
 # Convert Settings for Ecosystem Model
