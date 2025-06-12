@@ -41,7 +41,7 @@ downloaded files. Default is the current work directory(getwd()).}
 
 \item{band}{Character: the band name (or vector of band names) of data to be requested.}
 
-\item{credential_path}{Character: physical path to the credential file. The default NULL.}
+\item{credential_path}{Character: physical path to the credential file (.netrc file). The default NULL.}
 
 \item{doi}{Character: data DOI on the NASA DAAC server, it can be obtained 
 directly from the NASA ORNL DAAC data portal (e.g., GEDI L4A through 

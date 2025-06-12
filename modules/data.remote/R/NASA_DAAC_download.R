@@ -12,7 +12,7 @@
 #' @param outdir Character: path of the directory in which to save the
 #'   downloaded files. Default is the current work directory(getwd()).
 #' @param band Character: the band name (or vector of band names) of data to be requested.
-#' @param credential_path Character: physical path to the credential file. The default NULL.
+#' @param credential_path Character: physical path to the credential file (.netrc file). The default NULL.
 #' @param doi Character: data DOI on the NASA DAAC server, it can be obtained 
 #' directly from the NASA ORNL DAAC data portal (e.g., GEDI L4A through 
 #' https://daac.ornl.gov/cgi-bin/dsviewer.pl?ds_id=2056).
