@@ -16,6 +16,7 @@ For more information about this file see also [Keep a Changelog](http://keepacha
 - Added automated pkgdown documentation for all PEcAn packages (@divine7022, #3482): 
   - Compiled pages are live at https://pecanproject.github.io/package-documentation and inside Docker at `pecan.localhost/pkgdocs/`, and these are automatically updated each time a PR to the source packages is merged.
   - You can compile all pkgdown pages locally at any time with `make pkgdocs`.
+- Added parallel mode for the entire SDA workflow.
 
 ### Fixed
 - api to correctly use x_var from request in plotResults #3528
