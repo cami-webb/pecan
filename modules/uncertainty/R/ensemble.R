@@ -80,11 +80,11 @@ read.ensemble.output <- function(ensemble.size, pecandir, outdir, start.year, en
 ##' @export
 ##' @author David LeBauer, Istem Fer
 get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples, 
-                                 method = "uniform", param.names = NULL, ...) {
+                                 method = "random", param.names = NULL, ...) {
   
   if (is.null(method)) {
     PEcAn.logger::logger.info("No sampling method supplied, defaulting to uniform random sampling")
-    method <- "uniform"
+    method <- "random"
   }
   
   ## force as numeric for compatibility with Fortran code in halton()
@@ -158,20 +158,23 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
           same.i <- round(c(PEcAn.emulator::lhc(t(matrix(0:1, ncol = 1, nrow = 2)), ensemble.size) * length(pft.samples[[pft.i]][[1]])))
         } else if (method == "uniform") {
           same.i <- sample.int(length(pft.samples[[pft.i]][[1]]), ensemble.size)
-        } else {
-          PEcAn.logger::logger.info("Method ", method, " has not been implemented yet, using uniform random sampling")
-          # uniform random
-          same.i <- sample.int(length(pft.samples[[pft.i]][[1]]), ensemble.size)
+        } else if (method == "random") {
+            PEcAn.logger::logger.info("Using random row sampling for MCMC draws")
+           same.i <- sample(nrow(pft.samples[[pft.i]][[1]]), ensemble.size, replace = TRUE)
+        }
+     else {
+           PEcAn.logger::logger.info("Method ", method, " has not been implemented yet, using uniform random sampling")
+           random.samples <- matrix(stats::runif(ensemble.size * total.sample.num), ensemble.size, total.sample.num)
         }
         
       }
       
       for (trait.i in seq(pft.samples[[pft.i]])) {
         col.i <- col.i + 1
-        if(names(pft.samples[[pft.i]])[trait.i] %in% param.names[[pft.i]]){ # keeping samples
-          ensemble.samples[[pft.i]][, trait.i] <- pft.samples[[pft.i]][[trait.i]][same.i]
-          sampled.indices[[pft.i]][, trait.i] <- same.i
-        }else{
+        if (names(pft.samples[[pft.i]])[trait.i] %in% param.names[[pft.i]]) { 
+             ensemble.samples[[pft.i]][, trait.i] <- pft.samples[[pft.i]][[trait.i]][same.i]
+             sampled.indices[[pft.i]][, trait.i] <- same.i
+       }else{
           # Extract original trait values
           trait.values <- pft.samples[[pft.i]][[trait.i]]
           sampled.values <- stats::quantile(trait.values, random.samples[, col.i])
@@ -179,14 +182,15 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
           ensemble.samples[[pft.i]][, trait.i] <- stats::quantile(pft.samples[[pft.i]][[trait.i]],
                                                                   random.samples[, col.i])
           sampled.indices[[pft.i]][, trait.i] <- sapply(sampled.values, function(val) {which.min(abs(trait.values - val)) })
-      }  # end trait
-      ensemble.samples[[pft.i]] <- as.data.frame(ensemble.samples[[pft.i]])
-      colnames(ensemble.samples[[pft.i]]) <- names(pft.samples[[pft.i]])
+      }  # end trait  
     }  #end pft
-    names(ensemble.samples) <- names(pft.samples)
-    ans <- ensemble.samples
+          ensemble.samples[[pft.i]] <- as.data.frame(ensemble.samples[[pft.i]])
+          colnames(ensemble.samples[[pft.i]]) <- names(pft.samples[[pft.i]])
+    
   }
-  return(list(ans,sampled.indices))
+   names(ensemble.samples) <- names(pft.samples)
+   ans <- ensemble.samples
+    return(list(ans,sampled.indices))
 } # get.ensemble.samples
 
 
