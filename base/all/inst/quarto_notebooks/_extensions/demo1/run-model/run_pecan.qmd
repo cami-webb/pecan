@@ -2,13 +2,6 @@
 title: "PEcAn Workflow"
 author: "PEcAn"
 format: pdf
-params:
-  year: 2004  # Default to start year from settings
-  xvar: "coarse_root_carbon_content"
-  yvar: "LAI"
-  width: 600
-  height: 400
----
 
 # Introduction {#introduction}
 
@@ -121,15 +114,20 @@ model_output <- PEcAn.utils::read.output(
   end.year = as.numeric(format(as.Date(settings$run$end.date), "%Y")),
   variables = NULL,  
   dataframe = TRUE, 
-  verbose = TRUE    
+  verbose = FALSE    # Set to FALSE to avoid warning messages
 )
 
-# Display available variables in model output
+# Store variable names for later use
+available_vars <- names(model_output)[!names(model_output) %in% c("posix", "time_bounds")]
+```
+
+```{r show-variables, echo=FALSE}
+# Display available variables in a clean format
 cat("Available variables in model output:\n")
-print(names(model_output)[names(model_output) != "posix"])  
+cat(paste(available_vars, collapse = "\n"))
+```
 
 ```{r plot-timeseries}
-# To plot different variables, simply change the variable names in the plot commands
 # You can see all available variables in the output from the previous block above
 # They are also listed here for reference:
 
