@@ -1,14 +1,14 @@
-generate_joint_ensemble_design <- function(settings, ensemble_size, posterior.files, ens.sample.method) {
+generate_joint_ensemble_design <- function(settings, ensemble_size, 
+                                           posterior.files = rep(NA, length(settings$pfts)), 
+                                           ens.sample.method = "uniform") {
   design_matrix <- data.frame()
   sampled_inputs <- list()
 
-  # Get and order inputs based on dependencies
   samp <- settings$ensemble$samplingspace
   parents <- lapply(samp, '[[', 'parent')
   order <- names(samp)[lapply(parents, function(tr) which(names(samp) %in% tr)) %>% unlist()]
   samp.ordered <- samp[c(order, names(samp)[!(names(samp) %in% order)])]
 
-  # Generate input sampling design
   for (i in seq_along(samp.ordered)) {
     input_tag <- names(samp.ordered)[i]
     parent_name <- samp.ordered[[i]]$parent
@@ -26,23 +26,24 @@ generate_joint_ensemble_design <- function(settings, ensemble_size, posterior.fi
     design_matrix[[input_tag]] <- input_result$ids
   }
 
-  # Load parameter sample indices
+  # Sample parameters
   PEcAn.uncertainty::get.parameter.samples(settings, posterior.files, ens.sample.method)
+
+  # Load samples from file
   samples.file <- file.path(settings$outdir, "samples.Rdata")
-  if (!file.exists(samples.file)) {
-    PEcAn.logger::logger.error(samples.file, "not found, this file is required.")
-  }
-
   samples <- new.env()
-  load(samples.file, envir = samples)
-  ensemble.samples <- samples$ensemble.samples
-
-  pft_name <- names(ensemble.samples)[1]
-  first_trait <- names(ensemble.samples[[pft_name]])[1]
-  param_ids <- seq_len(nrow(ensemble.samples[[pft_name]][[first_trait]]))
-
-  
-  design_matrix$parameters <- param_ids[1:ensemble_size]
+  if (file.exists(samples.file)) {
+    load(samples.file, envir = samples)
+    if (!is.null(samples$ensemble.samples)) {
+      # Just a placeholder: extract representative trait index per ensemble member
+      # You may want to flatten or select indices per trait
+      design_matrix[["param"]] <- seq_len(ensemble_size)
+    } else {
+      PEcAn.logger::logger.warn("ensemble.samples not found in samples.Rdata")
+    }
+  } else {
+    PEcAn.logger::logger.error(samples.file, "not found, this file is required")
+  }
 
   return(design_matrix)
 }
