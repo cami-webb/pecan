@@ -223,7 +223,8 @@ for (y in 2012:2024) {
                                                cores = parallel::detectCores())
 }
 
-# setup.
+# setup parallel downscaling.
+method <- "randomForest"
 base.map.dir <- "/projectnb/dietzelab/dongchen/anchorSites/downscale/MODIS_NLCD_LC.tif"
 load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA/sda.all.forecast.analysis.Rdata")
 variables <- c("AbvGrndWood", "LAI", "SoilMoistFrac", "TotSoilCarb")
@@ -251,7 +252,8 @@ for (i in seq_along(date)) {
                  time = time, 
                  variable = variable, 
                  folder.path = folder.path, 
-                 base.map.dir = base.map.dir, 
+                 base.map.dir = base.map.dir,
+                 method = method,
                  cores = cores, 
                  outdir = file.path(outdir, "downscale_maps_analysis_lc_ts")),
          file = file.path(folder.path, "dat.rds"))

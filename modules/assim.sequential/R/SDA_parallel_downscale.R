@@ -270,15 +270,16 @@ prepare_train_dat <- function(pts, analysis, covariates.dir, variable) {
 
 #' @description
 #' This function helps to train the ML model across ensemble members in parallel.
-#' @title parallel_rf_train
+#' @title parallel_train
 #' 
 #' @param full_data numeric: the matrix generated using the `prepare_train_dat` function.
+#' @param method: character: machine learning method (currently support randomForest and xgboost).
 #' @param cores numeric: how many CPus to be used in the calculation, the default is the total CPU number you have.
 #'
 #' @return list of trained models across ensemble members.
 #' 
 #' @author Dongchen Zhang
-parallel_rf_train <- function(full_data, cores = parallel::detectCores()) {
+parallel_train <- function(full_data, method = "randomForest", cores = parallel::detectCores()) {
   # grab ensemble and predictor index.
   col.names <- colnames(full_data)
   ensemble.inds <- which(grepl("ensemble", col.names, fixed = TRUE))
@@ -296,16 +297,40 @@ parallel_rf_train <- function(full_data, cores = parallel::detectCores()) {
   opts <- list(progress=progress)
   # foreach loop.
   models <- foreach::foreach(i = ensemble.inds, 
-                             .packages=c("Kendall", "stats", "randomForest"),
+                             .packages=c("Kendall", "stats", method),
                              .options.snow=opts) %dopar% {
                                ensemble_col <- col.names[ensemble.inds[i]]
-                               formula <- stats::as.formula(paste(ensemble_col, "~", paste(col.names[predictor.inds], collapse = " + ")))
-                               randomForest::randomForest(formula,
-                                                          data = full_data,
-                                                          ntree = 1000,
-                                                          na.action = stats::na.omit,
-                                                          keep.forest = TRUE,
-                                                          importance = TRUE)
+                               predictor_col <- col.names[predictor.inds]
+                               # if it's randomForest.
+                               if (method == "randomForest") {
+                                 formula <- stats::as.formula(paste(ensemble_col, "~", paste(predictor_col, collapse = " + ")))
+                                 model <- randomForest::randomForest(formula,
+                                                                     data = full_data,
+                                                                     ntree = 1000,
+                                                                     na.action = stats::na.omit,
+                                                                     keep.forest = TRUE,
+                                                                     importance = TRUE)
+                               }
+                               # if it's xgboost.
+                               if (method == "xgboost") {
+                                 formula <- stats::as.formula(paste0("~ ", paste(predictor_col, collapse = " + "), " - 1"))
+                                 train.df  <- model.matrix(pred_formula, data = full_data)
+                                 train.df  <- xgb.DMatrix(data = train.df, label = full_data[[ensemble_col]])
+                                 model <- xgb.train(
+                                   params   = list(
+                                     objective        = "reg:squarederror",
+                                     eta              = 0.1,
+                                     max_depth        = 6,
+                                     subsample        = 0.8,
+                                     colsample_bytree = 0.8
+                                   ),
+                                   data    = train.df,
+                                   nrounds = 1000,
+                                   nthread = 1,
+                                   verbose = 0
+                                 )
+                               }
+                               model
                              }
   # stop parallel.
   parallel::stopCluster(cl)
@@ -383,12 +408,18 @@ parallel_prediction <- function(base.map.dir, models, cov.vecs, non.na.inds, out
 #' @param variable: character: name of state variable. It should match up with the column names of the analysis data frame. 
 #' @param outdir character: the output directory where the downscaled maps will be stored.
 #' @param base.map.dir character: path to the GeoTIFF file within which the extents and CRS will be used to generate the ensemble maps.
+#' @param method: character: machine learning method, default is randomForest (currently support randomForest and xgboost).
 #' @param cores numeric: how many CPus to be used in the calculation, the default is the total CPU number you have.
 #'
 #' @return paths to the ensemble downscaled maps.
 #' 
 #' @author Dongchen Zhang
-downscale_rf_main <- function(settings, analysis, covariates.dir, time, variable, outdir, base.map.dir, cores = parallel::detectCores()) {
+downscale_main <- function(settings, analysis, covariates.dir, time, variable, outdir, base.map.dir, method = "randomForest", cores = parallel::detectCores()) {
+  # check ML package.
+  if (!require(method, character.only = T)) {
+    PEcAn.logger::logger.info(paste("The package:", method, "is not installed."))
+    return(0)
+  }
   # create folder specific for the time and carbon type.
   folder.name <- file.path(outdir, paste0(c(variable, time), collapse = "_"))
   if (!file.exists(folder.name)) {
@@ -408,10 +439,10 @@ downscale_rf_main <- function(settings, analysis, covariates.dir, time, variable
   }
   # parallel train.
   PEcAn.logger::logger.info("Parallel training.")
-  models <- parallel_rf_train(full_data = full_data, cores = cores)
+  models <- parallel_rf_train(full_data = full_data, method = method, cores = cores)
   # save trained models for future analysis.
   # saveRDS(models, file.path(folder.name, "rf_models.rds"))
-  save(models, file = file.path(folder.name, "rf_models.Rdata"))
+  save(models, file = file.path(folder.name, "ml_models.Rdata"))
   # convert stacked covariates geotiff file into data frame.
   PEcAn.logger::logger.info("Converting geotiff to df.")
   cov.df <- stack_covariates_2_df(rast.dir = covariates.dir, cores = cores)
@@ -454,6 +485,6 @@ downscale_rf_main <- function(settings, analysis, covariates.dir, time, variable
 #' @author Dongchen Zhang
 downscale_qsub_main <- function(folder.path) {
   dat <- readRDS(file.path(folder.path, "dat.rds"))
-  out <- downscale_rf_main(dat$settings, dat$analysis.yr, dat$covariates.dir, lubridate::year(dat$time), dat$variable, dat$outdir, dat$base.map.dir, dat$cores)
+  out <- downscale_main(dat$settings, dat$analysis.yr, dat$covariates.dir, lubridate::year(dat$time), dat$variable, dat$outdir, dat$base.map.dir, dat$method, dat$cores)
   saveRDS(out, file.path(folder.path, "res.rds"))
 }
