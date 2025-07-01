@@ -23,10 +23,16 @@ listToXml <- function(x, ...) {
 #' @export
 #' @author David LeBauer, Carl Davidson, Rob Kooper
 listToXml.default <- function(x, ...) {
+  args <- list(...)
   if (methods::hasArg("tag")) {
-    tag <- list(...)$tag
+    tag <- args$tag
   } else {
-    tag <- "pecan"
+    args <- args[names(args) == ""]
+    if (length(args) > 0) {
+      tag <- args[[1]]
+    } else {
+      tag <- "pecan"
+    }
   }
   # just a textnode, or empty node with attributes
   if (typeof(x) != "list") {
