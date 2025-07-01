@@ -10,10 +10,11 @@
 \item{x}{object to be converted.
 Despite the function name, need not actually be a list}
 
-\item{...}{further arguments.
-Used to set the element name of the created XML object,
-which is taken from an argument named \code{tag} if present,
-or otherwise from the first element of \code{...}}
+\item{...}{further arguments, used to set the root element name
+of the created XML object.
+The name is taken from an argument named \code{tag} if present,
+or otherwise from the first unnamed element of \code{...},
+or otherwise defaults to "pecan'}
 }
 \value{
 xmlNode

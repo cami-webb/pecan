@@ -14,21 +14,19 @@ listToXml <- function(x, ...) {
 #' @title List to XML
 #' @param x object to be converted.
 #'   Despite the function name, need not actually be a list
-#' @param ... further arguments.
-#'   Used to set the element name of the created XML object,
-#'   which is taken from an argument named `tag` if present,
-#'   or otherwise from the first element of `...`
+#' @param ... further arguments, used to set the root element name
+#'   of the created XML object.
+#'   The name is taken from an argument named `tag` if present,
+#'   or otherwise from the first unnamed element of `...`,
+#'   or otherwise defaults to "pecan'
 #' @return xmlNode
 #' @export
 #' @author David LeBauer, Carl Davidson, Rob Kooper
 listToXml.default <- function(x, ...) {
-  args <- list(...)
-  if (length(args) == 0) {
-    tag <- "pecan"
-  } else if ("tag" %in% names(args)) {
-    tag <- args$tag
+  if (methods::hasArg("tag")) {
+    tag <- list(...)$tag
   } else {
-    tag <- args[[1]]
+    tag <- "pecan"
   }
   # just a textnode, or empty node with attributes
   if (typeof(x) != "list") {

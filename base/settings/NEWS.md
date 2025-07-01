@@ -4,6 +4,11 @@
 
 * listToXml.MultiSettings now produces valid XML from a MultiSettings with length 1.
 
+## Changed
+
+* The `tag` argument to `listToXml()` is now optional and will default to "pecan" if not specified. This sets the name of of the root XML tag that contains the entire resulting settings object.
+
+
 # PEcAn.settings 1.9.0
 
 ## Changed
