@@ -64,15 +64,6 @@ This section handles the crucial step of loading the PEcAn settings.
 settings_path <- "~/pecan.xml" 
 ```
 
-
-```{r}
-# Generate workflow ID  (e.g., 20250619154701)
-workflow_id <- format(Sys.time(), "%Y%m%d%H%M%S")
-
-# Replace all occurrences of "ID" in the XML file with that workflow_id
-system(glue::glue("sed -i 's|ID|{workflow_id}|g' {settings_path}"))
-```
-
 # Prepare and Validate Settings
 
 After specifying the path to your `pecan.xml` file, the next step involves reading and preparing these settings. PEcAn provides robust utilities to process and validate your configurations before any execution begins. 
@@ -99,7 +90,6 @@ Once the settings have been read and prepared, it is often useful to inspect the
 # This helps you understand what configurations are available
 str(settings)
 ```
-
 # Run Model Simulations and Fetch Results
 
 This section executes the actual model simulations and retrieves the results. The process is managed by PEcAn's workflow system, which handles the execution of your chosen ecosystem model.
