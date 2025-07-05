@@ -4,14 +4,21 @@
   <notes/>
   <userid>-1</userid>
   <username/>
+  <date>2025-06-19-15-34-01</date>
  </info>
  <outdir>/data/workflows/PEcAn_99000000001</outdir>
  <pfts>
   <pft>
    <name>temperate.coniferous</name>
-   <outdir>/pecan/documentation/quarto/01_Demo_Basic_Run/99000000001/pft/temperate.coniferous</outdir>
   </pft>
  </pfts>
+ <ensemble>
+   <samplingspace>
+   <parameters>
+    <method>uniform</method>
+   </parameters>
+   </samplingspace>
+  </ensemble>
  <model>
   <id>99000000003</id>
   <type>SIPNET</type>
@@ -19,9 +26,6 @@
   <delete.raw>FALSE</delete.raw>
   <binary>/usr/local/bin/sipnet.git</binary>
  </model>
- <workflow>
-  <id>2025-06-19-15-34-01</id>
- </workflow>
  <run>
   <site>
    <id>772</id>
@@ -53,14 +57,14 @@
    <uri>amqp://guest:guest@rabbitmq/%2F</uri>
    <queue>SIPNET_git</queue>
   </rabbitmq>
-  <rundir>/pecan/documentation/quarto/01_Demo_Basic_Run/99000000001/run</rundir>
-  <outdir>/data/workflows/99000000001/out</outdir>
+  <rundir>/data/workflows/PEcAn_99000000001/run</rundir>
+  <outdir>/data/workflows/PEcAn_99000000001/out</outdir>
  </host>
  <settings.info>
   <deprecated.settings.fixed>TRUE</deprecated.settings.fixed>
   <settings.updated>TRUE</settings.updated>
   <checked>TRUE</checked>
  </settings.info>
- <rundir>/pecan/documentation/quarto/01_Demo_Basic_Run/99000000001/run</rundir>
- <modeloutdir>/data/workflows/99000000001/out</modeloutdir>
+<rundir>/data/workflows/PEcAn_99000000001/run</rundir>
+<modeloutdir>/data/workflows/PEcAn_99000000001/out</modeloutdir>
 </pecan>
