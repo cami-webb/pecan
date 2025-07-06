@@ -50,6 +50,7 @@ First, we need to load the PEcAn R packages. These packages provide all the func
 ```{r libraries}
 # Load the PEcAn.all package, which includes all necessary PEcAn functionality
 library("PEcAn.all")
+library("here")
 ```
 
 # Load PEcAn settings files
@@ -60,9 +61,7 @@ This section handles the step of loading the PEcAn settings.
 -   Alternatively, for a sample or initial run, you can use the example `pecan.xml` file available at: `pecan/documentation/quarto/01_Demo_Basic_Run`.
  
 ```{r load-settings}
-# Specify the path to your pecan.xml file
-# Replace this with your actual pecan.xml file path
-settings_path <- "~/pecan.xml" 
+settings_path <- here::here("/pecan/documentation/quarto/01_Demo_Basic_Run/pecan.xml")
 ```
 
 # Prepare and Validate Settings
@@ -203,100 +202,75 @@ available_vars <- names(model_output)[!names(model_output) %in% c("posix", "time
 This section shows all the variables that are available in the model output. These variables represent different ecosystem processes and states that the model has simulated.
 
 ```{r show-variables, echo=FALSE}
-# Display available variables in a clean format
-# This helps users understand what data is available for analysis
-cat("Available variables in model output:\n")
-cat(paste(available_vars, collapse = "\n"))
+# Read variable descriptions from external CSV
+var_lookup <- read.csv("/pecan/documentation/quarto/01_Demo_Basic_Run/variable_lookup.csv", stringsAsFactors = FALSE)
+
+# Build table for all available_vars, using lookup where possible
+vars_df <- data.frame(Variable = available_vars, stringsAsFactors = FALSE)
+vars_df <- dplyr::left_join(vars_df, var_lookup, by = "Variable")
+vars_df$Description[is.na(vars_df$Description)] <- "(No description available)"
+
+# Show as a table
+knitr::kable(vars_df, caption = "Model Output Variables and Descriptions")
 ```
 
 # Visualize Model Results
 
 This section provides examples of how to create time series plots of different model variables. The examples cover various ecosystem processes including carbon fluxes, carbon pools, water variables, and structural variables like Leaf Area Index (LAI).
 
-```{r plot-timeseries}
-# You can see all available variables in the output from the previous block above
-# They are also listed here for reference:
+# Plot Carbon Fluxes
 
-# Carbon fluxes:
-# - GPP (Gross Primary Productivity), NPP (Net Primary Productivity)
-# - NEE (Net Ecosystem Exchange), TotalResp (Total Respiration)
-# - AutoResp (Autotrophic Respiration), HeteroResp (Heterotrophic Respiration)
-# - SoilResp (Soil Respiration)
-# Carbon pools:
-# - AbvGrndWood (Above Ground Wood), TotLivBiom (Total Live Biomass)
-# - TotSoilCarb (Total Soil Carbon), leaf_carbon_content
-# - litter_carbon_content, fine_root_carbon_content, coarse_root_carbon_content
-# - GWBI (Gross Woody Biomass Increment), AGB (Above Ground Biomass)
-# Water variables:
-# - Qle (Latent Heat Flux), Transp (Transpiration)
-# - SoilMoist (Soil Moisture), SoilMoistFrac (Soil Moisture Fraction)
-# - SWE (Snow Water Equivalent), litter_mass_content_of_water
-# Other:
-# - LAI (Leaf Area Index)
-
-# Example 1: Carbon fluxes
+```{r plot-carbon-fluxes}
 # Plot Gross Primary Productivity (GPP) and Net Primary Productivity (NPP)
-# These represent the carbon uptake by photosynthesis
 plot(model_output$posix, model_output$GPP, 
      type = 'l',
      col = 'green',
      xlab = 'Date',
      ylab = 'Carbon Flux (kg C m-2 s-1)',
      main = 'Carbon Fluxes Over Time')
+lines(model_output$posix, model_output$NPP, col = 'blue')
+legend('topright', legend = c('GPP', 'NPP'), col = c('green', 'blue'), lty = 1)
+```
 
-# Add NPP line to compare with GPP
-lines(model_output$posix, model_output$NPP, 
-      col = 'blue')
+# Plot Carbon Pools
 
-# Add legend to distinguish between the two variables
-legend('topright', 
-       legend = c('GPP', 'NPP'),
-       col = c('green', 'blue'),
-       lty = 1)
-
-# Example 2: Carbon pools
-# To plot carbon pools instead, uncomment and modify these lines:
+```{r plot-carbon-pools}
+# Plot Total Live Biomass and Total Soil Carbon
 plot(model_output$posix, model_output$TotLivBiom,
      type = 'l',
      col = 'darkgreen',
      xlab = 'Date',
      ylab = 'Carbon Pool (kg C m-2)',
      main = 'Carbon Pools Over Time')
-lines(model_output$posix, model_output$TotSoilCarb,
-      col = 'brown')
-legend('topright',
-       legend = c('Total Live Biomass', 'Total Soil Carbon'),
-       col = c('darkgreen', 'brown'),
-       lty = 1)
+lines(model_output$posix, model_output$TotSoilCarb, col = 'brown')
+legend('topright', legend = c('Total Live Biomass', 'Total Soil Carbon'), col = c('darkgreen', 'brown'), lty = 1)
+```
 
-# Example 3: Water variables
-# To plot water variables instead, uncomment and modify these lines:
+# Plot Water Variables
+
+```{r plot-water-variables}
+# Plot Soil Moisture and Snow Water Equivalent
 plot(model_output$posix, model_output$SoilMoist,
      type = 'l',
      col = 'blue',
      xlab = 'Date',
      ylab = 'Soil Moisture (kg m-2)',
      main = 'Soil Moisture Over Time')
-lines(model_output$posix, model_output$SWE,
-      col = 'lightblue')
-legend('topright',
-       legend = c('Soil Moisture', 'Snow Water Equivalent'),
-       col = c('blue', 'lightblue'),
-       lty = 1)
+lines(model_output$posix, model_output$SWE, col = 'lightblue')
+legend('topright', legend = c('Soil Moisture', 'Snow Water Equivalent'), col = c('blue', 'lightblue'), lty = 1)
+```
 
-# Example 4: LAI and Biomass
-# To plot LAI and biomass, uncomment and modify these lines:
+# Plot LAI and Biomass
+
+```{r plot-lai-biomass}
+# Plot Leaf Area Index (LAI) and Above Ground Wood
 plot(model_output$posix, model_output$LAI,
      type = 'l',
      col = 'darkgreen',
      xlab = 'Date',
      ylab = 'LAI (m2 m-2)',
      main = 'Leaf Area Index Over Time')
-lines(model_output$posix, model_output$AbvGrndWood,
-      col = 'brown')
-legend('topright',
-       legend = c('LAI', 'Above Ground Wood'),
-       col = c('darkgreen', 'brown'),
-       lty = 1)
+lines(model_output$posix, model_output$AbvGrndWood, col = 'brown')
+legend('topright', legend = c('LAI', 'Above Ground Wood'), col = c('darkgreen', 'brown'), lty = 1)
 ```
 
