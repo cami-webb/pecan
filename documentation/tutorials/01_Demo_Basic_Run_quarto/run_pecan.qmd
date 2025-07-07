@@ -1,7 +1,22 @@
 ---
 title: "Running Ecosystem Simulations Using PEcAn"
 author: "Aritra Dey"
-format: pdf
+format:
+  pdf:
+    documentclass: article  # Can also use: report, book
+    toc: true
+    number-sections: true
+    keep-tex: true
+    latex-engine: lualatex  # Optional: for better font and Unicode handling
+    mainfont: "TeX Gyre Pagella"  # Or another professional font
+    papersize: a4
+    fontsize: 11pt
+    geometry: margin=1in
+    fig-align: center
+    fig-cap-location: bottom
+    code-block-bg: "#f8f8f8"  # subtle gray background
+    code-block-border-left: "#2b2b2b"
+    code-block-font-size: 90%
 ---
 
 # Introduction {#introduction}
@@ -27,7 +42,7 @@ This notebook demonstrates how to:
 ## Prerequisites
 
 Before running this notebook, make sure you have:
-- A valid `pecan.xml` configuration file (or use the example provided)
+- A valid `pecan.xml` configuration file (or use the example provided: [pecan.xml](pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/pecan.xml))
 
 ## How to Use This Notebook
 
@@ -60,7 +75,7 @@ This section handles the step of loading the PEcAn settings.
 -   Alternatively, for a sample or initial run, you can use the example `pecan.xml` file available at: `pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/pecan.xml`.
  
 ```{r load-settings}
-settings_path <- here::here("/pecan/documentation/quarto/01_Demo_Basic_Run/pecan.xml")
+settings_path <- here::here("/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/pecan.xml")
 ```
 
 # Prepare and Validate Settings
@@ -104,9 +119,9 @@ This section sets up the path to the meteorological data file that the model wil
 The meteorological data contains essential climate variables like temperature, precipitation, solar radiation, and humidity that drive the ecosystem model.ttings-path
 
 ```{r prepare-met-directory}
-dir.create("/data/dbfiles", recursive = TRUE , showWarnings = FALSE)
+dir.create("/data/dbfiles", recursive = TRUE, showWarnings = FALSE)
 # Copy the meteorological data file to the dbfiles directory
-system("cp /pecan/documentation/quarto/01_Demo_Basic_Run/dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim /data/dbfiles/")
+system("cp /pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim /data/dbfiles/")
 ```
 
 # Write Model Configuration Files
@@ -127,7 +142,7 @@ settings$write <- FALSE
 
 # Set the path to Plant Functional Type (PFT) parameter files
 # These files define model parameters for the temperate coniferous forest.
-settings$pfts[[1]]$posterior.files <- "/pecan/documentation/quarto/01_Demo_Basic_Run/pft/temperate.coniferous/prior.distns.Rdata"
+settings$pfts[[1]]$posterior.files <- here::here("/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/pft/temperate.coniferous/prior.distns.Rdata")
 
 # Generate model-specific configuration files
 # This creates the necessary input files for the SIPNET model
@@ -159,12 +174,12 @@ After the model simulation completes, we need to extract the results and prepare
 ```{r get-plot-vars}
 # Read the run ID from the runs.txt file
 # This file contains the unique identifier for this model run
-# Note: if you are using an xml from a run with multiple ensembles 
+# Note: if you are using an xml from a run with multiple ensembles
 # this line will provide only the first run id
-runid <- as.character(read.table(paste(settings$outdir, "/run/","runs.txt", sep=""))[1,1])
+runid <- as.character(read.table(paste(settings$outdir, "/run/", "runs.txt", sep = ""))[1, 1])
 
 # Construct the output directory path for this specific run
-outdir <- paste(settings$outdir,"/out/",runid,sep= "")
+outdir <- paste(settings$outdir, "/out/", runid, sep = "")
 
 # Extract start and end years from the settings
 # These define the time period for the simulation
@@ -181,9 +196,9 @@ model_output <- PEcAn.utils::read.output(
   outdir,
   start.year,
   end.year,
-  variables = NULL,  
-  dataframe = TRUE, 
-  verbose = FALSE  
+  variables = NULL,
+  dataframe = TRUE,
+  verbose = FALSE
 )
 
 # Store variable names for later use
@@ -197,7 +212,7 @@ This section shows all the variables that are available in the model output. The
 
 ```{r show-variables, echo=FALSE}
 # Read variable descriptions from external CSV
-var_lookup <- read.csv("/pecan/documentation/quarto/01_Demo_Basic_Run/variable_lookup.csv", stringsAsFactors = FALSE)
+var_lookup <- read.csv("/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/variable_lookup.csv", stringsAsFactors = FALSE)
 
 # Build table for all available_vars, using lookup where possible
 vars_df <- data.frame(Variable = available_vars, stringsAsFactors = FALSE)
@@ -216,14 +231,15 @@ This section provides examples of how to create time series plots of different m
 
 ```{r plot-carbon-fluxes}
 # Plot Gross Primary Productivity (GPP) and Net Primary Productivity (NPP)
-plot(model_output$posix, model_output$GPP, 
-     type = 'l',
-     col = 'green',
-     xlab = 'Date',
-     ylab = 'Carbon Flux (kg C m-2 s-1)',
-     main = 'Carbon Fluxes Over Time')
-lines(model_output$posix, model_output$NPP, col = 'blue')
-legend('topright', legend = c('GPP', 'NPP'), col = c('green', 'blue'), lty = 1)
+plot(model_output$posix, model_output$GPP,
+  type = "l",
+  col = "green",
+  xlab = "Date",
+  ylab = "Carbon Flux (kg C m-2 s-1)",
+  main = "Carbon Fluxes Over Time"
+)
+lines(model_output$posix, model_output$NPP, col = "blue")
+legend("topright", legend = c("GPP", "NPP"), col = c("green", "blue"), lty = 1)
 ```
 
 # Plot Carbon Pools
@@ -231,13 +247,14 @@ legend('topright', legend = c('GPP', 'NPP'), col = c('green', 'blue'), lty = 1)
 ```{r plot-carbon-pools}
 # Plot Total Live Biomass and Total Soil Carbon
 plot(model_output$posix, model_output$TotLivBiom,
-     type = 'l',
-     col = 'darkgreen',
-     xlab = 'Date',
-     ylab = 'Carbon Pool (kg C m-2)',
-     main = 'Carbon Pools Over Time')
-lines(model_output$posix, model_output$TotSoilCarb, col = 'brown')
-legend('topright', legend = c('Total Live Biomass', 'Total Soil Carbon'), col = c('darkgreen', 'brown'), lty = 1)
+  type = "l",
+  col = "darkgreen",
+  xlab = "Date",
+  ylab = "Carbon Pool (kg C m-2)",
+  main = "Carbon Pools Over Time"
+)
+lines(model_output$posix, model_output$TotSoilCarb, col = "brown")
+legend("topright", legend = c("Total Live Biomass", "Total Soil Carbon"), col = c("darkgreen", "brown"), lty = 1)
 ```
 
 # Plot Water Variables
@@ -245,13 +262,14 @@ legend('topright', legend = c('Total Live Biomass', 'Total Soil Carbon'), col = 
 ```{r plot-water-variables}
 # Plot Soil Moisture and Snow Water Equivalent
 plot(model_output$posix, model_output$SoilMoist,
-     type = 'l',
-     col = 'blue',
-     xlab = 'Date',
-     ylab = 'Soil Moisture (kg m-2)',
-     main = 'Soil Moisture Over Time')
-lines(model_output$posix, model_output$SWE, col = 'lightblue')
-legend('topright', legend = c('Soil Moisture', 'Snow Water Equivalent'), col = c('blue', 'lightblue'), lty = 1)
+  type = "l",
+  col = "blue",
+  xlab = "Date",
+  ylab = "Soil Moisture (kg m-2)",
+  main = "Soil Moisture Over Time"
+)
+lines(model_output$posix, model_output$SWE, col = "lightblue")
+legend("topright", legend = c("Soil Moisture", "Snow Water Equivalent"), col = c("blue", "lightblue"), lty = 1)
 ```
 
 # Plot LAI and Biomass
@@ -259,12 +277,27 @@ legend('topright', legend = c('Soil Moisture', 'Snow Water Equivalent'), col = c
 ```{r plot-lai-biomass}
 # Plot Leaf Area Index (LAI) and Above Ground Wood
 plot(model_output$posix, model_output$LAI,
-     type = 'l',
-     col = 'darkgreen',
-     xlab = 'Date',
-     ylab = 'LAI (m2 m-2)',
-     main = 'Leaf Area Index Over Time')
-lines(model_output$posix, model_output$AbvGrndWood, col = 'brown')
-legend('topright', legend = c('LAI', 'Above Ground Wood'), col = c('darkgreen', 'brown'), lty = 1)
+  type = "l",
+  col = "darkgreen",
+  xlab = "Date",
+  ylab = "LAI (m2 m-2)",
+  main = "Leaf Area Index Over Time"
+)
+lines(model_output$posix, model_output$AbvGrndWood, col = "brown")
+legend("topright", legend = c("LAI", "Above Ground Wood"), col = c("darkgreen", "brown"), lty = 1)
+```
+
+# Conclusion
+
+This notebook demonstrated how to set up, run, and analyze a PEcAn ecosystem model workflow programmatically. You can now modify parameters, try different models, or extend the analysis as needed.
+
+# Teardown: Clean Up Workflow Output (Optional)
+
+If you want to remove all files and directories created by this workflow and start fresh, you can run the following code. This will delete the entire output directory specified in your settings. **Use with caution!**
+
+```{r teardown-cleanup}
+# WARNING: This will permanently delete all workflow output files!
+# Uncomment the line below to enable cleanup.
+# fs::dir_delete(settings$outdir)
 ```
 
