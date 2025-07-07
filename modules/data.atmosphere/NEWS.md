@@ -8,6 +8,7 @@
 
 * Functions that take argument `site_id` now accept strings as well as BETYdb numeric IDs. 
 * `download.ERA5.old` renamed to `download.ERA5_cds`
+* `download.ERA5_cds` now uses the R package ecmwfr (replacing python dependency of cdsapi via reticulate), enabling direct NetCDF downloads; and made flexible for both reanalysis and ensemble data product.
 
 ## Removed
 
