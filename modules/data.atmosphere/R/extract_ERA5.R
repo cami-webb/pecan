@@ -28,6 +28,8 @@
 #'  purrr::map(~xts::apply.daily(.x, mean))
 #'
 #' }
+#' @importFrom dplyr %>%
+#' @importFrom foreach %dopar%
 extract.nc.ERA5 <-
   function(slat,
            slon,

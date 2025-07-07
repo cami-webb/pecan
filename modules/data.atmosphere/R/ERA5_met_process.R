@@ -11,7 +11,7 @@
 #' 
 #' @author Dongchen Zhang
 #' @importFrom dplyr %>%
-#'
+#' @importFrom foreach %dopar%
 ERA5_met_process <- function(settings, in.path, out.path, write.db=FALSE, write = TRUE){
   #getting site info
   start_date <- settings$state.data.assimilation$start.date
