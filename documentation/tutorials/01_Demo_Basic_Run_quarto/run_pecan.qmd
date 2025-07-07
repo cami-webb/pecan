@@ -3,18 +3,18 @@ title: "Running Ecosystem Simulations Using PEcAn"
 author: "Aritra Dey"
 format:
   pdf:
-    documentclass: article  # Can also use: report, book
+    documentclass: article
     toc: true
     number-sections: true
     keep-tex: true
-    latex-engine: lualatex  # Optional: for better font and Unicode handling
-    mainfont: "TeX Gyre Pagella"  # Or another professional font
+    latex-engine: lualatex  
+    mainfont: "TeX Gyre Pagella" 
     papersize: a4
     fontsize: 11pt
     geometry: margin=1in
     fig-align: center
     fig-cap-location: bottom
-    code-block-bg: "#f8f8f8"  # subtle gray background
+    code-block-bg: "#f8f8f8" 
     code-block-border-left: "#2b2b2b"
     code-block-font-size: 90%
 ---
@@ -212,7 +212,7 @@ This section shows all the variables that are available in the model output. The
 
 ```{r show-variables, echo=FALSE}
 # Read variable descriptions from external CSV
-var_lookup <- read.csv("/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/variable_lookup.csv", stringsAsFactors = FALSE)
+var_lookup <- read.csv("/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto/extfiles/variable_lookup.csv", stringsAsFactors = FALSE)
 
 # Build table for all available_vars, using lookup where possible
 vars_df <- data.frame(Variable = available_vars, stringsAsFactors = FALSE)
