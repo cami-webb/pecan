@@ -94,7 +94,7 @@
 "ggplot2","*","base/visualization","Imports",FALSE
 "ggplot2","*","modules/assim.sequential","Imports",FALSE
 "ggplot2","*","modules/benchmark","Imports",FALSE
-"ggplot2","*","modules/data.atmosphere","Imports",FALSE
+"ggplot2","*","modules/data.atmosphere","Suggests",FALSE
 "ggplot2","*","modules/data.remote","Suggests",FALSE
 "ggplot2","*","modules/meta.analysis","Suggests",FALSE
 "ggplot2","*","modules/priors","Imports",FALSE
