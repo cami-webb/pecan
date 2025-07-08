@@ -98,16 +98,12 @@ neon_hi_elev <- site_info |>
   mutate(site.pft = "new_conifer")
 settings_neon <- createMultiSiteSettings(settings, neon_hi_elev)
 
-listToXml(settings_neon, tag = "pecan")
-```
-
-
-## Shows settings object after "createMultiSiteSettings(settings, selected_sites)"
+## Shows settings object before and after "createMultiSiteSettings(settings, selected_sites)"
 
 ```{r}
-
 listToXml(settings, tag = "pecan")
-
+listToXml(settings_neon, tag = "pecan")
+```
 ```
 
 
