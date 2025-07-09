@@ -38,13 +38,14 @@
 #'  (will only use the year part of the date)
 #' @param end_date the end date of the data to be downloaded
 #'  (will only use the year part of the date)
+#' @param var.names character: list of variable names to be extracted.
 #' @param overwrite should existing files be overwritten
 #' @param verbose should the function be very verbose
 #' @param year.fragment the function should ignore whether or not the data is
 #'  stored as a set of complete years (such as for forecasts).
 #' @param ... Additional arguments, currently ignored
 #' @author Luke Dramko, Michael Dietze, Alexey Shiklomanov, Rob Kooper
-met2model.SIPNET <- function(in.path, in.prefix, outfolder, start_date, end_date,
+met2model.SIPNET <- function(in.path, in.prefix, outfolder, start_date, end_date, var.names,
                              overwrite = FALSE, verbose = FALSE, year.fragment = FALSE, ...) {
  
   if (verbose) {
@@ -138,7 +139,11 @@ met2model.SIPNET <- function(in.path, in.prefix, outfolder, start_date, end_date
     if (file.exists(old.file)) {
       ## open netcdf
       nc <- ncdf4::nc_open(old.file)
-      nc.var.names <- names(nc$var)
+      if (!is.null(var.names)) {
+        nc.var.names <- var.names
+      } else {
+        nc.var.names <- names(nc$var)
+      }
       ## convert time to seconds
       sec <- nc$dim$time$vals
       sec <- PEcAn.utils::ud_convert(sec, unlist(strsplit(nc$dim$time$units, " "))[1], "seconds")
