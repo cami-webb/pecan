@@ -17,8 +17,8 @@ For more information about this file see also [Keep a Changelog](http://keepacha
   - Compiled pages are live at https://pecanproject.github.io/package-documentation and inside Docker at `pecan.localhost/pkgdocs/`, and these are automatically updated each time a PR to the source packages is merged.
   - You can compile all pkgdown pages locally at any time with `make pkgdocs`.
 
-- Initial Quarto notebook `run_pecan.qmd` to run PEcAn Demo 1 workflow from a pre-generated `pecan.xml` file, enabling notebook-based model runs, analysis, and visualization.
- - Directory structure for PEcAn Quarto notebooks under `/home/aritra/Downloads/projects/gsoc-codebases/pecan/documentation/tutorials/01_Demo_Basic_Run_quarto`.
+- Initial Quarto notebook `run_pecan.qmd` to run PEcAn Demo 1 workflow from a pre-configured `pecan.xml` file, enabling notebook-based model runs, analysis, and visualization.[#3531](https://github.com/PecanProject/pecan/pull/3531)
+ - Directory structure for PEcAn Quarto notebooks under `pecan/documentation/tutorials/Demo_1_Basic_Run`
  - Support for inspecting and plotting NetCDF output variables within the notebook workflow.
 
 ### Fixed
