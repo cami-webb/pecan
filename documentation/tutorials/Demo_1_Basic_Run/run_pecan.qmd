@@ -4,7 +4,7 @@ author: "Aritra Dey"
 format:
   pdf:
     toc: true
-    number-sections: true
+    number-sections: false
 ---
 
 # 1. Introduction {#introduction}
