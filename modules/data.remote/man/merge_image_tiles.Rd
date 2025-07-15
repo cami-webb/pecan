@@ -31,6 +31,7 @@ character: file path to the merged GeoTIFF file.
 Merge image tiles to a single image (currently support hdf and tif image format).
 }
 \details{
+Please make sure all image tiles are stored in the `folder.path`.
 Please refer to the gdalwarp manual for more details
 https://gdal.org/en/stable/programs/gdalwarp.html
 }
