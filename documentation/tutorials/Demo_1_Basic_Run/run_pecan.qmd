@@ -48,6 +48,21 @@ Before running this notebook, make sure you have:
 
 This demo illustrates how to run a basic PEcAn workflow using an R-based Quarto notebook. It will cover loading settings, writing model configuration files, and running model simulations. This approach provides a programmatic alternative to the web-based PEcAn interface for executing ecosystem models.
 
+# 2. Install SIPNET v1.3.0
+
+If you haven't already installed the SIPNET binary, you can do so by running the following code. This will download the SIPNET binary to `demo_outdir/sipnet` and make it executable.
+
+```{r download-sipnet, eval = FALSE}
+# Download and install SIPNET v1.3.0
+source(
+  here::here(
+    "documentation/tutorials/Demo_1_Basic_Run/download_sipnet.R"
+  )
+)
+```
+
+You can find the most recent version of the SIPNET binary at: [SIPNET GitHub Releases](https://github.com/PecanProject/sipnet/releases), but this notebook is designed to work with SIPNET v1.3.0.
+
 # 2. Load PEcAn Packages
 
 First, we need to load the PEcAn R packages. These packages provide all the functions we'll use to run the workflow.
@@ -55,18 +70,17 @@ First, we need to load the PEcAn R packages. These packages provide all the func
 ```{r libraries}
 # Load the PEcAn.all package, which includes all necessary PEcAn functionality
 library("PEcAn.all")
-library("here")
 ```
 
 # 3. Load PEcAn Settings Files
 
 This section handles the step of loading the PEcAn settings.
 
-- If you have a `pecan.xml` file preconfigured, place it in your working directory and copy its file path. Assign this path to the **settings_path** variable.
-- Alternatively, for a sample or initial run, you can use the example `pecan.xml` file available at: `pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml`.
+For a demo run, you can use the example `pecan.xml` file available at: `pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml`.
+
 
 ```{r load-settings}
-settings_path <- here::here("/pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml")
+settings_path <- here::here("documentation/tutorials/Demo_1_Basic_Run/pecan.xml")
 ```
 
 # 4. Prepare and Validate Settings
@@ -101,7 +115,7 @@ Before running the workflow, we need to ensure that the output directory specifi
 > **Note:** All outputs will be written to `settings$outdir`. You can change this directory in your `pecan.xml` file or by modifying `settings$outdir` in the notebook before running the workflow.
 
 ```{r create-outdir}
-dir.create(settings$outdir, recursive = TRUE, showWarnings = FALSE)
+dir.create(settings$outdir, recursive = TRUE)
 ```
 
 # 7. Prepare Meteorological Data
@@ -109,9 +123,12 @@ dir.create(settings$outdir, recursive = TRUE, showWarnings = FALSE)
 This section sets up the path to the meteorological data file that the model will use for the simulation. The meteorological data contains essential climate variables like temperature, precipitation, solar radiation, and humidity that drive the ecosystem model.
 
 ```{r prepare-met-directory}
-dir.create("/data/dbfiles", recursive = TRUE, showWarnings = FALSE)
+dir.create(here::here("dbfiles"))
 # Copy the meteorological data file to the dbfiles directory
-system("cp /pecan/documentation/tutorials/Demo_1_Basic_Run/dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim /data/dbfiles/")
+file.copy(
+  here::here("documentation/tutorials/Demo_1_Basic_Run/dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim"),
+  here::here("dbfiles/")
+)
 ```
 
 # 8. Write Model Configuration Files
@@ -124,10 +141,8 @@ This step generates the model-specific configuration files that will be used to 
 4. Generating configs: Use `runModule.run.write.configs()`
 
 ```{r write-configs}
-# Disable database operations for this demo
-settings$database <- NULL
-settings$write <- FALSE
-settings$pfts[[1]]$posterior.files <- here::here("/pecan/documentation/tutorials/Demo_1_Basic_Run/pft/temperate.coniferous/prior.distns.Rdata")
+settings$database <- NULL # Disable database operations for this demo
+settings$write <- FALSE # Disable write operations
 settings <- PEcAn.workflow::runModule.run.write.configs(settings)
 ```
 
@@ -152,9 +167,9 @@ After the model simulation completes, we need to extract the results and prepare
 
 ```{r get-plot-vars}
 runid <- as.character(read.table(paste(settings$outdir, "/run/", "runs.txt", sep = ""))[1, 1]) # Note: if you are using an xml from a run with multiple ensembles this line will provide only the first run id
-outdir <- paste(settings$outdir, "/out/", runid, sep = "")
-start.year <- as.numeric(lubridate::year(settings$run$start.date))
-end.year <- as.numeric(lubridate::year(settings$run$end.date))
+outdir <- file.path(settings$outdir, "/out/", runid)
+start.year <- lubridate::year(settings$run$start.date)
+end.year <- lubridate::year(settings$run$end.date)
 model_output <- PEcAn.utils::read.output(
   runid,
   outdir,
@@ -172,9 +187,19 @@ available_vars <- names(model_output)[!names(model_output) %in% c("posix", "time
 This section shows all the variables that are available in the model output. These variables represent different ecosystem processes and states that the model has simulated.
 
 ```{r show-variables, echo=FALSE}
-var_lookup <- read.csv("/pecan/documentation/tutorials/Demo_1_Basic_Run/extfiles/variable_lookup.csv", stringsAsFactors = FALSE)
-vars_df <- data.frame(Variable = available_vars, stringsAsFactors = FALSE)
-vars_df <- dplyr::left_join(vars_df, var_lookup, by = "Variable")
+vars_df <- PEcAn.utils::standard_vars  |> 
+  dplyr::select(
+    Variable = Variable.Name, 
+    Description = Long.name)  |> 
+  dplyr::filter(Variable %in% available_vars)  |> 
+  # TODO: add year to PEcAn.utils::standard vars
+  dplyr::bind_rows(
+    dplyr::tibble(
+      Variable = "year",
+      Description = "Year"
+    )
+  ) 
+
 vars_df$Description[is.na(vars_df$Description)] <- "(No description available)"
 knitr::kable(vars_df, caption = "Model Output Variables and Descriptions")
 ```
@@ -246,6 +271,8 @@ legend("topright", legend = c("LAI", "Above Ground Wood"), col = c("darkgreen", 
 # 13. Conclusion
 
 This notebook demonstrated how to set up, run, and analyze a PEcAn ecosystem model workflow programmatically. You can now modify parameters, try different models, or extend the analysis as needed.
+
+Try editing the `pecan.xml` file. Give it a new name and update the **settings_path** variable at the beginning of this Demo to point to the new file. See how the changes affect the model output!
 
 # 14. Clean Up Workflow Output (Optional)
 

@@ -6,14 +6,16 @@
   <username/>
   <date>2025-06-19-15-34-01</date>
  </info>
- <outdir>/data/workflows/PEcAn_ENS</outdir>
+ <outdir>demo_outdir</outdir>
  <pfts>
   <pft>
    <name>temperate.coniferous</name>
+   <posterior.files>documentation/tutorials/Demo_1_Basic_Run/pft/temperate.coniferous/prior.distns.Rdata</posterior.files>
   </pft>
- </pfts>
+ </pfts> 
  <ensemble>
    <size>1</size>
+   <variable>NPP</variable>
    <samplingspace>
    <parameters>
     <method>uniform</method>
@@ -24,7 +26,7 @@
   <type>SIPNET</type>
   <revision>git</revision>
   <delete.raw>FALSE</delete.raw>
-  <binary>/usr/local/bin/sipnet.git</binary>
+  <binary>demo_outdir/sipnet</binary>
  </model>
  <run>
   <site>
@@ -40,7 +42,7 @@
     <output>SIPNET</output>
     <username>Aritra_2004</username>
     <path>
-     <path1>/data/dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim</path1>
+     <path1>dbfiles/AMF_US-NR1_BASE_HH_23-5.2004-01-01.2004-12-31.clim</path1>
     </path>
    </met>
   </inputs>
@@ -49,18 +51,5 @@
  </run>
  <host>
   <name>localhost</name>
-  <rabbitmq>
-   <uri>amqp://guest:guest@rabbitmq/%2F</uri>
-   <queue>SIPNET_git</queue>
-  </rabbitmq>
-  <rundir>/data/workflows/PEcAn_ENS/run</rundir>
-  <outdir>/data/workflows/PEcAn_ENS/out</outdir>
  </host>
- <settings.info>
-  <deprecated.settings.fixed>TRUE</deprecated.settings.fixed>
-  <settings.updated>TRUE</settings.updated>
-  <checked>TRUE</checked>
- </settings.info>
-<rundir>/data/workflows/PEcAn_ENS/run</rundir>
-<modeloutdir>/data/workflows/PEcAn_ENS/out</modeloutdir>
 </pecan>
