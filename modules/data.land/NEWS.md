@@ -1,3 +1,7 @@
+# PEcAn.data.land 1.8.2
+- Removed unused parameter `machine` from put_veg_module()
+
+
 # PEcAn.data.land 1.8.1
 
 * Dependency `datapack` is now optional. It is only used by `dataone_download()` (#3373).
