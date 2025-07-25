@@ -2,6 +2,7 @@
 
 * `ERA5_met_process()` can now process ensemble data efficiently in parallel using new option `n_cores`
 * Dependency `ggplot2` is now suggested rather than required. It is used in two vignettes and for optional diagnostic plots from `debias_met_regression`.
+* `extract.nc.ERA5()` and `met2CF.ERA5` now supports both ensemble and reanalysis data processing .
 
 
 # PEcAn.data.atmosphere 1.9.0
