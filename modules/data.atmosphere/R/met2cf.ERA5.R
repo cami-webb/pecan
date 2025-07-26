@@ -12,6 +12,7 @@
 #' @param verbose Logical flag defining if ouput of function be extra verbose.
 #' @param is_ensemble Logical. if TRUE (default), processes data as ensemble members. If FALSE, processes as single 
 #'   reanalysis dataset.
+#' @param ens_size Number of ensemble members to process. Default is 10.
 
 #'
 #' @return list of dataframes
@@ -26,14 +27,15 @@ met2CF.ERA5<- function(lat,
                         out.xts,
                         overwrite = FALSE,
                         verbose = TRUE,
-                        is_ensemble = TRUE) {
+                        is_ensemble = TRUE,
+                        ens_size = 10) {
   
   years <- seq(lubridate::year(start_date),
                lubridate::year(end_date),
                1
   )
-  
-  ensemblesN <- if(is_ensemble) seq(1, 10) else 1
+
+  ensemblesN <- if(is_ensemble) seq(1, ens_size) else 1
 
   start_date <- paste0(lubridate::year(start_date),"-01-01")  %>% as.Date()
   end_date <- paste0(lubridate::year(end_date),"-12-31") %>% as.Date()
