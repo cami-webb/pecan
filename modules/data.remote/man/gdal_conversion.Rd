@@ -53,5 +53,5 @@ f <-
 }
 }
 \author{
-Dongchen Zhang.
+Dongchen Zhang
 }
