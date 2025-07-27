@@ -240,7 +240,12 @@ gdal_translate <- function(src_dataset,dst_dataset,ot,strict,of="GTiff",
 # TODO: minimum version requirement
 
 gdal_chooseInstallation <- function(hasDrivers)
-{
+{	
+  gdal_setInstallation()
+  gdal_installations <- getOption("gdalUtils_gdalPath")
+  if(is.null(getOption("gdalUtils_gdalPath"))) return()
+  gdal_installation_ids <- seq(length(gdal_installations))
+  current_match <- rep(x=TRUE,times=length(gdal_installations))
   
   if(!missing(hasDrivers))
   {
