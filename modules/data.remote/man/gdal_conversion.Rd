@@ -8,7 +8,7 @@ gdal_conversion(
   in_path,
   outfolder = NULL,
   band_name = NULL,
-  just_band_name = T,
+  just_band_name = TRUE,
   target_format = ".tif"
 )
 }

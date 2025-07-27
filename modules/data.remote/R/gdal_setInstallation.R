@@ -46,7 +46,6 @@
 #' getOption("gdalUtils_gdalPath")[[1]]$version
 #' }
 #' @importFrom R.utils listDirectory
-#' @export
 ## @import utils
 ## @importFrom utils shortPathName
 
