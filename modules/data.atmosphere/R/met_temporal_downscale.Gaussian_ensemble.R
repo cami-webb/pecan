@@ -40,7 +40,7 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
                                  "surface_downwelling_longwave_flux_in_air", "air_pressure", "surface_downwelling_shortwave_flux_in_air", 
                                  "eastward_wind", "northward_wind", "specific_humidity", "precipitation_flux"), 
                     units <- c("Kelvin", "Kelvin", "Kelvin", "W/m2", "Pascal", "W/m2", "m/s", 
-                               "m/s", "g/g", "kg/m2/s"))
+                               "m/s", "kg/kg", "kg/m2/s"))
   # Reading in the training data
   train <- list()
   tem <- ncdf4::nc_open(train_met)
@@ -141,9 +141,9 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
       len_diff <- reso_len - length(tem.met)
       tem.met <- append(tem.met,values = rep(NA,len_diff)) 
     } else {
-        for (x in seq(from=0, to=reso_len, by=div)){
-          tem.met[x] <- sourtemp[x / div]
-        }
+      for (x in seq(from=0, to=reso_len, by=div)){
+        tem.met[x] <- sourtemp[x / div]
+      }
     }
     
     spline.temp = zoo::na.spline(tem.met)
@@ -257,10 +257,11 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
         
         # swdn = 0 without sunlight
         srs <- eph$sunrise
-        hr <- substr(srs[i], 1, 2)
-        hr <- as.numeric(hr)
+        srs_hr <- floor(srs[i] / 100)  # extract hours (430 -> 4)
+        srs_min <- (srs[i] %% 100) / 60  # convert minutes to fraction (30 -> 0.5)
         # utc_diff must be used so we can begin the sine wave at local sunrise
-        hr <- hr + utc_diff
+        hr <- srs_hr + srs_min + utc_diff
+        hr <- max(0, min(23, hr))
         
         l <- vector()
         for (n in seq_len(hr)) {
@@ -269,7 +270,7 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
         for (n in seq_along(wav)) {
           l[n + hr] <- wav[n]
         }
-        for (n in seq_len(24 - (length(wav) + hr))) {
+        for (n in seq_len(floor(24 - (length(wav) + hr)))) {
           l[n + hr + length(wav)] <- 0
         }
         
@@ -366,13 +367,14 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
     
     rows <- 1
     dir.create(outfolder, showWarnings = FALSE, recursive = TRUE)
-
-    loc.file <- file.path(outfolder, paste0(source_name, ".dwnsc.gauss.ens", 
+    source_name <- basename(input_met)  # extracts "US-Ha1.2004.nc" from full path
+    loc.file <- file.path(outfolder, paste0(tools::file_path_sans_ext(source_name), ".dwnsc.gauss.ens", 
                                             e, ".", year, ".nc"))
     
-    loc <- ncdf4::nc_create(filename = loc.file, vars = train.list, verbose = verbose)
+    loc <- ncdf4::nc_create(filename = loc.file, vars = train.list, force_v4 = TRUE, verbose = verbose)
     for (j in seq_along(var$CF.name)) {
-      ncdf4::ncvar_put(nc = loc, varid = as.character(var$CF.name[j]), vals = downscaled.met[[j]])
+      var_name <- as.character(var$CF.name[j])
+      ncdf4::ncvar_put(nc = loc, varid = var_name, vals = downscaled.met[[var_name]])
     }
     ncdf4::nc_close(loc)
     
