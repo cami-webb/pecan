@@ -14,6 +14,7 @@ NASA_DAAC_download(
   to,
   outdir = getwd(),
   band = NULL,
+  data_version = NULL,
   credential_path = NULL,
   doi,
   just_path = FALSE
@@ -39,7 +40,9 @@ NASA_DAAC_download(
 \item{outdir}{Character: path of the directory in which to save the
 downloaded files. Default is the current work directory(getwd()).}
 
-\item{band}{Character: the band name (or vector of band names) of data to be requested.}
+\item{band}{Character: the band name (or vector of band names) of data to be requested. Default is NULL.}
+
+\item{data_version}{Character: the version (typically starts with V) of data to be requested. Default is NULL.}
 
 \item{credential_path}{Character: physical path to the credential file (.netrc file). The default NULL.}
 
@@ -86,8 +89,8 @@ paths <- NASA_DAAC_download(ul_lat = ul_lat,
                             lr_lat = lr_lat, 
                             lr_lon = lr_lon, 
                             from = from, 
-                            to = to, 
-                            band = "V2_1",
+                            to = to,
+                            data_version = "V2_1", 
                             doi = doi,
                             just_path = T)
 # MODIS LAI data.
@@ -113,7 +116,7 @@ lr_lat <- 7
 lr_lon <- -20
 from <- "2020-01-01"
 to <- "2020-01-31"
-doi <- "10.5067/LWJ6TF5SZRG3"
+doi <- "10.5067/02LGW4DGJYRX"
 paths <- NASA_DAAC_download(ul_lat = ul_lat, 
                             ul_lon = ul_lon, 
                             lr_lat = lr_lat, 

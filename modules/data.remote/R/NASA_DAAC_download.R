@@ -11,7 +11,8 @@
 #'   "yyyy-mm-dd".
 #' @param outdir Character: path of the directory in which to save the
 #'   downloaded files. Default is the current work directory(getwd()).
-#' @param band Character: the band name (or vector of band names) of data to be requested.
+#' @param band Character: the band name (or vector of band names) of data to be requested. Default is NULL.
+#' @param data_version Character: the version (typically starts with V) of data to be requested. Default is NULL.
 #' @param credential_path Character: physical path to the credential file (.netrc file). The default NULL.
 #' @param doi Character: data DOI on the NASA DAAC server, it can be obtained 
 #' directly from the NASA ORNL DAAC data portal (e.g., GEDI L4A through 
@@ -52,8 +53,8 @@
 #'                             lr_lat = lr_lat, 
 #'                             lr_lon = lr_lon, 
 #'                             from = from, 
-#'                             to = to, 
-#'                             band = "V2_1",
+#'                             to = to,
+#'                             data_version = "V2_1", 
 #'                             doi = doi,
 #'                             just_path = T)
 #' # MODIS LAI data.
@@ -79,7 +80,7 @@
 #' lr_lon <- -20
 #' from <- "2020-01-01"
 #' to <- "2020-01-31"
-#' doi <- "10.5067/LWJ6TF5SZRG3"
+#' doi <- "10.5067/02LGW4DGJYRX"
 #' paths <- NASA_DAAC_download(ul_lat = ul_lat, 
 #'                             ul_lon = ul_lon, 
 #'                             lr_lat = lr_lat, 
@@ -148,6 +149,7 @@ NASA_DAAC_download <- function(ul_lat,
                                to,
                                outdir = getwd(),
                                band = NULL,
+                               data_version = NULL,
                                credential_path = NULL,
                                doi,
                                just_path = FALSE) {
@@ -198,6 +200,10 @@ NASA_DAAC_download <- function(ul_lat,
       if (!is.null(band)) {
         granules_href <- granules_href[which(grepl(band, basename(granules_href), fixed = T))]
       }
+      # grab specific data version
+      if (!is.null(data_version)) {
+        granules_href <- granules_href[which(grepl(data_version, granules_href, fixed = T))]
+      }
       page <- page + 1
     }
   }
@@ -219,6 +225,11 @@ NASA_DAAC_download <- function(ul_lat,
                   stringr::str_ends(basename(granules_href), ".hdf") |
                   stringr::str_ends(basename(granules_href), ".nc"))
   granules_href <- granules_href[inds]
+  # remove URLs that have more than one dots in the basename.
+  inds <- which(nchar(gsub("[^.]", "", basename(granules_href))) > 1)
+  if (length(inds) > 0) {
+    granules_href <- granules_href[-inds]
+  }
   # detect existing files if we want to download the files.
   if (!just_path) {
     same.file.inds <- which(basename(granules_href) %in% list.files(outdir))
