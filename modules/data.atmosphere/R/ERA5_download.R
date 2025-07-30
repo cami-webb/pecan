@@ -6,7 +6,6 @@
 #'
 #' @details
 #' This function requires a valid CDS API key and the \code{ecmwfr} package for accessing the Copernicus Climate Data Store.
-#' The function will automatically prompt to install \code{ecmwfr} if not present in interactive sessions.
 #' To get a Copernicus CDS API key, register at \url{https://cds.climate.copernicus.eu/profile}.
 #' You must provide both \code{user} (UID) and \code{key} parameters from your CDS profile.
 #'
@@ -29,7 +28,7 @@
 #'   \item{startdate}{Start date and time of the data in the file.}
 #'   \item{enddate}{End date and time of the data in the file.}
 #'   \item{mimetype}{MIME type of the file ("application/x-netcdf").}
-#'   \item{formatname}{Format name ("ERA5_year.nc").}
+#'   \item{formatname}{Format name ("ERA5_year.nc" or "ERA5.rea_year.nc").}
 #'
 #' @examples
 #' \dontrun{
@@ -66,19 +65,13 @@ download.ERA5_cds <- function(outfolder, start_date, end_date,
                               extent, variables, time = NULL, dataset = "reanalysis-era5-single-levels",
                               product_type = "ensemble_members", user = NULL, key = NULL, timeout = 36000) {
   
-  # check and install for ecmwfr if not present
+  # check for required package
   if (!requireNamespace("ecmwfr", quietly = TRUE)) {
-    PEcAn.logger::logger.info("ecmwfr package required but not installed")
-    if (interactive() && readline("Install ecmwfr from CRAN? (1/0): ") == "1") {
-      tryCatch({
-        install.packages("ecmwfr")
-        if (!requireNamespace("ecmwfr", quietly = TRUE)) {
-          PEcAn.logger::logger.severe("ecmwfr installation failed - please install manually")
-        }
-      }, error = function(e) PEcAn.logger::logger.severe("ecmwfr installation error: ", conditionMessage(e)))
-    } else {
-      PEcAn.logger::logger.severe("ecmwfr package required - please install to proceed")
-    }
+    PEcAn.logger::logger.severe(
+      "Package 'ecmwfr' is required for ERA5 downloads. ",
+      "Install with: install.packages('ecmwfr'). ",
+      "Get CDS credentials from: https://cds.climate.copernicus.eu/profile"
+    )
   }
   
   if (!dir.exists(outfolder)) dir.create(outfolder, recursive = TRUE)
@@ -112,11 +105,12 @@ download.ERA5_cds <- function(outfolder, start_date, end_date,
   }
   ecmwfr::wf_set_key(user = user, key = key)
   
+  file_prefix <- if (product_type == "reanalysis") "ERA5.rea_" else "ERA5_"
   # loop over years.
   nc.paths <- c()
   for (y in years) {
-    fname <- file.path(outfolder, paste0("ERA5_", y, ".nc"))
-    
+    fname <- file.path(outfolder, paste0(file_prefix, y, ".nc"))
+
     request <- list(
       dataset_short_name = dataset,
       product_type = list(product_type),
@@ -156,7 +150,7 @@ download.ERA5_cds <- function(outfolder, start_date, end_date,
                          startdate = paste0(paste(years[i], months[1], days[1], sep = "-"), " ", times[1], ":00"),
                          enddate = paste0(paste(years[i], months[length(months)], days[length(days)], sep = "-"), " ", times[length(times)], ":00"),
                          mimetype = "application/x-netcdf",
-                         formatname = "ERA5_year.nc")
+                         formatname = paste0(file_prefix, "year.nc"))
   }
   return(results)
 }
