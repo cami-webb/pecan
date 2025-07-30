@@ -8,6 +8,7 @@ gdal_conversion(
   in_path,
   outfolder = NULL,
   band_name = NULL,
+  tile_id = NULL,
   just_band_name = TRUE,
   target_format = ".tif"
 )
@@ -18,6 +19,8 @@ gdal_conversion(
 \item{outfolder}{character: physical path to the folder where you want to export the converted image. Default is NULL.}
 
 \item{band_name}{character: band name of the image. Default is NULL.}
+
+\item{tile_id}{character/numeric: id for differentiate different converted image tiles.}
 
 \item{just_band_name}{boolean: if we just want the band names of the image file. Default is TRUE.}
 

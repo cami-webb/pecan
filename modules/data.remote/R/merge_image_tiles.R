@@ -35,7 +35,7 @@ merge_image_tiles <- function(in.path,
                                                  COMPRESS = "DEFLATE")) {
   # Detect if we have the gdalwarp module installed.
   # check shell environments.
-  if ("try-error" %in% class(try(system("gdal"), silent = T))) {
+  if ("try-error" %in% class(try(temp <- system("which gdalwarp", intern = T), silent = T))) {
     PEcAn.logger::logger.info("The gdalwarp function is not detected in shell command.")
     return(NA)
   }
@@ -43,9 +43,8 @@ merge_image_tiles <- function(in.path,
   file.paths <- list.files(in.path, full.names = T)
   # if we only want to know the exact band names from the image files.
   if (just.band.name) {
-    band.names <- file.paths %>% 
-      gdal_conversion(just_band_name = just.band.name) %>% 
-      unlist %>% unique %>% sort
+    # here we are assuming all image tiles share the same band names.
+    band.names <- gdal_conversion(file.paths[1], just_band_name = just.band.name)
     return(band.names)
   }
   # Image conversion.
@@ -54,9 +53,13 @@ merge_image_tiles <- function(in.path,
     return(0)
   }
   converted.file.paths <- file.paths %>% 
-    gdal_conversion(outfolder = out.path, 
-                    band_name = band.name, 
-                    just_band_name = just.band.name) %>% unlist
+    purrr::map2(seq_along(file.paths), function(f, tile.id) {
+      gdal_conversion(in_path = f, 
+                      outfolder = out.path, 
+                      band_name = band.name, 
+                      tile_id = tile.id, 
+                      just_band_name = just.band.name)
+    }) %>% unlist
   # write job.sh script.
   # insert image settings.
   gdal.cmd <- "gdalwarp"
@@ -90,7 +93,7 @@ merge_image_tiles <- function(in.path,
   }
   # how many CPUs will be used.
   if (!is.null(computation$NUM_THREADS)) {
-    gdal.cmd <- paste(gdal.cmd, paste0("-multi -wo -NUM_THREADS=", computation$NUM_THREADS))
+    gdal.cmd <- paste(gdal.cmd, paste0("-multi -wo NUM_THREADS=", computation$NUM_THREADS))
   }
   # image compress method.
   if (!is.null(computation$COMPRESS)) {
@@ -131,6 +134,7 @@ merge_image_tiles <- function(in.path,
 #' @param in_path character: physical path to the image file.
 #' @param outfolder character: physical path to the folder where you want to export the converted image. Default is NULL.
 #' @param band_name character: band name of the image. Default is NULL.
+#' @param tile_id character/numeric: id for differentiate different converted image tiles.
 #' @param just_band_name boolean: if we just want the band names of the image file. Default is TRUE.
 #' @param target_format character: target image format. Default is .tif.
 #' @export
@@ -155,7 +159,7 @@ merge_image_tiles <- function(in.path,
 #'     just_band_name = F, 
 #'     target_format = ".tif")
 #' }
-gdal_conversion <- function(in_path, outfolder = NULL, band_name = NULL, just_band_name = TRUE, target_format = ".tif") {
+gdal_conversion <- function(in_path, outfolder = NULL, band_name = NULL, tile_id = NULL, just_band_name = TRUE, target_format = ".tif") {
   # grab subdataset paths.
   sds <- get_subdatasets(in_path)
   # grab band names.
@@ -181,7 +185,11 @@ gdal_conversion <- function(in_path, outfolder = NULL, band_name = NULL, just_ba
   }
   # create target output file name.
   origin_file_name <- basename(in_path)
-  target_file_name <- paste0(strsplit(origin_file_name, split = ".", fixed = T)[[1]][1], "_", band_name, target_format)
+  if (!is.null(tile_id)) {
+    target_file_name <- paste0(strsplit(origin_file_name, split = ".", fixed = T)[[1]][1], "_", band_name, "_", tile_id, target_format)
+  } else {
+    target_file_name <- paste0(strsplit(origin_file_name, split = ".", fixed = T)[[1]][1], "_", band_name, target_format)
+  }
   # conversion.
   band.ind <- which(band_names == band_name)
   out <- gdal_translate(sds[band.ind], file.path(outfolder, target_file_name))
