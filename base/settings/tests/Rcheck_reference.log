@@ -99,13 +99,13 @@ Package in Depends field not imported from: ‘methods’
   update.settings:
     function(settings, force)
 
-  See section ‘Generic functions and methods’ in the ‘Writing R
-  Extensions’ manual.
+See section ‘Generic functions and methods’ in the ‘Writing R
+Extensions’ manual.
 
-  Found the following apparent S3 methods exported but not registered:
-    update.settings
-  See section ‘Registering S3 methods’ in the ‘Writing R Extensions’
-  manual.
+Found the following apparent S3 methods exported but not registered:
+  update.settings
+See section ‘Registering S3 methods’ in the ‘Writing R Extensions’
+manual.
 * checking replacement functions ... WARNING
   ‘$<-.MultiSettings’ ‘[<-.MultiSettings’ ‘[[<-.MultiSettings’
 The argument of a replacement function which corresponds to the right
