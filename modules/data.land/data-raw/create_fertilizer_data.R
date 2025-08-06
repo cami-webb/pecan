@@ -59,7 +59,7 @@ convert_swat_fert_table_to_pkg_df <- function() {
 
 custom_fertilizers <- tibble::tribble(
   ~name, ~description, ~fraction_mineral_n, ~fraction_nh3_n, ~fraction_no3_n, ~fraction_organic_n, ~fraction_c, ~cn_ratio,
-  "manure", "Generic mixed animal manure", 0.0, 0.0, 0.0, 0.02, 0.24, 12,
+  "manure", "Generic mixed animal manure", 0.0138, 0.0137, 0.0001, 0.02, 0.24, 12,
   "ammonium_nitrate", "Ammonium nitrate", 0.33, 0.17, 0.16, 0.0, 0.0, NA
 )
 fertilizer_composition_data <- dplyr::bind_rows(
