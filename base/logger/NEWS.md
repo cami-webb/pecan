@@ -1,3 +1,7 @@
+# Unreleased
+
+- All `logger.set*` functions now invisibly return the previously set value. This can be handy for restoring settings after a temporary change.
+
 # PEcAn.logger 1.8.3
 
 - Maintenance release with no user-visible changes.

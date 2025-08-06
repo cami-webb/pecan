@@ -247,11 +247,14 @@ logger.getLevel <- function() {
 
 
 ##' Configure logging to console.
-##' 
+##'
 ##' Should the logging to be printed to the console or not.
 ##'
 ##' @param console set to true to print logging to console.
-##' @param stderr set to true (default) to use stderr instead of stdout for logging
+##' @param stderr set to true (default) to log to stderr instead of stdout
+##' @return Invisibly, a list of the previously set values of `console`
+##'   and `stderr`. This can be used to restore the previous settings after a
+##'   temporary change.
 ##' @export
 ##' @author Rob Kooper
 ##' @examples
@@ -259,16 +262,22 @@ logger.getLevel <- function() {
 ##' logger.setUseConsole(TRUE)
 ##' }
 logger.setUseConsole <- function(console, stderr = TRUE) {
+  old <- list(console = .utils.logger$console, stderr = .utils.logger$stderr)
   .utils.logger$console <- console
   .utils.logger$stderr <- stderr
+
+  invisible(old)
 } # logger.setUseConsole
 
 
 ##' Configure logging output filename.
-##' 
+##'
 ##' The name of the file where the logging information should be written to.
 ##'
-##' @param filename the file to send the log messages to (or NA to not write to file)
+##' @param filename the file to send the log messages to
+##'  (or NA to not write to file)
+##' @return Invisibly, the previously set filename.
+##'   This can be used to restore settings after a temporary change.
 ##' @export
 ##' @author Rob Kooper
 ##' @examples
@@ -276,25 +285,32 @@ logger.setUseConsole <- function(console, stderr = TRUE) {
 ##' logger.setOutputFile('pecan.log')
 ##' }
 logger.setOutputFile <- function(filename) {
+  old <- .utils.logger$filename
   .utils.logger$filename <- filename
+
+  invisible(old)
 } # logger.setOutputFile
 
 
 ##' Configure whether severe should quit.
-##' 
-##' The default is for a non-interactive session to quit. Setting this to false is
-##' especially useful for running tests when placed in \code{inst/tests/test.<fn>.R}, 
-##' but is not passed from \code{tests/run.all.R}.
+##'
+##' The default is for a non-interactive session to quit.
+##' Setting this to false is especially useful for running tests.
 ##'
 ##' @param severeQuits should R quit on a severe error.
 ##' @export
+##' @return invisibly, the previous value of `severeQuits`.
+##'   This can be used to restore settings after a temporary change.
 ##' @author Rob Kooper
 ##' @examples
 ##' \dontrun{
 ##' logger.setQuitOnSevere(FALSE)
 ##' }
 logger.setQuitOnSevere <- function(severeQuits) {
+  old <- .utils.logger$quit
   .utils.logger$quit <- severeQuits
+
+  invisible(old)
 } # logger.setQuitOnSevere
 
 
@@ -304,6 +320,8 @@ logger.setQuitOnSevere <- function(severeQuits) {
 ##' wrap the line when printing a message at that many chars.
 ##'
 ##' @param width number of chars to print before wrapping to next line.
+##' @return Invisibly, the previously set width.
+##'   This can be used to restore settings after a temporary change.
 ##' @export
 ##' @author David LeBauer
 ##' @examples
@@ -311,5 +329,8 @@ logger.setQuitOnSevere <- function(severeQuits) {
 ##' logger.setWidth(70)
 ##' }
 logger.setWidth <- function(width) {
+  old <- .utils.logger$width
   .utils.logger$width <- width
+
+  invisible(old)
 } # logger.setWidth
