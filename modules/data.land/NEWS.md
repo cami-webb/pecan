@@ -1,3 +1,7 @@
+# PEcAn.data.land 1.8.2
+- Removed unused parameter `machine` from put_veg_module()
+
+
 # PEcAn.data.land 1.8.1
 
 * Dependency `datapack` is now optional. It is only used by `dataone_download()` (#3373).
@@ -10,6 +14,9 @@
 ## Added
 
 * New function `soilgrids_soilC_extract` retrieves soil C estimates with uncertainty from the ISRIC SoilGrids 250m data. (#3040, @Qianyuxuan)
+* Included all relevant carbon pools (`ROOT_BIOMASS`, `AG_BIOMASS`, `SOIL_STOCK`, `LIT_BIOMASS`) in BADM-based IC extraction; excluded non-pool variables like `SOIL_CHEM`.
+* Added explicit support for `LIT_BIOMASS` to fully utilize **BADM** biomass capabilities.
+* Added `test-IC_BADM_Utilities.R` to validate BADM initial condition extraction and processing
 
 ## Fixed
 
@@ -20,6 +27,7 @@
 
 * `find.land()` has been removed. It is not used anywhere we know if, has apparently not been working for some time, and relied on the `maptools` package which is scheduled for retirement.
 * Removed dependency on `PEcAn.data.atmosphere`, notably by retrieving site latitude and longitude directly from `PEcAn.DB::query.site` instead of custom lookups (#3300, Abhinav Pandey).
+* Fixed a bugs and BADM now process both single-site and multi-site settings, detecting the input structure and processing each site independently to generate the correct number of ensemble members per site.
 
 
 # PEcAn.data.land 1.7.1
