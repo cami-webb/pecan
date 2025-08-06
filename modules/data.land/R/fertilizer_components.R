@@ -21,7 +21,7 @@
 #' @md
 #' @note The following is a list of valid fertilizer names:
 #' - Mineral fertilizers: ammonium_nitrate, anhydrous_ammonia, urea
-#' - Fresh manures: beef_fr, broil_fr, dairy_fr, duck_fr, goat_fr, horse_fr, 
+#' - Fresh manures: manure, beef_fr, broil_fr, dairy_fr, duck_fr, goat_fr, horse_fr, 
 #'      layer_fr, sheep_fr, swine_fr, trkey_fr, veal_fr
 #' - Compost: org_compost
 #' 
