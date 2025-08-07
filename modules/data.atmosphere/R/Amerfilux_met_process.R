@@ -389,6 +389,56 @@ AmeriFlux_met_process <- function(site_id,
         overwrite = overwrite
       )
     
+    tryCatch({
+      # remove extra variables from gapfilled file that are not in CF file
+      gapfill_file <- gapfill_results$file
+      nc_cf <- ncdf4::nc_open(cf_results$file)
+      cf_vars <- names(nc_cf$var)
+      ncdf4::nc_close(nc_cf)
+      nc_gap <- ncdf4::nc_open(gapfill_file)
+      gap_vars <- names(nc_gap$var)
+      extra_vars <- setdiff(gap_vars, cf_vars)
+      ncdf4::nc_close(nc_gap)
+      
+      if (length(extra_vars) > 0) {
+        if (verbose) {
+          PEcAn.logger::logger.info(paste("removing variables from gapfill file:",
+                                          paste(extra_vars, collapse = ", ")))
+        }
+        temp_file <- tempfile(tmpdir = dirs$gapfilled, fileext = ".nc")
+        nc_in <- ncdf4::nc_open(gapfill_file)
+        nc_out <- ncdf4::nc_create(
+          temp_file,
+          vars = nc_in$var[setdiff(names(nc_in$var), extra_vars)],
+          force_v4 = TRUE
+        )
+        global_atts <- ncdf4::ncatt_get(nc_in, 0)
+        for (att in names(global_atts)) {
+          ncdf4::ncatt_put(nc_out, 0, att, global_atts[[att]])
+        }
+        for (dim in names(nc_in$dim)) {
+          if (!dim %in% names(nc_out$dim)) {
+            ncdf4::ncvar_add(nc_out, nc_in$dim[[dim]])
+          }
+        }
+        for (v in names(nc_out$var)) {
+          data <- ncdf4::ncvar_get(nc_in, v)
+          ncdf4::ncvar_put(nc_out, v, data)
+          var_atts <- ncdf4::ncatt_get(nc_in, v)
+          for (att in names(var_atts)) {
+            ncdf4::ncatt_put(nc_out, v, att, var_atts[[att]])
+          }
+        }
+        ncdf4::nc_close(nc_in)
+        ncdf4::nc_close(nc_out)
+        file.remove(gapfill_file)
+        file.rename(temp_file, gapfill_file)
+      }
+    }, error = function(e) {
+      if (file.exists(temp_file)) file.remove(temp_file)
+      PEcAn.logger::logger.severe("variable filtering failed:", e$message)
+    })
+    
     # generate ensembles
     if(verbose) {
       PEcAn.logger::logger.info(paste("Generating", n_ens, "ensemble members"))
@@ -398,8 +448,8 @@ AmeriFlux_met_process <- function(site_id,
         in.path = dirs$gapfilled,
         in.prefix = sub("\\.\\d+$", "", tools::file_path_sans_ext(basename(gapfill_results$file))),
         outfolder = dirs$ensembles,
-        input_met = gapfill_results$file,
-        train_met = gapfill_results$file,
+        input_met = gapfill_file,
+        train_met = gapfill_file,
         overwrite = overwrite,
         verbose = verbose,
         n_ens = n_ens,
@@ -427,4 +477,4 @@ AmeriFlux_met_process <- function(site_id,
     PEcAn.logger::logger.severe("Processing failed: ", e$message)
     return(NULL)
   })
-} 
+}
