@@ -59,7 +59,7 @@ This function requires a valid CDS API key and the \code{ecmwfr} package for acc
 To get a Copernicus CDS API key, register at \url{https://cds.climate.copernicus.eu/profile}.
 You must provide both \code{user} (UID) and \code{key} parameters from your CDS profile.
 
-You can check the "CC-BY" license under the \href{https://cds.climate.copernicus.eu/profile?tab=licences}{licenses tab of your profile page}.
+You can check the "CC-BY" license under the \href{https://cds.climate.copernicus.eu/profile?tab=licences}{'licences' tab of your profile page}.
 }
 \examples{
 \dontrun{
