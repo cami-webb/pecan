@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 NCPUS ?= 1
 
 BASE := logger utils db settings visualization qaqc remote workflow
