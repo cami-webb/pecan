@@ -67,7 +67,8 @@ Suggests:
     redland,
     raster,
     reticulate,
-    testthat (>= 1.0.2)
+    testthat (>= 1.0.2),
+    withr
 Remotes:
     github::ropensci/traits
 License: BSD_3_clause + file LICENSE

@@ -3,7 +3,14 @@ All notable changes are kept in this file. All changes made should be added to t
 `Unreleased`. Once a new release is made this file will be updated to create a new `Unreleased`
 section for the next release.
 
-For more information about this file see also [Keep a Changelog](http://keepachangelog.com/) .
+	For more information about this file see also [Keep a Changelog](http://keepachangelog.com/) .
+
+## Unreleased
+
+### Added
+
+* Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
+
 
 ## [1.9.0] - 2025-05-25
 
