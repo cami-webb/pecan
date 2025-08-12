@@ -5,7 +5,10 @@
 \title{Merge image tiles to a single image (currently support hdf and tif image format).}
 \usage{
 merge_image_tiles(
-  folder.path,
+  in.path,
+  out.path = NULL,
+  band.name = NULL,
+  just.band.name = TRUE,
   keep.files = FALSE,
   image.settings = list(crs = "EPSG:4326", dimension = NULL, ext = NULL, fun = NULL),
   computation = list(GDAL_CACHEMAX = 1000, wm = "80\%", NUM_THREADS = 16, COMPRESS =
@@ -13,7 +16,13 @@ merge_image_tiles(
 )
 }
 \arguments{
-\item{folder.path}{character: physical path to the folder that contains all the image tiles.}
+\item{in.path}{character: physical path to the folder that contains all the original image tiles.}
+
+\item{out.path}{character: physical path to the folder that contains converted and merged images.}
+
+\item{band.name}{character: band name of the image. Default is NULL.}
+
+\item{just.band.name}{boolean: if we just want the band names of the image file. Default is TRUE.}
 
 \item{keep.files}{Boolean: if we want to keep the image tiles at the end.}
 
