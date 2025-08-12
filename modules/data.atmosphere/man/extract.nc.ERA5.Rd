@@ -13,6 +13,7 @@ extract.nc.ERA5(
   outfolder,
   in.prefix,
   newsite,
+  ncores = 1,
   vars = NULL,
   overwrite = FALSE,
   verbose = FALSE,
@@ -20,25 +21,28 @@ extract.nc.ERA5(
 )
 }
 \arguments{
-\item{slat}{latitude}
+\item{slat}{numeric: vector of latitudes.}
 
-\item{slon}{longitude}
+\item{slon}{numeric: vector of longitudes.}
 
-\item{in.path}{path to the directory containing the file to be inserted}
+\item{in.path}{character: path to the directory containing the file to be inserted}
 
-\item{start_date}{start date}
+\item{start_date}{character: start date (in YYYY-MM-DD format).}
 
-\item{end_date}{end date}
+\item{end_date}{character: end date (in YYYY-MM-DD format).}
 
-\item{outfolder}{Path to directory where nc files need to be saved.}
+\item{outfolder}{character: Path to directory where nc files need to be saved.}
 
-\item{in.prefix}{initial portion of the filename that does not vary by date.
+\item{in.prefix}{character: initial portion of the filename that does not vary by date.
 Does not include directory; specify that as part of in.path.}
 
-\item{newsite}{site name.}
+\item{newsite}{character: vector of site names. 
+The length should match with that of slat and slon.}
 
-\item{vars}{variables to be extracted. If NULL all the variables will be
-returned.}
+\item{ncores}{numeric: the number of CPUs for the parallel compute. Default is 1.}
+
+\item{vars}{character: names of variables to be extracted. If NULL all the variables will be
+returned. Default is NULL.}
 
 \item{overwrite}{Logical if files needs to be overwritten.}
 
