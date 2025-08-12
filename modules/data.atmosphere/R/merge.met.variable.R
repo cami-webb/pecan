@@ -1,22 +1,21 @@
 #' Merge a new met variable from an external file (e.g. CO2) into existing met files
 #'
+#' Currently modifies the files IN PLACE rather than creating a new copy of the files an a new DB record. 
+#' Currently unit and name checking only implemented for CO2. 
+#' Currently does not yet support merge data that has lat/lon
+#' New variable only has time dimension and thus MIGHT break downstream code....
+#'
 #' @param in.path     path to original data
 #' @param in.prefix   prefix of original data
-#' @param start_date  
-#' @param end_date 
+#' @param start_date,end_date date (or character in a standard date format). Only year component is used.
 #' @param merge.file  path of file to be merged in
 #' @param overwrite logical: replace output file if it already exists? 
 #' @param verbose logical: should \code{\link[ncdf4:ncdf4-package]{ncdf4}} functions
 #'   print debugging information as they run? 
-#' @param ... 
+#' @param ... other arguments, currently ignored
 #'
 #' @return Currently nothing. TODO: Return a data frame summarizing the merged files.
 #' @export
-#'
-#' @details Currently modifies the files IN PLACE rather than creating a new copy of the files an a new DB record. 
-#' Currently unit and name checking only implemented for CO2. 
-#' Currently does not yet support merge data that has lat/lon
-#' New variable only has time dimension and thus MIGHT break downstream code....
 #'
 #' @examples
 #' \dontrun{
@@ -48,9 +47,8 @@ merge_met_variable <- function(in.path,in.prefix,start_date, end_date, merge.fil
   merge.time.attr <- ncdf4::ncatt_get(merge.nc,"time")
   merge.data <- ncdf4::ncvar_get(merge.nc,varid = merge.vars[1])
   
-  udunits2::ud.is.parseable(merge.time.attr$units)
   origin <- "1970-01-01 00:00:00 UTC"
-  merge.time.std <- udunits2::ud.convert(merge.time,
+  merge.time.std <- PEcAn.utils::ud_convert(merge.time,
                                          merge.time.attr$units,
                                          paste0("seconds since ",origin))
   
@@ -82,7 +80,7 @@ merge_met_variable <- function(in.path,in.prefix,start_date, end_date, merge.fil
   ## name and variable conversions
   if(toupper(merge.vars[1]) == "CO2"){
     merge.vars[1] <- "mole_fraction_of_carbon_dioxide_in_air"
-    merge.data <- udunits2::ud.convert(merge.data,merge.attr$units,"mol/mol")
+    merge.data <- PEcAn.utils::ud_convert(merge.data, merge.attr$units, "mol/mol")
     merge.attr$units = "mol/mol"
   }
   
@@ -117,7 +115,7 @@ merge_met_variable <- function(in.path,in.prefix,start_date, end_date, merge.fil
     ##extract target time
     target.time <- ncdf4::ncvar_get(nc,"time")
     target.time.attr <- ncdf4::ncatt_get(nc,"time")
-    target.time.std <- udunits2::ud.convert(target.time,
+    target.time.std <- PEcAn.utils::ud_convert(target.time,
                                            target.time.attr$units,
                                            paste0("seconds since ",origin))
     target.time.std <- as.POSIXct(target.time.std,tz = "UTC",origin=origin) 

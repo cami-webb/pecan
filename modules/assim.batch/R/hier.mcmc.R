@@ -105,7 +105,7 @@ hier.mcmc <- function(settings, gp.stack, nstack = NULL, nmcmc, rng_orig,
   mu_site_curr <- matrix(rep(mu_site_init, nsites), ncol=nparam, byrow = TRUE)
   
   # values for each site will be accepted/rejected in themselves
-  currSS  <- sapply(seq_len(nsites), function(v) PEcAn.emulator::get_ss(gp.stack[[v]], mu_site_curr[v,], pos.check))
+  currSS  <- sapply(seq_len(nsites), function(v) get_ss(gp.stack[[v]], mu_site_curr[v,], pos.check))
   # force it to be nvar x nsites matrix
   currSS  <- matrix(currSS, nrow = length(settings$assim.batch$inputs), ncol = nsites)
   currllp <- lapply(seq_len(nsites), function(v) PEcAn.assim.batch::pda.calc.llik.par(settings, nstack[[v]], currSS[,v]))
@@ -208,16 +208,16 @@ hier.mcmc <- function(settings, gp.stack, nstack = NULL, nmcmc, rng_orig,
     # propose new site parameter vectors
     thissite <- g %% nsites
     if(thissite == 0) thissite <- nsites
-    proposed <- tmvtnorm::rtmvnorm(1, 
-                                   mean = mu_site_curr[thissite,], 
+    proposed <- TruncatedNormal::rtmvnorm(1, 
+                                   mu    = mu_site_curr[thissite,], 
                                    sigma = jcov.arr[,,thissite],
-                                   lower = rng_orig[,1],
-                                   upper = rng_orig[,2])
+                                   lb    = rng_orig[,1],
+                                   ub    = rng_orig[,2])
 
     mu_site_new <- matrix(rep(proposed, nsites),ncol=nparam, byrow = TRUE)
     
     # re-predict current SS
-    currSS <- sapply(seq_len(nsites), function(v) PEcAn.emulator::get_ss(gp.stack[[v]], mu_site_curr[v,], pos.check))
+    currSS <- sapply(seq_len(nsites), function(v) get_ss(gp.stack[[v]], mu_site_curr[v,], pos.check))
     currSS <- matrix(currSS, nrow = length(settings$assim.batch$inputs), ncol = nsites)
     
     # calculate posterior
@@ -228,13 +228,13 @@ hier.mcmc <- function(settings, gp.stack, nstack = NULL, nmcmc, rng_orig,
     
     # calculate jump probabilities
     currHR <- sapply(seq_len(nsites), function(v) {
-      tmvtnorm::dtmvnorm(mu_site_curr[v,], mu_site_new[v,], jcov.arr[,,v],
-                         lower = rng_orig[,1],
-                         upper = rng_orig[,2], log = TRUE)
+      TruncatedNormal::dtmvnorm(mu_site_curr[v,], mu_site_new[v,], jcov.arr[,,v],
+                         lb = rng_orig[,1],
+                         ub = rng_orig[,2], log = TRUE, B = 1e2)
     })
     
     # predict new SS
-    newSS <- sapply(seq_len(nsites), function(v) PEcAn.emulator::get_ss(gp.stack[[v]], mu_site_new[v,], pos.check))
+    newSS <- sapply(seq_len(nsites), function(v) get_ss(gp.stack[[v]], mu_site_new[v,], pos.check))
     newSS <- matrix(newSS, nrow = length(settings$assim.batch$inputs), ncol = nsites)
     
     # calculate posterior
@@ -246,13 +246,13 @@ hier.mcmc <- function(settings, gp.stack, nstack = NULL, nmcmc, rng_orig,
     
     # calculate jump probabilities
     newHR <- sapply(seq_len(nsites), function(v) {
-      tmvtnorm::dtmvnorm(mu_site_new[v,], mu_site_curr[v,], jcov.arr[,,v],
-                         lower = rng_orig[,1],
-                         upper = rng_orig[,2], log = TRUE)
+      TruncatedNormal::dtmvnorm(mu_site_new[v,], mu_site_curr[v,], jcov.arr[,,v],
+                         lb = rng_orig[,1],
+                         ub = rng_orig[,2], log = TRUE, B = 1e2)
     })
     
     # Accept/reject with MH rule
-    ar <- PEcAn.emulator::is.accepted(currPost + currHR, newPost + newHR)
+    ar <- is.accepted(currPost + currHR, newPost + newHR)
     mu_site_curr[ar, ] <- mu_site_new[ar, ]
     musite.accept.count[thissite] <- musite.accept.count[thissite] + ar[thissite]
     

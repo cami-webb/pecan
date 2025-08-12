@@ -1,13 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
-##-------------------------------------------------------------------------------------------------#
 ##' Convert MODEL output into the PEcAn standard
 ##' 
 ##' @name model2netcdf.JULES
@@ -26,7 +16,7 @@ model2netcdf.JULES <- function(outdir) {
     print(fname)
     nc <- ncdf4::nc_open(fname, write = TRUE)
     ## extract variable and long names
-    write.table(sapply(nc$var, function(x) { x$longname }), 
+    utils::write.table(sapply(nc$var, function(x) { x$longname }), 
                 file = paste0(fname, ".var"), 
                 col.names = FALSE, 
                 row.names = TRUE,

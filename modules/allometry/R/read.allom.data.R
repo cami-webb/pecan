@@ -1,19 +1,13 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2015 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
 
-#' @title read.allom.data
-#' @name  read.allom.data
+#' read.allom.data
 #' 
-#' @description Extracts PFT- and component-specific data and allometeric equations from the specified files.
+#' Extracts PFT- and component-specific data and allometeric equations from the specified files.
 #' 
+#' This code also estimates the standard error from R-squared, 
+#' which is required to simulate pseudodata from the allometric eqns.
+#'
 #' @param pft.data   PFT dataframe
-#' \itemize{
+#' \describe{
 #'   \item{acronym}{USDA species acronyms, used with FIELD data (vector)}
 #'   \item{spcd}{USFS species codes, use with TALLY data (vector)}
 #' }
@@ -23,8 +17,6 @@
 #' @param nsim       number of Monte Carlo draws in numerical transforms
 #' @return \item{field}{PFT-filtered field Data}
 #'         \item{parm}{Component- and PFT-filtered Allometric Equations}
-#' @details This code also estimates the standard error from R-squared, 
-#' which is required to simulate pseudodata from the allometric eqns.
 read.allom.data <- function(pft.data, component, field, parm, nsim = 10000) {
   
   allom <- list(parm = NULL, field = NULL)
@@ -43,7 +35,7 @@ read.allom.data <- function(pft.data, component, field, parm, nsim = 10000) {
     for (i in seq_along(field)) {
       
       ## load data
-      dat <- read.csv(field[i])
+      dat <- utils::read.csv(field[i])
       
       ## grab the response component
       y <- switch(as.character(component), 
@@ -75,10 +67,10 @@ read.allom.data <- function(pft.data, component, field, parm, nsim = 10000) {
   
   if (!is.null(parm)) 
   {
-    allom$parm <- read.csv(parm, skip = 2, as.is = TRUE)
+    allom$parm <- utils::read.csv(parm, skip = 2, as.is = TRUE)
     
     ## debugging hack allom$parm <-
-    ## read.csv('/home/mdietze/stats/AllomAve/Table3_GTR-NE-319.csv',skip=2)
+    ## utils::read.csv('/home/mdietze/stats/AllomAve/Table3_GTR-NE-319.csv',skip=2)
     
     ## Match TALLY data to PFT
     allompft <- rep(NA, nrow(allom$parm))
@@ -165,7 +157,7 @@ read.allom.data <- function(pft.data, component, field, parm, nsim = 10000) {
     Rratio <- (1 - R2) / R2
     for (i in seq_along(sel)) {
       
-      x <- runif(nsim, rng[1, i], rng[2, i])
+      x <- stats::runif(nsim, rng[1, i], rng[2, i])
       if (!is.na(Xcor[i])) {
         x <- Xcor[i] * x
       } else {
@@ -215,7 +207,7 @@ read.allom.data <- function(pft.data, component, field, parm, nsim = 10000) {
         y <- a[i] * x^(b[i])
       }
       
-      se[i] <- sqrt(Rratio[i] * var(y))
+      se[i] <- sqrt(Rratio[i] * stats::var(y))
       ## note: y is not units corrected because SE needs to be in original units, same as the other parms
     }
     Xmin <- rng[1, ]

@@ -1,14 +1,19 @@
-##' @name load_data
-##' @title load_data
-##' @export
-##' @param data.path character
-##' @param format list
-##' @param start_year numeric
-##' @param end_year numeric
-##' @param site list
-##' @author Betsy Cowdery, Istem Fer, Joshua Mantooth
-##' Generic function to convert input files containing observational data to 
-##' a common PEcAn format. 
+#' load data
+#'
+#' Generic function to convert input files containing observational data to
+#' a common PEcAn format.
+#'
+#' @param data.path character
+#' @param format list
+#' @param start_year numeric
+#' @param end_year numeric
+#' @param site list
+#' @param vars.used.index which variables to use? If NULL, these are taken from `format`
+#' @param ... further arguments, currently ignored
+#'
+#' @author Betsy Cowdery, Istem Fer, Joshua Mantooth
+#' @importFrom magrittr %>%
+#' @export
 
 load_data <- function(data.path, format, start_year = NA, end_year = NA, site = NA, 
                       vars.used.index=NULL, ...) {
@@ -30,12 +35,6 @@ load_data <- function(data.path, format, start_year = NA, end_year = NA, site = 
     vars.used.index <- setdiff(seq_along(format$vars$variable_id), format$time.row)
   }
   
-  library(PEcAn.utils)
-  library(PEcAn.benchmark)
-  library(lubridate)
-  library(udunits2)
-  library(dplyr)
-  
   # Determine the function that should be used to load the data
   mimetype <- gsub("-", "_", format$mimetype)
   fcn1 <- paste0("load_", format$file_name)
@@ -44,20 +43,6 @@ load_data <- function(data.path, format, start_year = NA, end_year = NA, site = 
     fcn <- match.fun(fcn1)
   } else if (exists(fcn2)) {
     fcn <- match.fun(fcn2)
-  } else if (!exists(fcn1) & !exists(fcn2) & require(bd)) { 
-    #To Do: call to DAP to see if conversion to csv is possible
-    #Brown Dog API call through BDFiddle, requires username and password
-    key   <- get_key("https://bd-api.ncsa.illinois.edu",username,password)
-    token <- get_token("https://bd-api.ncsa.illinois.edu",key)
-    #output_path = where are we putting converted file?
-    converted.data.path <- convert_file(url = "https://bd-api.ncsa.illinois.edu", input_filename = data.path, 
-                                        output = "csv", output_path = output_path, token = token)
-    if (is.na(converted.data.path)){
-      PEcAn.logger::logger.error("Converted file was not returned from Brown Dog")
-    }
-    #not doing anything about mimetypes not convertible by BD right now
-    fcn <- match.fun("load_csv")
-    data.path <- converted.data.path
   } else {
     PEcAn.logger::logger.warn("Brown Dog is currently unable to perform conversion from ",mimetype," to a PEcAn usable format")
   }
@@ -88,17 +73,17 @@ load_data <- function(data.path, format, start_year = NA, end_year = NA, site = 
       x <- as.matrix(out[col])
       u1 <- vars_used$input_units[i]
       u2 <- vars_used$pecan_units[i]
-      if (udunits2::ud.are.convertible(u1, u2)) {
+      if (units::ud_are_convertible(u1, u2)) {
         print(sprintf("convert %s %s to %s %s",
                       vars_used$input_name[i], vars_used$input_units[i], 
                       vars_used$pecan_name[i], vars_used$pecan_units[i]))
-        out[col] <- udunits2::ud.convert(as.numeric(x), u1, u2)
+        out[col] <- PEcAn.utils::ud_convert(as.numeric(x), u1, u2)
         colnames(out)[col] <- vars_used$pecan_name[i]
-      } else if (misc.are.convertible(u1, u2)) {
+      } else if (PEcAn.utils::misc.are.convertible(u1, u2)) {
         print(sprintf("convert %s %s to %s %s", 
                       vars_used$input_name[i], u1, 
                       vars_used$pecan_name[i], u2))
-        out[col] <- as.vector(misc.convert(x, u1, u2)) # Betsy: Adding this because misc.convert returns vector with attributes original agrument x, which causes problems later
+        out[col] <- as.vector(PEcAn.utils::misc.convert(x, u1, u2)) # Betsy: Adding this because misc.convert returns vector with attributes original agrument x, which causes problems later
         colnames(out)[col] <- vars_used$pecan_name[i]
       } else {
         PEcAn.logger::logger.warn(paste("Units cannot be converted. Removing variable. please check the units of",vars_used$input_name[i]))
@@ -115,7 +100,7 @@ load_data <- function(data.path, format, start_year = NA, end_year = NA, site = 
     names(out)[col] <- format$vars$pecan_name[time.row]
     
     # Need a much more spohisticated approach to converting into time format. 
-    y <- dplyr::select(out, one_of(format$vars$pecan_name[time.row]))
+    y <- dplyr::select(out, tidyselect::one_of(format$vars$pecan_name[time.row]))
     
     if(!is.null(site$time_zone)){
       tz = site$time_zone
@@ -133,16 +118,15 @@ load_data <- function(data.path, format, start_year = NA, end_year = NA, site = 
   # This was part of the arguments but never implemented
   if(!is.na(start_year)){
     out$year <- lubridate::year(out$posix)
-    out <- out %>% filter(.,year >= as.numeric(start_year))
+    out <- out %>% filter(.data$year >= as.numeric(start_year))
     print("subsetting by start year")
   }
   
   if(!is.na(end_year)){
     out$year <- lubridate::year(out$posix)
-    out <- out %>% filter(.,year <= as.numeric(end_year))
+    out <- out %>% filter(.data$year <= as.numeric(end_year))
     print("subsetting by end year")
   }
   
   return(out)
 } # load_data
-

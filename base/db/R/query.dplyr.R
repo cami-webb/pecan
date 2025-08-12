@@ -1,21 +1,34 @@
 #' Connect to bety using current PEcAn configuration
 #' @param php.config Path to `config.php`
 #' @export
-#' 
+#'
 betyConnect <- function(php.config = "../../web/config.php") {
   ## Read PHP config file for webserver
+  if (file.exists(php.config)) {
+    php_params <- PEcAn.utils::read_web_config(php.config)
+  } else {
+    php_params <- list()
+  }
 
-  config.list <- PEcAn.utils::read_web_config(php.config)
+  ## helper function
+  getphp = function (item, default = "") {
+    value = php_params[[item]]
+    if (is.null(value)) default else value
+  }
+
+  ## fill in all data from environment variables
+  dbparams <- get_postgres_envvars(host = getphp("db_bety_hostname", "localhost"),
+                                   port = getphp("db_bety_port", "5432"),
+                                   dbname = getphp("db_bety_database", "bety"),
+                                   user = getphp("db_bety_username", "bety"),
+                                   password = getphp("db_bety_password", "bety"))
+
+  ## force driver to be postgres (only value supported by db.open)
+  dbparams[["driver"]] <- "Postgres"
 
   ## Database connection
-  # TODO: The latest version of dplyr/dbplyr works with standard DBI-based
-  # objects, so we should replace this with a standard `db.open` call.
-  dplyr::src_postgres(dbname = config.list$db_bety_database,
-               host = config.list$db_bety_hostname,
-               user = config.list$db_bety_username,
-               password = config.list$db_bety_password)
+  db.open(dbparams)
 }  # betyConnect
-
 
 #' Convert number to scientific notation pretty expression
 #' @param l Number to convert to scientific notation
@@ -43,12 +56,14 @@ dplyr.count <- function(df) {
 }  # dplyr.count
 
 
-#' Convert netcdf number of days to date
+#' Convert netcdf number of days to a datetime
+#' @param time number of time units elapsed since origin
+#' @param unit string containing CF-style time unit including origin (e.g. "days since 2010-01-01")
 #' @export
 ncdays2date <- function(time, unit) {
-  date    <- lubridate::parse_date_time(unit, c("ymd_hms", "ymd_h", "ymd"))
-  days    <- udunits2::ud.convert(time, unit, paste("days since ", date))
-  seconds <- udunits2::ud.convert(days, "days", "seconds")
+  date    <- lubridate::parse_date_time(unit, c("ymd_HMS", "ymd_H", "ymd"))
+  days    <- PEcAn.utils::ud_convert(time, unit, paste("days since ", date))
+  seconds <- PEcAn.utils::ud_convert(days, "days", "seconds")
   return(as.POSIXct.numeric(seconds, origin = date, tz = "UTC"))
 }  # ncdays2date
 
@@ -59,22 +74,28 @@ ncdays2date <- function(time, unit) {
 #' @export
 dbHostInfo <- function(bety) {
   # get host id
-  result <- db.query(query = "select cast(floor(nextval('users_id_seq') / 1e9) as bigint);", con = bety$con)
+  result <- db.query(query = "select cast(floor(nextval('users_id_seq') / 1e9) as bigint);", con = bety)
   hostid <- result[["floor"]]
 
   # get machine start and end based on hostid
   machine <- dplyr::tbl(bety, "machines") %>%
-    dplyr::filter(sync_host_id == !!hostid) %>%
-    dplyr::select(sync_start, sync_end)
+    dplyr::filter(.data$sync_host_id == !!hostid)
+
 
   if (is.na(nrow(machine)) || nrow(machine) == 0) {
     return(list(hostid = hostid,
+                hostname = "",
                 start = 1e+09 * hostid,
-                end = 1e+09 * (hostid + 1) - 1))
+                end = 1e+09 * (hostid + 1) - 1,
+                sync_url = "",
+                sync_contact = ""))
   } else {
     return(list(hostid = hostid,
+                hostname = machine$hostname,
                 start = machine$sync_start,
-                end = machine$sync_end))
+                end = machine$sync_end,
+                sync_url = machine$sync_url,
+                sync_contact = machine$sync_contact))
   }
 }  # dbHostInfo
 
@@ -92,7 +113,7 @@ workflows <- function(bety, ensemble = FALSE) {
     query <- "SELECT id AS workflow_id, folder FROM workflows"
   }
   dplyr::tbl(bety, dbplyr::sql(query)) %>%
-    dplyr::filter(workflow_id >= !!hostinfo$start & workflow_id <= !!hostinfo$end) %>%
+    dplyr::filter(.data$workflow_id >= !!hostinfo$start & .data$workflow_id <= !!hostinfo$end) %>%
     return()
 }  # workflows
 
@@ -103,7 +124,7 @@ workflows <- function(bety, ensemble = FALSE) {
 #' @export
 workflow <- function(bety, workflow_id) {
   workflows(bety) %>%
-    dplyr::filter(workflow_id == !!workflow_id)
+    dplyr::filter(.data$workflow_id == !!workflow_id)
 }  # workflow
 
 
@@ -113,14 +134,14 @@ workflow <- function(bety, workflow_id) {
 #' @export
 runs <- function(bety, workflow_id) {
   Workflows <- workflow(bety, workflow_id) %>%
-    dplyr::select(workflow_id, folder)
+    dplyr::select("workflow_id", "folder")
   Ensembles <- dplyr::tbl(bety, "ensembles") %>%
-    dplyr::select(ensemble_id = id, workflow_id) %>%
+    dplyr::select(ensemble_id = "id", "workflow_id") %>%
     dplyr::inner_join(Workflows, by = "workflow_id")
   Runs <- dplyr::tbl(bety, "runs") %>%
-    dplyr::select(run_id = id, ensemble_id) %>%
+    dplyr::select(run_id = "id", "ensemble_id") %>%
     dplyr::inner_join(Ensembles, by = "ensemble_id")
-  dplyr::select(Runs, -workflow_id, -ensemble_id) %>%
+  dplyr::select(Runs, -"workflow_id", -"ensemble_id") %>%
     return()
 }  # runs
 
@@ -128,6 +149,8 @@ runs <- function(bety, workflow_id) {
 #' Get vector of workflow IDs
 #' @inheritParams dbHostInfo
 #' @param query Named vector or list of workflow IDs
+#' @param all.ids logical: return a list of all workflow_ids in the BETY database,
+#'  or just those that are part of the query?
 #' @export
 get_workflow_ids <- function(bety, query, all.ids = FALSE) {
   # If we dont want all workflow ids but only workflow id from the user url query
@@ -136,9 +159,9 @@ get_workflow_ids <- function(bety, query, all.ids = FALSE) {
   } else {
     # Get all workflow IDs
     ids <- workflows(bety, ensemble = FALSE) %>%
-      dplyr::distinct(workflow_id) %>%
+      dplyr::distinct(.data$workflow_id) %>%
       dplyr::collect() %>%
-      dplyr::pull(workflow_id) %>%
+      dplyr::pull("workflow_id") %>%
       sort(decreasing = TRUE)
   }
   return(ids)
@@ -151,7 +174,7 @@ get_users <- function(bety) {
   hostinfo <- dbHostInfo(bety)
   query <- "SELECT id, login FROM users"
   out <- dplyr::tbl(bety, dbplyr::sql(query)) %>%
-    dplyr::filter(id >= hostinfo$start & id <= hostinfo$end)
+    dplyr::filter(.data$id >= hostinfo$start & .data$id <= hostinfo$end)
   return(out)
 }  # get_workflow_ids
 
@@ -165,7 +188,7 @@ get_run_ids <- function(bety, workflow_id) {
   if (workflow_id != "") {
     runs <- runs(bety, workflow_id)
     if (dplyr.count(runs) > 0) {
-      run_ids <- dplyr::pull(runs, run_id) %>% sort()
+    run_ids <- dplyr::pull(runs, "run_id") %>% sort()
     }
   }
   return(run_ids)
@@ -181,7 +204,7 @@ get_run_ids <- function(bety, workflow_id) {
 get_var_names <- function(bety, workflow_id, run_id, remove_pool = TRUE) {
   var_names <- character(0)
   if (workflow_id != "" && run_id != "") {
-    workflow <- dplyr::collect(workflow(bety, workflow_id))
+    workflow <- dplyr::collect(workflow(bety, .data$workflow_id))
     if (nrow(workflow) > 0) {
       outputfolder <- file.path(workflow$folder, "out", run_id)
       if (utils::file_test("-d", outputfolder)) {
@@ -235,18 +258,18 @@ load_data_single_run <- function(bety, workflow_id, run_id) {
   # @return Dataframe for one run
   # Adapted from earlier code in pecan/shiny/workflowPlot/server.R
   globalDF <- data.frame()
-  workflow <- dplyr::collect(workflow(bety, workflow_id))
+  workflow <- dplyr::collect(workflow(bety, .data$workflow_id))
   # Use the function 'var_names_all' to get all variables
   var_names <- var_names_all(bety, workflow_id, run_id)
   # lat/lon often cause trouble (like with JULES) but aren't needed for this basic plotting
-  var_names <- setdiff(var_names, c("lat", "latitude", "lon", "longitude")) 
+  var_names <- setdiff(var_names, c("lat", "latitude", "lon", "longitude"))
   outputfolder <- file.path(workflow$folder, 'out', run_id)
-  out <- read.output(runid = run_id, outdir = outputfolder, variables = var_names, dataframe = TRUE)
+  out <- PEcAn.utils::read.output(runid = run_id, outdir = outputfolder, variables = var_names, dataframe = TRUE)
   ncfile <- list.files(path = outputfolder, pattern = "\\.nc$", full.names = TRUE)[1]
   nc <- ncdf4::nc_open(ncfile)
-  
-  globalDF <- tidyr::gather(out, key = var_name, value = vals, names(out)[names(out) != "posix"]) %>%
-    dplyr::rename(dates = posix)
+
+  globalDF <- tidyr::gather(out, key = "var_name", value = "vals", names(out)[names(out) != "posix"]) %>%
+    dplyr::rename(dates = "posix")
   globalDF$workflow_id <- workflow_id
   globalDF$run_id <- run_id
   globalDF$xlab <- "Time"

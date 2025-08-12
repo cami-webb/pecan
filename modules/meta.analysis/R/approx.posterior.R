@@ -1,12 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
 ##' Approximate the posterior MCMC with a closed form pdf
 ##'
 ##' returns priors where posterior MCMC are missing
@@ -34,7 +25,7 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
   posteriors <- priors
   do.plot <- !is.null(outdir)
   if (do.plot == TRUE) {
-    pdf(file.path(outdir, paste("posteriors", filename.flag, ".pdf", sep = "")))
+    grDevices::pdf(file.path(outdir, paste("posteriors", filename.flag, ".pdf", sep = "")))
   }
   
   ## loop over traits
@@ -55,7 +46,7 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
     zerobound <- c("exp", "gamma", "lnorm", "weibull")
     if (pdist %in% "beta") {
       m   <- mean(dat)
-      v   <- var(dat)
+      v   <- stats::var(dat)
       k   <- (1 - m)/m
       a   <- (k / ((1 + k) ^ 2 * v) - 1) / (1 + k)
       b   <- a * k
@@ -63,13 +54,13 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
       
       if (do.plot) {
         x <- seq(0, 1, length = 1000)
-        plot(density(dat), col = 2, lwd = 2, main = trait)
+        plot(stats::density(dat), col = 2, lwd = 2, main = trait)
         if (!is.null(trait.data)) {
-          rug(trait.data[[trait]]$Y, lwd = 2, col = "purple")
+          graphics::rug(trait.data[[trait]]$Y, lwd = 2, col = "purple")
         }
-        lines(x, dbeta(x, fit$estimate[1], fit$estimate[2]), lwd = 2, type = "l")
-        lines(x, dbeta(x, pparm[1], pparm[2]), lwd = 3, type = "l", col = 3)
-        legend("topleft", 
+        graphics::lines(x, stats::dbeta(x, fit$estimate[1], fit$estimate[2]), lwd = 2, type = "l")
+        graphics::lines(x, stats::dbeta(x, pparm[1], pparm[2]), lwd = 3, type = "l", col = 3)
+        graphics::legend("topleft", 
                legend = c("data", "prior", "post", "approx"), 
                col = c("purple", 3, 2, 1), lwd = 2)
       }
@@ -93,7 +84,7 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
       dist.names <- dist.names[!failfit.bool]
       
       fparm <- lapply(fit, function(x) { as.numeric(x$estimate) })
-      fAIC <- lapply(fit, AIC) 
+      fAIC <- lapply(fit, stats::AIC)
       
       bestfit <- which.min(fAIC)
       posteriors[ptrait, "distn"] <- dist.names[bestfit]
@@ -111,7 +102,7 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
       ## default: NORMAL
       posteriors[trait, "distn"] <- "norm"
       posteriors[trait, "parama"] <- mean(dat)
-      posteriors[trait, "paramb"] <- sd(dat)
+      posteriors[trait, "paramb"] <- stats::sd(dat)
       if (do.plot) {
         .dens_plot(posteriors, priors, ptrait, dat, trait, trait.data)
       }
@@ -119,7 +110,7 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
   }  ## end trait loop
   
   if (do.plot) {
-    dev.off()
+    grDevices::dev.off()
   }
   
   return(posteriors)
@@ -159,13 +150,13 @@ approx.posterior <- function(trait.mcmc, priors, trait.data = NULL, outdir = NUL
     rng <- range(trait.data[[trait]]$Y)
   }
 
-  plot(density(dat), col = 2, lwd = 2, main = trait, xlim = rng)
+  plot(stats::density(dat), col = 2, lwd = 2, main = trait, xlim = rng)
   if (!is.null(trait.data)) {
-    rug(trait.data[[trait]]$Y, lwd = 2, col = "purple")
+    graphics::rug(trait.data[[trait]]$Y, lwd = 2, col = "purple")
   }
-  lines(x, f(x), lwd = 2, type = "l")
-  lines(x, fp(x), lwd = 3, type = "l", col = 3)
-  legend("topleft", 
+  graphics::lines(x, f(x), lwd = 2, type = "l")
+  graphics::lines(x, fp(x), lwd = 3, type = "l", col = 3)
+  graphics::legend("topleft", 
          legend = c("data", "prior", "post", "approx"), 
          col = c("purple", 3, 2, 1), lwd = 2)
 }

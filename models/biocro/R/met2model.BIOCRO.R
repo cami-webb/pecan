@@ -1,29 +1,23 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
 
 .datatable.aware <- TRUE
+
+
 ##-------------------------------------------------------------------------------------------------#
-##' Converts a met CF file to a model specific met file. The input
-##' files are called <in.path>/<in.prefix>.YYYY.cf
-##'
-##' @name met2model.BIOCRO
-##' @title Write BioCro met files
-##' @param in.path path on disk where CF file lives
-##' @param in.prefix prefix for each file
-##' @param outfolder location where model specific output is written
-##' @param lat,lon Site latitude and longitude
-##' @param start_date,end_date Date range to convert. Each year will be written to a separate file
-##' @param overwrite logical: Write over any existing file of the same name? If FALSE, leaves the existing file untouched and skips to the next year.
-##' @param ... other arguments passed from PEcAn, currently ignored
-##' @return a dataframe of information about the written file
-##' @export
-##' @author Rob Kooper, David LeBauer
+#' Write BioCro met files
+#'
+#' Converts a met CF file to a model specific met file. The input
+#' files are called <in.path>/<in.prefix>.YYYY.cf
+#'
+#' @param in.path path on disk where CF file lives
+#' @param in.prefix prefix for each file
+#' @param outfolder location where model specific output is written
+#' @param lat,lon Site latitude and longitude
+#' @param start_date,end_date Date range to convert. Each year will be written to a separate file
+#' @param overwrite logical: Write over any existing file of the same name? If FALSE, leaves the existing file untouched and skips to the next year.
+#' @param ... other arguments passed from PEcAn, currently ignored
+#' @return a dataframe of information about the written file
+#' @export
+#' @author Rob Kooper, David LeBauer
 ##-------------------------------------------------------------------------------------------------#
 met2model.BIOCRO <- function(in.path, in.prefix, outfolder, overwrite = FALSE,
                              lat, lon, start_date, end_date, ...) {
@@ -51,7 +45,7 @@ met2model.BIOCRO <- function(in.path, in.prefix, outfolder, overwrite = FALSE,
     on.exit(close_nc_if_open(met.nc), add = FALSE)
       # add = FALSE because any previous file was closed at end of prev. loop
 
-    dt <- mean(diff(udunits2::ud.convert(
+    dt <- mean(diff(PEcAn.utils::ud_convert(
       met.nc$dim$time$vals,
       met.nc$dim$time$units,
       "hours since 1700-01-01 00:00:00")))
@@ -102,56 +96,59 @@ met2model.BIOCRO <- function(in.path, in.prefix, outfolder, overwrite = FALSE,
 
 
 ##-------------------------------------------------------------------------------------------------#
-##' Converts a CF data frame into a BioCro met input
-##'
-##' @name cf2biocro
-##' @title Convert CF-formatted met data to BioCro met
-##' @param met data.table object  with met for a single site; output from \code{\link{load.cfmet}}
-##' \itemize{
-##' \item {year} {int}
-##' \item {month} {int}
-##' \item {day} {int: day of month (1-31)}
-##' \item {doy} {int: day of year (1-366)}
-##' \item {hour} {int (0-23)}
-##' \item {date} {YYYY-MM-DD HH:MM:SS POSIXct}
-##' \item {wind_speed} {num m/s}
-##' \item {northward_wind}
-##' \item {eastward_wind}
-##' \item {ppfd} {optional; if missing, requires surface_downwelling_shortwave_flux_in_air}
-##' \item {surface_downwelling_shortwave_flux_in_air}
-##' \item {air_pressure (Pa)} {optional; if missing, requires relative_humidity}
-##' \item {specific_humidity} {optional; if missing, requires relative_humidity}
-##' \item {relative_humidity} {optional; if missing, requires air_pressure and specific_humidity}
-##' \item {precipitation_flux}
-##' \item {air_temperature}
-##' }
-##' @param longitude in degrees east, used for calculating solar noon
-##' @param zulu2solarnoon logical; if TRUE, convert time from GMT to local solar time.
-##' @return data.table / data.frame with fields
-##' \itemize{
-##' \item {doy} {day of year}
-##' \item {hr} {hour}
-##' \item {solar} {solar radiation (PPFD)}
-##' \item {temp} {temperature, degrees celsius}
-##' \item {rh} {relative humidity, as fraction (0-1)}
-##' \item {windspeed} {m/s}
-##' \item {precip} {cm/h}
-##' }
-##' @export cf2biocro
-##' @importFrom data.table :=
-##' @author David LeBauer
+#' Converts a CF data frame into a BioCro met input
+#'
+#' @param met data.table object  with met for a single site; output from \code{\link{load.cfmet}}
+#' \describe{
+#' \item{year}{int}
+#' \item{month}{int}
+#' \item{day}{int: day of month (1-31)}
+#' \item{doy}{int: day of year (1-366)}
+#' \item{hour}{int (0-23)}
+#' \item{date}{YYYY-MM-DD HH:MM:SS POSIXct}
+#' \item{wind_speed}{num m/s}
+#' \item{northward_wind}{}
+#' \item{eastward_wind}{}
+#' \item{ppfd}{optional; if missing, requires surface_downwelling_shortwave_flux_in_air}
+#' \item{surface_downwelling_shortwave_flux_in_air}{}
+#' \item{air_pressure (Pa)}{optional; if missing, requires relative_humidity}
+#' \item{specific_humidity}{optional; if missing, requires relative_humidity}
+#' \item{relative_humidity}{optional; if missing, requires air_pressure and specific_humidity}
+#' \item{precipitation_flux}{}
+#' \item{air_temperature}{}
+#' }
+#' @param longitude in degrees east, used for calculating solar noon
+#' @param zulu2solarnoon logical; if TRUE, convert time from GMT to local solar time.
+#' @return data.table / data.frame with fields
+#' \describe{
+#' \item{doy}{day of year}
+#' \item{hr}{hour}
+#' \item{solar}{solar radiation (PPFD)}
+#' \item{temp}{temperature, degrees celsius}
+#' \item{rh}{relative humidity, as fraction (0-1)}
+#' \item{windspeed}{m/s}
+#' \item{precip}{cm/h}
+#' }
+#' @export
+#' @importFrom data.table :=
+#' @author David LeBauer
 cf2biocro <- function(met, longitude = NULL, zulu2solarnoon = FALSE) {
 
+  if (!data.table::is.data.table(met)) {
+    met <- data.table::copy(met)
+    data.table::setDT(met)
+  }
+
   if ((!is.null(longitude)) & zulu2solarnoon) {
-    solarnoon_offset <- udunits2::ud.convert(longitude/360, "day", "minute")
+    solarnoon_offset <- PEcAn.utils::ud_convert(longitude/360, "day", "minute")
     met[, `:=`(solardate = met$date + lubridate::minutes(solarnoon_offset))]
   }
   if (!"relative_humidity" %in% colnames(met)) {
     if (all(c("air_temperature", "air_pressure", "specific_humidity") %in% colnames(met))) {
       rh <- PEcAn.data.atmosphere::qair2rh(
         qair = met$specific_humidity,
-        temp = udunits2::ud.convert(met$air_temperature, "Kelvin", "Celsius"),
-        press = udunits2::ud.convert(met$air_pressure, "Pa", "hPa"))
+        temp = PEcAn.utils::ud_convert(met$air_temperature, "Kelvin", "Celsius"),
+        press = PEcAn.utils::ud_convert(met$air_pressure, "Pa", "hPa"))
       met[, `:=`(relative_humidity = rh)]
     } else {
       PEcAn.logger::logger.error("neither relative_humidity nor [air_temperature, air_pressure, and specific_humidity]", 
@@ -160,7 +157,7 @@ cf2biocro <- function(met, longitude = NULL, zulu2solarnoon = FALSE) {
   }
   if (!"ppfd" %in% colnames(met)) {
     if ("surface_downwelling_photosynthetic_photon_flux_in_air" %in% colnames(met)) {
-      ppfd <- udunits2::ud.convert(met$surface_downwelling_photosynthetic_photon_flux_in_air, "mol", "umol")
+      ppfd <- PEcAn.utils::ud_convert(met$surface_downwelling_photosynthetic_photon_flux_in_air, "mol", "umol")
     } else if ("surface_downwelling_shortwave_flux_in_air" %in% colnames(met)) {
       par <- PEcAn.data.atmosphere::sw2par(met$surface_downwelling_shortwave_flux_in_air)
       ppfd <- PEcAn.data.atmosphere::par2ppfd(par)
@@ -184,10 +181,10 @@ cf2biocro <- function(met, longitude = NULL, zulu2solarnoon = FALSE) {
                        doy = lubridate::yday(met$date),
                        hour = round(lubridate::hour(met$date) + lubridate::minute(met$date) / 60, 0),
                        solar = ppfd,
-                       Temp = udunits2::ud.convert(met$air_temperature, "Kelvin", "Celsius"),
+                       Temp = PEcAn.utils::ud_convert(met$air_temperature, "Kelvin", "Celsius"),
                        RH = met$relative_humidity,
                        windspeed = wind_speed,
-                       precip = udunits2::ud.convert(met$precipitation_flux, "s-1", "h-1"))]
+                       precip = PEcAn.utils::ud_convert(met$precipitation_flux, "s-1", "h-1"))]
   newmet <- newmet[newmet$hour <= 23,]
   return(as.data.frame(newmet))
 }  # cf2biocro

@@ -14,6 +14,7 @@ predict_subdaily_met(
   yrs.predict = NULL,
   ens.labs = 1:3,
   resids = FALSE,
+  adjust.pr = 1,
   force.sanity = TRUE,
   sanity.tries = 25,
   overwrite = FALSE,
@@ -46,6 +47,8 @@ ensemble rather than overwriting with a default naming scheme}
 
 \item{resids}{- logical stating whether to pass on residual data or not}
 
+\item{adjust.pr}{- adjustment factor fore precipitation when the extracted values seem off}
+
 \item{force.sanity}{- (logical) do we force the data to meet sanity checks?}
 
 \item{sanity.tries}{- how many time should we try to predict a reasonable value before giving up?  We don't want to end up in an infinite loop}
@@ -57,6 +60,8 @@ ensemble rather than overwriting with a default naming scheme}
 \item{seed}{- manually set seed for results to be reproducible}
 
 \item{print.progress}{- print the progress bar?}
+
+\item{...}{further arguments, currently ignored}
 }
 \description{
 This is the main function of the tdm family workflow. This function predicts subdaily meteorology

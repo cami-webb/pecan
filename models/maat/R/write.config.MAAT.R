@@ -1,24 +1,16 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
 ##-------------------------------------------------------------------------------------------------#
 ## Functions to prepare and write out MAAT model xml files for MA, SA, and Ensemble runs
 PREFIX_XML <- "<?xml version=\"1.0\"?>\n"
 ##-------------------------------------------------------------------------------------------------#
 
 ##------------------------------------------------------------------------------------------------#
+##' Convert samples for MAAT
+##'
 ##' convert parameters and parameter names from PEcAn database default units/names with MAAT
 ##'
 ##' Performs model specific unit conversions on a a list of trait values,
 ##' such as those provided to write.config
-##' @name convert.samples.MAAT
-##' @title Convert samples for MAAT
+##'
 ##' @param trait.samples a matrix or dataframe of samples from the trait distribution
 ##' @param runid optional parameter for debugging
 ##' @return matrix or dataframe with values transformed
@@ -59,19 +51,19 @@ convert.samples.MAAT <- function(trait.samples, runid) {
   }
   if ("Ha.vcmax" %in% names(trait.samples)) {
     ## Convert from kJ mol-1 to J mol-1
-    trait.samples <- transform(trait.samples, Ha.vcmax = udunits2::ud.convert(Ha.vcmax, "kJ", "J"))
+    trait.samples$Ha.vcmax <- PEcAn.utils::ud_convert(trait.samples$Ha.vcmax, "kJ", "J")
   }
   if ("Hd.vcmax" %in% names(trait.samples)) {
     ## Convert from kJ mol-1 to J mol-1
-    trait.samples <- transform(trait.samples, Hd.vcmax = udunits2::ud.convert(Hd.vcmax, "kJ", "J"))
+    trait.samples$Hd.vcmax <- PEcAn.utils::ud_convert(trait.samples$Hd.vcmax, "kJ", "J")
   }
   if ("Ha.jmax" %in% names(trait.samples)) {
     ## Convert from kJ mol-1 to J mol-1
-    trait.samples <- transform(trait.samples, Ha.jmax = udunits2::ud.convert(Ha.jmax, "kJ", "J"))
+    trait.samples$Ha.jmax <- PEcAn.utils::ud_convert(trait.samples$Ha.jmax, "kJ", "J")
   }
   if ("Hd.jmax" %in% names(trait.samples)) {
     ## Convert from kJ mol-1 to J mol-1
-    trait.samples <- transform(trait.samples, Hd.jmax = udunits2::ud.convert(Hd.jmax, "kJ", "J"))
+    trait.samples$Hd.jmax <- PEcAn.utils::ud_convert(trait.samples$Hd.jmax, "kJ", "J")
   }
   if ("leaf_reflect_vis" %in% names(trait.samples) & "leaf_trans_vis" %in% names(trait.samples) ){
     leaf_abs <- 1-(trait.samples[["leaf_reflect_vis"]]+trait.samples[["leaf_trans_vis"]])
@@ -81,11 +73,11 @@ convert.samples.MAAT <- function(trait.samples, runid) {
   }
   if ("leaf_width" %in% names(trait.samples)) {
     ## Convert from mm to m
-    trait.samples <- transform(trait.samples, leaf_width = udunits2::ud.convert(leaf_width, "mm", "m"))
+    trait.samples$leaf_width <- PEcAn.utils::ud_convert(trait.samples$leaf_width, "mm", "m")
   }
   if ("g0" %in% names(trait.samples)) {
     ## Convert from umol H2O m-2 s-1 to mol m-2s-1
-    trait.samples <- transform(trait.samples, g0 = udunits2::ud.convert(g0, "umol H2O m-2 s-1", "mol H2O m-2 s-1"))
+    trait.samples$g0 <- PEcAn.utils::ud_convert(trait.samples$g0, "umol H2O m-2 s-1", "mol H2O m-2 s-1")
   }
   
   # for debugging conversions 
@@ -103,10 +95,8 @@ convert.samples.MAAT <- function(trait.samples, runid) {
 ##' Requires a pft xml object, a list of trait values for a single model run,
 ##' and the name of the file to create
 ##'
-##' @name write.config.MAAT
-##' @title Write MAAT model configuration files
 ##' @param defaults list of defaults to process
-##' @param trait.samples vector of samples for a given trait
+##' @param trait.values vector of samples for a given trait
 ##' @param settings list of settings from pecan settings file
 ##' @param run.id id of run
 ##' @return configuration file for MAAT for given run

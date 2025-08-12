@@ -16,7 +16,7 @@ GEF(
   ...
 )
 
-GEF.MultiSite(setting, Forecast, Observed, H, extraArg, ...)
+GEF.MultiSite(settings, Forecast, Observed, H, extraArg, ...)
 }
 \arguments{
 \item{settings}{pecan standard settings list.}
@@ -24,6 +24,8 @@ GEF.MultiSite(setting, Forecast, Observed, H, extraArg, ...)
 \item{Forecast}{A list containing the forecasts variables including Q (process variance) and X (a dataframe of forecast state variables for different ensemble)}
 
 \item{Observed}{A list containing the observed variables including R (cov of observed state variables) and Y (vector of estimated mean of observed state variables)}
+
+\item{H}{not used}
 
 \item{extraArg}{This argument is a list containing aqq, bqq and t. The aqq and bqq are shape parameters estimated over time for the process covariance and t gives the time in terms of index of obs.list. See Details.}
 

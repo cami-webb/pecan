@@ -32,10 +32,9 @@ get_site_info <- function(xmlfile) {
   
   
   PEcAn.logger::logger.info("**** Extracting LandTrendr AGB data for model sites ****")
-  bety <- list(user = 'bety', password = 'bety', host = 'localhost',
-               dbname = 'bety', driver = 'PostgreSQL', write = TRUE)
-  con <- PEcAn.DB::db.open(bety)
-  bety$con <- con
+  con <- PEcAn.DB::db.open(
+    list(user='bety', password='bety', host='localhost',
+    dbname='bety', driver='PostgreSQL',write=TRUE))
   site_ID <- observation
   suppressWarnings(site_qry <- glue::glue_sql("SELECT *, ST_X(ST_CENTROID(geometry)) AS lon,
                                               ST_Y(ST_CENTROID(geometry)) AS lat FROM sites WHERE id IN ({ids*})",

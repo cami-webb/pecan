@@ -6,19 +6,26 @@ substrRight <- function(x, n) {
 ##' @name debias_met
 ##' @title debias_met
 ##' @export
-##' @param outfolder
+##'
+##' @param outfolder location where output is stored
 ##' @param input_met - the source_met dataset that will be altered by the training dataset in NC format. 
 ##' @param train_met - the observed dataset that will be used to train the modeled dataset in NC format
 ##' @param de_method - select which debias method you would like to use, options are 'normal', 'linear regression'
-##' @param site.id
 ##' @param overwrite logical: replace output file if it already exists? Currently ignored.
 ##' @param verbose logical: should \code{\link[ncdf4:ncdf4-package]{ncdf4}}
+##' @param site_id BETY site id
+##' @param ... other inputs
 ##'   functions print debugging information as they run?
 ##' @author James Simkins
 debias.met <- function(outfolder, input_met, train_met, site_id, de_method = "linear", 
                        overwrite = FALSE, verbose = FALSE, ...) {
-  
-  outfolder <- paste0(outfolder, "_site_", paste0(site_id%/%1e+09, "-", site_id%%1e+09))
+  if (is.numeric(site_id) && site_id > 1e+09) {
+    # Assume this is a BETY id, condense for readability
+    siteid_str <- paste0(site_id %/% 1e+09, "-", site_id %% 1e+09)
+  } else {
+    siteid_str <- as.character(site_id)
+  }
+  outfolder <-  paste0(outfolder, "_site_", siteid_str)
   
   var <- data.frame(CF.name = c("air_temperature", "air_temperature_max", "air_temperature_min", 
                                 "surface_downwelling_longwave_flux_in_air", "air_pressure", "surface_downwelling_shortwave_flux_in_air", 

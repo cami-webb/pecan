@@ -13,6 +13,8 @@
 #' @param model Which GFDL model to run (options are CM3, ESM2M, ESM2G)
 #' @param scenario Which scenario to run (options are rcp26, rcp45, rcp60, rcp85)
 #' @param ensemble_member Which ensemble_member to initialize the run (options are r1i1p1, r3i1p1, r5i1p1)
+#' @param ... further arguments, currently ignored
+#'
 #' @author James Simkins, Alexey Shiklomanov, Ankur Desai
 download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
                           overwrite = FALSE, verbose = FALSE,
@@ -152,7 +154,7 @@ download.GFDL <- function(outfolder, start_date, end_date, lat.in, lon.in,
       # timestamped in middle of interval, others at end.
       # But if these disagree by more than 3 hours, we have a problem.
       raw_time <- ncdf4::ncvar_get(dap, "time", start = time_offset, count = obs_per_year)
-      converted_time <- udunits2::ud.convert(raw_time, dap$dim$time$units, dim$time$units)
+      converted_time <- PEcAn.utils::ud_convert(raw_time, dap$dim$time$units, dim$time$units)
       if(!all(diff(converted_time) == 3 * 60 * 60)){
         PEcAn.logger::logger.error(
           "Expected timestamps at 3-hour intervals, got",

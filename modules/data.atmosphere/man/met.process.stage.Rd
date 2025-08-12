@@ -7,7 +7,11 @@
 met.process.stage(input.id, raw.id, con)
 }
 \arguments{
-\item{raw.id}{}
+\item{input.id}{bety db for input format}
+
+\item{raw.id}{format id for the raw met data}
+
+\item{con}{database connection}
 }
 \description{
 met.process.stage

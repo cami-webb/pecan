@@ -1,25 +1,16 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
 
 PREFIX_XML <- "<?xml version=\"1.0\"?>\n<!DOCTYPE config SYSTEM \"biocro.dtd\">\n"
 
-##' convert parameters from PEcAn database default units to biocro defaults
-##'
-##' Performs model specific unit conversions on a list of trait values,
-##' such as those provided to write.config
-##' @name convert.samples.BIOCRO
-##' @title Convert samples for biocro
-##' @param trait.samples a matrix or dataframe of samples from the trait distribution
-##' @param biocro_version numeric, but currently only checks whether version is less than 1.0
-##' @return dataframe with values transformed
-##' @export
-##' @author David LeBauer
+#' convert parameters from PEcAn database default units to biocro defaults
+#'
+#' Performs model specific unit conversions on a list of trait values,
+#' such as those provided to write.config
+#'
+#' @param trait.samples a matrix or dataframe of samples from the trait distribution
+#' @param biocro_version numeric, but currently only checks whether version is less than 1.0
+#' @return dataframe with values transformed
+#' @export
+#' @author David LeBauer
 convert.samples.BIOCRO <- function(trait.samples, biocro_version=1.0) {
 
   trait.samples <- as.data.frame(trait.samples)
@@ -28,10 +19,10 @@ convert.samples.BIOCRO <- function(trait.samples, biocro_version=1.0) {
   ## transform values with different units cuticular conductance - BETY default is
   ## umol; BioCro uses mol
   if ("cuticular_cond" %in% trait.names) {
-    trait.samples$cuticular_cond = udunits2::ud.convert(trait.samples$cuticular_cond, "umol", "mol")
+    trait.samples$cuticular_cond = PEcAn.utils::ud_convert(trait.samples$cuticular_cond, "umol", "mol")
   }
   if ("SLA" %in% trait.names) {
-    trait.samples$SLA = udunits2::ud.convert(trait.samples$SLA, "kg/m2", "g/cm2")
+    trait.samples$SLA = PEcAn.utils::ud_convert(trait.samples$SLA, "kg/m2", "g/cm2")
   }
 
   ## rename bety variables to match active version of biocro
@@ -64,19 +55,17 @@ convert.samples.BIOCRO <- function(trait.samples, biocro_version=1.0) {
 }  # convert.samples.BIOCRO
 
 
-##' Writes a configuration files for the biocro model
-##'
-##' @name write.config.BIOCRO
-##' @title Write configuration files for the biocro model
-##' @param defaults named list with default model parameter values
-##' @param trait.values named list (or dataframe of trait values)
-##'  can either be a data.frame or named list of traits, e.g.
-##' \code{data.frame(vmax = 1, b0 = 2)} or \code{list(vmax = 1, b0 = 2)}
-##' @param settings pecan settings file configured for BioCro
-##' @param run.id integer; a unique identifier for the run.
-##' @export
-##' @return nothing, writes configuration file as side effect
-##' @author David LeBauer
+#' Writes a configuration files for the biocro model
+#'
+#' @param defaults named list with default model parameter values
+#' @param trait.values named list (or dataframe of trait values)
+#'  can either be a data.frame or named list of traits, e.g.
+#' \code{data.frame(vmax = 1, b0 = 2)} or \code{list(vmax = 1, b0 = 2)}
+#' @param settings pecan settings file configured for BioCro
+#' @param run.id integer; a unique identifier for the run.
+#' @export
+#' @return nothing, writes configuration file as side effect
+#' @author David LeBauer
 write.config.BIOCRO <- function(defaults = NULL, trait.values, settings, run.id) {
 
   ## find out where to write run/ouput
@@ -209,15 +198,13 @@ write.config.BIOCRO <- function(defaults = NULL, trait.values, settings, run.id)
 }  # write.config.BIOCRO
 
 
-##' Clear out previous config and parameter files.
-##'
-##' @name remove.config.BIOCRO
-##' @title Clear out previous biocro config and parameter files.
-##' @param main.outdir Primary PEcAn output directory (will be depreciated)
-##' @param settings PEcAn settings file
-##' @return nothing, removes config files as side effect
-##' @export
-##' @author Shawn Serbin, David LeBauer
+#' Clear out previous config and parameter files.
+#'
+#' @param main.outdir Primary PEcAn output directory (will be depreciated)
+#' @param settings PEcAn settings file
+#' @return nothing, removes config files as side effect
+#' @export
+#' @author Shawn Serbin, David LeBauer
 remove.config.BIOCRO <- function(main.outdir, settings) {
 
   ## Remove files on localhost

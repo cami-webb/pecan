@@ -1,12 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-#------------------------------------------------------------------------------#
 ##' Query available trait data associated with a given pft and a list of traits
 ##'
 ##' @name query.traits
@@ -40,21 +31,21 @@ query.traits <- function(ids, priors, con,
   if (length(ids) == 0 || length(priors) == 0) {
     return(list())
   }
-  
+
   id_type = rlang::sym(if (ids_are_cultivars) {"cultivar_id"} else {"specie_id"})
-  
+
   traits <- (dplyr::tbl(con, "traits")
              %>% dplyr::inner_join(dplyr::tbl(con, "variables"), by = c("variable_id" = "id"))
              %>% dplyr::filter(
                (!!id_type %in% ids),
-               (name %in% !!priors)) # TODO: use .data$name when filter supports it
-             %>% dplyr::distinct(name) # TODO: use .data$name when distinct supports it
+               (.data$name %in% !!priors)) 
+             %>% dplyr::distinct(.data$name) 
              %>% dplyr::collect())
-  
+
   if (nrow(traits) == 0) {
     return(list())
   }
-  
+
   ### Grab trait data
   trait.data <- lapply(traits$name, function(trait){
     query.trait.data(
@@ -65,6 +56,6 @@ query.traits <- function(ids, priors, con,
       ids_are_cultivars = ids_are_cultivars)
   })
   names(trait.data) <- traits$name
-  
+
   return(trait.data)
 }

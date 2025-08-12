@@ -1,13 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2015 Boston University, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
-#--------------------------------------------------------------------------------------------------#
 ##' Convert DALEC output to netCDF
 ##'
 ##' Converts all output contained in a folder to netCDF.
@@ -22,13 +12,13 @@
 ##' @author Shawn Serbin, Michael Dietze
 model2netcdf.DALEC <- function(outdir, sitelat, sitelon, start_date, end_date) {
   runid <- basename(outdir)
-  DALEC.configs <- read.table(file.path(gsub(pattern = "/out/",
+  DALEC.configs <- utils::read.table(file.path(gsub(pattern = "/out/",
                                              replacement = "/run/", x = outdir),
                                         paste0("CONFIG.", runid)),
                               stringsAsFactors = FALSE)
   
   ### Read in model output in DALEC format
-  DALEC.output      <- read.table(file.path(outdir, "out.txt"),
+  DALEC.output      <- utils::read.table(file.path(outdir, "out.txt"),
                                   header = FALSE, sep = "")
   DALEC.output.dims <- dim(DALEC.output)
   

@@ -1,13 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
-##--------------------------------------------------------------------------------------------------#
 ##' Extract trait data from database
 ##'
 ##' Extracts data from database for a given trait and set of species,
@@ -17,6 +7,9 @@
 ##' converted from measurement temperature to \eqn{25^oC} via the arrhenius equation.
 ##'
 ##' @param trait is the trait name used in the database, stored in variables.name
+##' @param con database connection object
+##' @param update.check.only if TRUE, returns results but does not print summaries
+##' @param ... unused currently
 ##' @param spstr is the species.id integer or string of integers associated with the species
 ##' @param ids_are_cultivars if TRUE, the IDs in spstr are cultivar IDs, otherwise they are species IDs. Passed on to \code{\link{query.data}}
 ##'

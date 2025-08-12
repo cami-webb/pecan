@@ -17,7 +17,7 @@ dataone_download(
 
 \item{filepath}{path to where files will be stored}
 
-\item{CNode}{}
+\item{CNode}{character, passed to `dataone::CNode`}
 
 \item{lazyLoad}{"A logical value. If TRUE, then only package member system metadata is downloaded and not data. The default is FALSE." -- dataone R}
 
@@ -28,7 +28,8 @@ Adapts the dataone::getDataPackage workflow to allow users to download data from
 }
 \examples{
 \dontrun{
-dataone_download(id = "doi:10.6073/pasta/63ad7159306bc031520f09b2faefcf87", filepath = "/fs/data1/pecan.data/dbfiles")
+dataone_download(id = "doi:10.6073/pasta/63ad7159306bc031520f09b2faefcf87", 
+filepath = "/fs/data1/pecan.data/dbfiles")
 }
 }
 \author{

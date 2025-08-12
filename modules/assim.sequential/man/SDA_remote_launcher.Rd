@@ -10,10 +10,34 @@ SDA_remote_launcher(settingPath, ObsPath, run.bash.args)
 \item{settingPath}{The Path to the setting that will run SDA}
 
 \item{ObsPath}{Path to the obs data which is expected to be an .Rdata.}
+
+\item{run.bash.args}{Shell commands to be run on the remote host before launching the SDA. See examples}
 }
 \value{
 This function returns a list of two pieces of information. One the remote path that SDA is running and the PID of the active run.
 }
 \description{
 SDA_remote_launcher
+}
+\examples{
+\dontrun{
+ # This example can be found under inst folder in the package
+ library(PEcAn.all)
+ library(purrr)
+ 
+ run.bash.args <- c(
+  "#$ -l h_rt=48:00:00",
+  "#$ -pe omp 28 # Request a parallel environment with 4 cores",
+  "#$ -l mem_per_core=1G # and 4G memory for each",
+  "#$ -l buyin",
+  "module load R/3.5.2",
+  "module load python/2.7.13"
+  )
+ settingPath <-"pecan.SDA.4sites.xml"
+
+ ObsPath <- "Obs/LandTrendr_AGB_output50s.RData"
+   
+ SDA_remote_launcher(settingPath, ObsPath, run.bash.args)
+}
+
 }

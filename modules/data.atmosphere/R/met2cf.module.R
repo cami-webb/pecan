@@ -26,12 +26,12 @@
       PEcAn.logger::logger.error("met2CF function ", fcn1, " or ", fcn2, " don't exist")
     }
     
-    cf0.id <- PEcAn.utils::convert.input(input.id = input.id, 
+    cf0.id <- PEcAn.DB::convert_input(input.id = input.id, 
                             outfolder = outfolder, 
                             formatname = formatname,
                             mimetype = mimetype, 
                             site.id = site.id, start_date = start_date, end_date = end_date, 
-                            pkg = pkg, fcn = fcn, con = con, host = host, browndog = NULL, 
+                            pkg = pkg, fcn = fcn, con = con, host = host, 
                             write = TRUE, 
                             format.vars = format.vars, 
                             overwrite = overwrite,
@@ -41,15 +41,16 @@
     fcn <- "permute.nc"
     outfolder <- file.path(dir, input_name)
     
-    cf.id <- PEcAn.utils::convert.input(input.id = cf0.id$input.id, 
+    cf.id <- PEcAn.DB::convert_input(input.id = cf0.id$input.id, 
                            outfolder = outfolder, 
                            formatname = formatname, 
                            mimetype = mimetype, 
                            site.id = site.id, 
                            start_date = start_date, end_date =  end_date, 
-                           pkg = pkg, fcn = fcn, con = con, host = host, browndog = NULL,
+                           pkg = pkg, fcn = fcn, con = con, host = host,
                            write = TRUE, 
-                           overwrite = overwrite, exact.dates = FALSE)
+                           overwrite = overwrite,
+                           exact.dates = FALSE)
     
   } else if (register$scale == "site") {
     input_name <- paste0(met, "_CF_site_", str_ns)
@@ -67,17 +68,18 @@
         PEcAn.logger::logger.error("met2CF function ", fcn1, " or ", fcn2, " doesn't exists")
       }
     format <- PEcAn.DB::query.format.vars(input.id = input.id, bety = bety)
-    cf.id <- PEcAn.utils::convert.input(input.id = input.id,
+    cf.id <- PEcAn.DB::convert_input(input.id = input.id,
                           outfolder = outfolder,
                           formatname = formatname,
                           mimetype = mimetype, 
                           site.id = site.id, 
                           start_date = start_date, end_date = end_date,
-                          pkg = pkg, fcn = fcn, con = con, host = host, browndog = NULL, 
+                          pkg = pkg, fcn = fcn, con = con, host = host,
                           write = TRUE, 
                           lat = lat, lon = lon, 
                           format.vars = format.vars, 
-                          overwrite = overwrite, exact.dates = FALSE)
+                          overwrite = overwrite,
+                          exact.dates = FALSE)
   }
   
   PEcAn.logger::logger.info("Finished change to CF Standards")

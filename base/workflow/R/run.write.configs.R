@@ -25,6 +25,25 @@
 run.write.configs <- function(settings, write = TRUE, ens.sample.method = "uniform", 
                               posterior.files = rep(NA, length(settings$pfts)), 
                               overwrite = TRUE) {
+  ## Skip database connection if settings$database is NULL or write is False
+  if (!isTRUE(write) && is.null(settings$database)) {
+    PEcAn.logger::logger.info("Not writing this run to database, so database connection skipped")
+    con <- NULL  # Set con to NULL to avoid errors in subsequent code
+  } else if(is.null(settings$database)) {
+    PEcAn.logger::logger.error(
+      "Database is NULL but writing is enabled. Provide valid database settings in pecan.xml."
+    )
+    stop("Database connection required but settings$database is NULL.")
+  } else{
+    tryCatch({
+      con <- PEcAn.DB::db.open(settings$database$bety)
+      on.exit(PEcAn.DB::db.close(con), add = TRUE)
+    }, error = function(e) {
+      PEcAn.logger::logger.severe(
+        "Connection requested, but failed to open with the following error: ",
+        conditionMessage(e))
+    })
+  }
   
   ## Which posterior to use?
   for (i in seq_along(settings$pfts)) {
@@ -32,19 +51,10 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
     if (is.na(posterior.files[i])) {
       ## otherwise, check to see if posteriorid exists
       if (!is.null(settings$pfts[[i]]$posteriorid)) {
-        
-        tryCatch({
-          con <- PEcAn.DB::db.open(settings$database$bety)
-          on.exit(PEcAn.DB::db.close(con), add = TRUE)
-        }, error = function(e) {
-          PEcAn.logger::logger.severe(
-            "Connection requested, but failed to open with the following error: ",
-            conditionMessage(e))
-        })
-  
+        #TODO: sometimes `files` is a 0x0 tibble and other operations with it fail.
         files <- PEcAn.DB::dbfile.check("Posterior",
-                              settings$pfts[[i]]$posteriorid, 
-                              con, settings$host$name, return.all = TRUE)
+                                        settings$pfts[[i]]$posteriorid, 
+                                        con, settings$host$name, return.all = TRUE)
         pid <- grep("post.distns.*Rdata", files$file_name)  ## is there a posterior file?
         if (length(pid) == 0) {
           pid <- grep("prior.distns.Rdata", files$file_name)  ## is there a prior file?
@@ -54,16 +64,48 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
         }  ## otherwise leave posteriors as NA
       }
       ## otherwise leave NA and get.parameter.samples will look for local
-    }
-  }
+    } else {
+      ## does posterior.files point to a directory instead of a file?
+      if(utils::file_test("-d",posterior.files[i])){
+        pfiles = dir(posterior.files[i],pattern = "post.distns.*Rdata",full.names = TRUE)
+        if(length(pfiles)>1){
+          pid = grep("post.distns.Rdata",pfiles)
+          if(length(pid > 0)){
+            pfiles = pfiles[grep("post.distns.Rdata",pfiles)]
+          } else {
+            PEcAn.logger::logger.error(
+              "run.write.configs: could not uniquely identify posterior files within",
+              posterior.files[i])
+          }
+          posterior.files[i] = pfiles
+        }
+      }
+      ## also, double check PFT outdir exists
+      if (is.null(settings$pfts[[i]]$outdir) || is.na(settings$pfts[[i]]$outdir)) {
+        ## no outdir
+        settings$pfts[[i]]$outdir <- file.path(settings$outdir, "pfts", settings$pfts[[i]]$name)
+      }
+    }  ## end else
+  } ## end for loop over pfts
   
   ## Sample parameters
   model <- settings$model$type
   scipen <- getOption("scipen")
   options(scipen = 12)
-
+  
   PEcAn.uncertainty::get.parameter.samples(settings, posterior.files, ens.sample.method)
-  load(file.path(settings$outdir, "samples.Rdata"))
+  samples.file <- file.path(settings$outdir, "samples.Rdata")
+  if (file.exists(samples.file)) {
+    samples <- new.env()
+    load(samples.file, envir = samples) ## loads ensemble.samples, trait.samples, sa.samples, runs.samples, env.samples
+    trait.samples <- samples$trait.samples
+    ensemble.samples <- samples$ensemble.samples
+    sa.samples <- samples$sa.samples
+    runs.samples <- samples$runs.samples
+    ## env.samples <- samples$env.samples
+  } else {
+    PEcAn.logger::logger.error(samples.file, "not found, this file is required by the run.write.configs function")
+  }
   
   ## remove previous runs.txt
   if (overwrite && file.exists(file.path(settings$rundir, "runs.txt"))) {
@@ -78,11 +120,12 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
   my.write.config <- paste0("write.config.",model)
   if (!exists(my.write.config)) {
     PEcAn.logger::logger.error(my.write.config, 
-                 "does not exist, please make sure that the model package contains a function called", 
-                 my.write.config)
+                               "does not exist, please make sure that the model package contains a function called", 
+                               my.write.config)
   }
   
   ## Prepare for model output.  Clean up any old config files (if exists)
+  #TODO: shouldn't this check if the files exist before removing them?
   my.remove.config <- paste0("remove.config.", model)
   if (exists(my.remove.config)) {
     do.call(my.remove.config, args = list(settings$rundir, settings))
@@ -101,19 +144,19 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
     
     ### Write out SA config files
     PEcAn.logger::logger.info("\n ----- Writing model run config files ----")
-    sa.runs <- PEcAn.utils::write.sa.configs(defaults = settings$pfts,
-                                quantile.samples = sa.samples, 
-                                settings = settings, 
-                                model = model,
-                                write.to.db = write)
+    sa.runs <- PEcAn.uncertainty::write.sa.configs(defaults = settings$pfts,
+                                                   quantile.samples = sa.samples, 
+                                                   settings = settings, 
+                                                   model = model,
+                                                   write.to.db = write)
     
     # Store output in settings and output variables
     runs.samples$sa <- sa.run.ids <- sa.runs$runs
     settings$sensitivity.analysis$ensemble.id <- sa.ensemble.id <- sa.runs$ensemble.id
     
     # Save sensitivity analysis info
-    fname <- PEcAn.utils::sensitivity.filename(settings, "sensitivity.samples", "Rdata",
-                                  all.var.yr = TRUE, pft = NULL)
+    fname <- PEcAn.uncertainty::sensitivity.filename(settings, "sensitivity.samples", "Rdata",
+                                                     all.var.yr = TRUE, pft = NULL)
     save(sa.run.ids, sa.ensemble.id, sa.samples, pft.names, trait.names, file = fname)
     
   }  ### End of SA
@@ -121,10 +164,10 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
   ### Write ENSEMBLE
   if ("ensemble" %in% names(settings)) {
     ens.runs <- PEcAn.uncertainty::write.ensemble.configs(defaults = settings$pfts,
-                                       ensemble.samples = ensemble.samples, 
-                                       settings = settings,
-                                       model = model, 
-                                       write.to.db = write)
+                                                          ensemble.samples = ensemble.samples, 
+                                                          settings = settings,
+                                                          model = model, 
+                                                          write.to.db = write)
     
     # Store output in settings and output variables
     runs.samples$ensemble <- ens.run.ids <- ens.runs$runs
@@ -132,7 +175,7 @@ run.write.configs <- function(settings, write = TRUE, ens.sample.method = "unifo
     ens.samples <- ensemble.samples  # rename just for consistency
     
     # Save ensemble analysis info
-    fname <- PEcAn.utils::ensemble.filename(settings, "ensemble.samples", "Rdata", all.var.yr = TRUE)
+    fname <- PEcAn.uncertainty::ensemble.filename(settings, "ensemble.samples", "Rdata", all.var.yr = TRUE)
     save(ens.run.ids, ens.ensemble.id, ens.samples, pft.names, trait.names, file = fname)
   } else {
     PEcAn.logger::logger.info("not writing config files for ensemble, settings are NULL")

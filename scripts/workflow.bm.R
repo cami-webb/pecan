@@ -12,7 +12,6 @@
 # Load required libraries
 # ----------------------------------------------------------------------
 library(PEcAn.all)
-library(RCurl)
 
 #--------------------------------------------------------------------------------#
 # Functions used to write STATUS used by history
@@ -113,7 +112,7 @@ for (i in seq_along(settings$run$inputs)) {
   
   # met conversion
   if (input.tag == "met") {
-    name <- ifelse(is.null(settings$browndog), "MET Process", "BrownDog")
+    name <- "MET Process"
     if (is.null(input$path) && (status.check(name) == 0)) {
       status.start(name)
       result <- PEcAn.data.atmosphere::met.process(site = settings$run$site, 
@@ -123,8 +122,7 @@ for (i in seq_along(settings$run$inputs)) {
                                                    model = settings$model$type, 
                                                    host = settings$run$host, 
                                                    dbparms = settings$database$bety, 
-                                                   dir = settings$run$dbfiles, 
-                                                   browndog = settings$browndog)
+                                                   dir = settings$run$dbfiles)
       settings$run$inputs[[i]][["path"]] <- result
       status.end()
       needsave <- TRUE
@@ -181,7 +179,7 @@ if ((length(which(commandArgs() == "--advanced")) != 0) && (status.check("ADVANC
 # Start ecosystem model runs
 if (status.check("MODEL") == 0) {
   status.start("MODEL")
-  PEcAn.remote::start.model.runs(settings, settings$database$bety$write)
+  PEcAn.workflow::start_model_runs(settings, settings$database$bety$write)
   status.end()
 }
 

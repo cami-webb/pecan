@@ -1,19 +1,25 @@
-ARG R_VERSION="3.5"
+ARG R_VERSION="4.4"
+ARG PARENT_IMAGE="rocker/tidyverse"
 
 # ----------------------------------------------------------------------
 # PECAN FOR MODEL BASE IMAGE
 # ----------------------------------------------------------------------
-FROM rocker/tidyverse:${R_VERSION}
-MAINTAINER Rob Kooper <kooper@illinois.edu>
+FROM ${PARENT_IMAGE}:${R_VERSION}
 
 # ----------------------------------------------------------------------
 # INSTALL BINARY/LIBRARY DEPENDENCIES
 # ----------------------------------------------------------------------
 RUN apt-get update \
     && apt-get -y --no-install-recommends install \
+       cmake \
+       curl \
        jags \
        time \
+       openssh-client \
+       patch \
+       rsync \
        libgdal-dev \
+       libglpk-dev \
        librdf0-dev \
        libnetcdf-dev \
        libudunits2-dev \
@@ -24,7 +30,8 @@ RUN apt-get update \
 # ----------------------------------------------------------------------
 # INSTALL DEPENDENCIES
 # ----------------------------------------------------------------------
-COPY pecan.depends /
-RUN bash /pecan.depends \
+COPY pecan.depends.R pecan_package_dependencies.csv pecan_deps_from_github.txt /
+RUN Rscript -e "install.packages(c('desc', 'remotes'))" \
+  && R_LIBS_USER='/usr/local/lib/R/site-library' Rscript /pecan.depends.R \
   && rm -rf /tmp/*
 

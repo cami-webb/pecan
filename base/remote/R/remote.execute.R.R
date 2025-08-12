@@ -6,10 +6,11 @@
 #'
 #' @title Execute command remotely
 #' @param script the script to be invoked, as a list of commands.
-#' @param args a character vector of arguments to command.
 #' @param host settings host list
 #' @param user the username to use for remote login
 #' @param verbose should the output be printed to the console
+#' @param R Path to the R executable or binary file.
+#' @param scratchdir Path to the scratch directory for temporary files during remote execution.
 #' @return the captured output of the command (both stdout and stderr)
 #' @author Rob Kooper
 #' @export
@@ -22,6 +23,7 @@ remote.execute.R <- function(script, host = "localhost", user = NA, verbose = FA
   if (is.character(host)) {
     host <- list(name = host)
   }
+  dir.create(scratchdir, showWarnings = FALSE, recursive = TRUE)
   uuid <- paste0("pecan-", paste(sample(c(letters[1:6], 0:9), 30, replace = TRUE),
                                  collapse = ""))
   tmpfile <- file.path(scratchdir, uuid)

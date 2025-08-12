@@ -7,7 +7,7 @@
 ##' @description This function extracts NLDAS data from grids that have been downloaded and stored locally.
 ##'              Once upon a time, you could query these files directly from the internet, but now they're 
 ##'              behind a tricky authentication wall. Files are saved as a netCDF file in CF conventions. 
-##'              These files are ready to be used in the general PEcAn workflow or fed into the downscalign 
+##'              These files are ready to be used in the general PEcAn workflow or fed into the downscaling 
 ##'              workflow.
 # ----------------------------------- 
 # Parameters
@@ -141,6 +141,8 @@ extract.local.NLDAS <- function(outfolder, in.path, start_date, end_date, lat.in
       for (v in 1:nrow(var)) {
         v.nldas <- paste(var$NLDAS.name[v])
         v.cf    <- paste(var$CF.name   [v])
+        
+        if(!v.nldas %in% names(dap_file$var) & v.cf %in% names(dap_file$var)) v.nldas <- v.cf
         
         # Variables have different dimensions (which is a pain in the butt)
         # so we need to check to see whether we're pulling 4 dimensions or just 3

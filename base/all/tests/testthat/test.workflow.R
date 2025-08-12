@@ -1,12 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
 # TODO This is an integration test (#1125)
 
 #context("tests of overall workflow")
@@ -18,5 +9,5 @@
 # run.meta.analysis(settings$pfts, settings$meta.analysis$iter, settings$meta.analysis$random.effects$on, settings$meta.analysis$threshold, settings$database$dbfiles, settings$database$bety)
 # run.write.configs("ED2")
 # clear.scratch(settings)
-# start.model.runs("ED2")
-# get.model.output("ED2")
+# start_model_runs("ED2")
+# get.results(settings)

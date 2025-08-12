@@ -15,6 +15,7 @@ lm_ensemble_sims(
   precip.distribution,
   force.sanity = TRUE,
   sanity.tries = 25,
+  sanity.sd = 6,
   seed = Sys.time(),
   print.progress = FALSE
 )
@@ -29,17 +30,21 @@ lm_ensemble_sims(
 \item{direction.filter}{- Whether the model will be filtered backward or forward in time. options = c("backward", "forward")
 (PalEON will go backward, anybody interested in the future will go forward)}
 
+\item{lags.list}{- optional list form of lags.init, with one entry for each unique `ens.day` in dat.mod}
+
 \item{lags.init}{- a data frame of initialization parameters to match the data in dat.mod}
 
-\item{dat.train}{- the training data used to fit the model; needed for night/day in 
+\item{dat.train}{- the training data used to fit the model; needed for night/day in
 surface_downwelling_shortwave_flux_in_air}
 
-\item{precip.distribution}{- a list with 2 sub-lists containing the number of observations with precip in the training data per day & 
+\item{precip.distribution}{- a list with 2 sub-lists containing the number of observations with precip in the training data per day &
 the hour of max rain in the training data.  This will be used to help solve the "constant drizzle" problem}
 
 \item{force.sanity}{- (logical) do we force the data to meet sanity checks?}
 
 \item{sanity.tries}{- how many time should we try to predict a reasonable value before giving up?  We don't want to end up in an infinite loop}
+
+\item{sanity.sd}{- how many standard deviations from the mean should be used to determine sane outliers (default 6)}
 
 \item{seed}{- (optional) set the seed manually to allow reproducible results}
 

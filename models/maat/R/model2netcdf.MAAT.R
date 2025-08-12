@@ -1,14 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
-
-##-------------------------------------------------------------------------------------------------#
 ##' @title Function to convert MAAT model output to standard netCDF format
 ##'
 ##' @param rundir Location of MAAT model run (i.e. MAAT project) directory with all required model run inputs.
@@ -26,7 +15,7 @@
 model2netcdf.MAAT <- function(rundir, outdir, sitelat = -999, sitelon = -999, start_date = NULL, end_date = NULL) {
 
   # setup constants
-  day_secs <- udunits2::ud.convert(1, "day", "seconds")
+  day_secs <- PEcAn.utils::ud_convert(1, "day", "seconds")
   
   # setup helper function
   var_update <- function(data, out, oldname, newname, oldunits, newunits = NULL, missval = -999, longname, ncdims) {

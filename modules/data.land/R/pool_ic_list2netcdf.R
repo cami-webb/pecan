@@ -5,7 +5,9 @@
 ##'
 ##' @param input list with two elements: list of netcdf dimensions (dims, with named values) and list of variables (vals, with named values)
 ##' @param outdir directory to write netcdf file
+##' @param ens Default is NA. Ensemble members.
 ##' @param siteid site id
+##'
 ##' @author Anne Thomas
 
 pool_ic_list2netcdf <- function(input, outdir, siteid, ens=NA){
@@ -26,11 +28,17 @@ pool_ic_list2netcdf <- function(input, outdir, siteid, ens=NA){
     ncdim = PEcAn.utils::to_ncdim(dimname, vals)
     dims[[dimname]] <- ncdim
   }
-  
+
   ncvars <- lapply(names(input$vals), PEcAn.utils::to_ncvar, dims)
-  
+
   #create nc file
-  str_ns <- paste0(siteid %/% 1e+09, "-", siteid %% 1e+09)
+  if (is.numeric(siteid) && siteid >= 1e+09) {
+    # Assume this is a BETYdb id, condense for readability
+    str_ns <- paste0(siteid %/% 1e+09, "-", siteid %% 1e+09)
+  } else {
+    # use as-is
+    str_ns <- siteid
+  }
 
   if (is.na(ens)){
     basefile <- paste0("IC_site_", str_ns)

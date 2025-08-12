@@ -2,14 +2,19 @@
 ##' @name download.MACA
 ##' @title download.MACA
 ##' @export
-##' @param outfolder
+##'
+##' @param outfolder location where output is stored
 ##' @param start_date , of the format "YEAR-01-01 00:00:00"
 ##' @param end_date , of the format "YEAR-12-31 23:59:59"
-##' @param lat
-##' @param lon
 ##' @param model , select which MACA model to run (options are BNU-ESM, CNRM-CM5, CSIRO-Mk3-6-0, bcc-csm1-1, bcc-csm1-1-m, CanESM2, GFDL-ESM2M, GFDL-ESM2G, HadGEM2-CC365, HadGEM2-ES365, inmcm4, MIROC5, MIROC-ESM, MIROC-ESM-CHEM, MRI-CGCM3, CCSM4, IPSL-CM5A-LR, IPSL-CM5A-MR, IPSL-CM5B-LR, NorESM1-M)
 ##' @param scenario , select which scenario to run (options are rcp45, rcp85)
 ##' @param ensemble_member , r1i1p1 is the only ensemble member available for this dataset, CCSM4 uses r6i1p1 instead
+##' @param site_id BETY site id 
+##' @param lat.in latitude of site
+##' @param lon.in longitude of site
+##' @param overwrite overwrite existing files? Default is FALSE
+##' @param verbose Default is FALSE, used as input in ncdf4::ncvar_def
+##' @param ... other inputs
 ##'
 ##' @author James Simkins
 download.MACA <- function(outfolder, start_date, end_date, site_id, lat.in, lon.in, model='IPSL-CM5A-LR', scenario='rcp85', ensemble_member='r1i1p1', 
@@ -18,12 +23,21 @@ download.MACA <- function(outfolder, start_date, end_date, site_id, lat.in, lon.
   end_date <- as.POSIXlt(end_date, tz = "UTC")
   start_year <- lubridate::year(start_date)
   end_year   <- lubridate::year(end_date)
-  site_id <- as.numeric(site_id)
+  site_id <- tryCatch(
+    as.numeric(site_id),
+    warning = function(w) as.character(site_id)
+  )
   model <- paste0(model)
   scenario <- paste0(scenario)
   ensemble_member <- paste0(ensemble_member)
-  outfolder <- paste0(outfolder,"_site_",paste0(site_id %/% 1000000000, "-", site_id %% 1000000000))
-  
+  if (is.numeric(site_id) && site_id > 1e9) {
+    # Assume this is a BETY id, condense for readability
+    siteid_str <- paste0(site_id %/% 1000000000, "-", site_id %% 1000000000)
+  } else {
+    siteid_str <- as.character(site_id)
+  }
+  outfolder <-  paste0(outfolder, "_site_", siteid_str)
+
   if (model == 'CCSM4'){
     ensemble_member <- 'r6i1p1'
   }

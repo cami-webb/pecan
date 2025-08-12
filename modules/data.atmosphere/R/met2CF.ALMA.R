@@ -20,6 +20,8 @@ insertPmet <- function(vals, nc2, var2, dim2, units2 = NA, conv = NULL,
 ##' @param start_date the start date of the data to be downloaded (will only use the year part of the date)
 ##' @param end_date the end date of the data to be downloaded (will only use the year part of the date)
 ##' @param overwrite should existing files be overwritten
+##' @param verbose logical: enable verbose mode for netcdf writer functions?
+##' @param ... further arguments, currently ignored
 ##'
 ##' @author Mike Dietze
 met2CF.PalEONregional <- function(in.path, in.prefix, outfolder, start_date, end_date, overwrite = FALSE,
@@ -110,7 +112,7 @@ met2CF.PalEONregional <- function(in.path, in.prefix, outfolder, start_date, end
     # create new coordinate dimensions based on site location lat/lon
     nc1           <- ncdf4::nc_open(old.file)
     tdim          <- nc1$dim[["time"]]
-    met[["time"]] <- udunits2::ud.convert(met[["time"]],"days","seconds")
+    met[["time"]] <- PEcAn.utils::ud_convert(met[["time"]],"days","seconds")
     tdim$units    <- paste0("seconds since ",year,"-01-01 00:00:00")
     tdim$vals     <- met[["time"]]
     tdim$len      <- length(tdim$vals)
@@ -179,7 +181,10 @@ met2CF.PalEONregional <- function(in.path, in.prefix, outfolder, start_date, end
 ##' @param outfolder location on disk where outputs will be stored
 ##' @param start_date the start date of the data to be downloaded (will only use the year part of the date)
 ##' @param end_date the end date of the data to be downloaded (will only use the year part of the date)
+##' @param lat,lon site location in decimal degrees. Caution: both must have length one.
 ##' @param overwrite should existing files be overwritten
+##' @param verbose logical: enable verbose mode for netcdf writer functions?
+##' @param ... further arguments, currently ignored
 ##'
 ##' @author Mike Dietze
 met2CF.PalEON <- function(in.path, in.prefix, outfolder, start_date, end_date, lat, lon, overwrite = FALSE,
@@ -373,6 +378,7 @@ met2CF.PalEON <- function(in.path, in.prefix, outfolder, start_date, end_date, l
 ##' @param start_date the start date of the data to be downloaded (will only use the year part of the date)
 ##' @param end_date the end date of the data to be downloaded (will only use the year part of the date)
 ##' @param overwrite should existing files be overwritten
+##' @param verbose logical: enable verbose mode for netcdf writer functions?
 ##'
 ##' @author Mike Dietze
 met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, overwrite = FALSE, verbose = FALSE) {
@@ -511,7 +517,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
              nc2 = nc2,
              var2 = "air_temperature", units2 = "K",
              dim2 = dim,
-             conv = function(x) { udunits2::ud.convert(x, "degC", "K") },
+             conv = function(x) { PEcAn.utils::ud_convert(x, "degC", "K") },
              verbose = verbose)
 
     # convert PRESS to air_pressure
@@ -520,7 +526,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
              nc2 = nc2,
              var2 = "air_pressure", units2 = "Pa",
              dim2 = dim,
-             conv = function(x) { udunits2::ud.convert(x, 'kPa', 'Pa') },
+             conv = function(x) { PEcAn.utils::ud_convert(x, 'kPa', 'Pa') },
              verbose = verbose)
 
     # convert CO2 to mole_fraction_of_carbon_dioxide_in_air
@@ -528,7 +534,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
              var1 = "CO2",
              nc2 = nc2,
              var2 = "mole_fraction_of_carbon_dioxide_in_air",  units2 = "mole/mole",
-             dim2 = dim, conv = function(x) { udunits2::ud.convert(x, "mol/mol", "ppm") },
+             dim2 = dim, conv = function(x) { PEcAn.utils::ud_convert(x, "mol/mol", "ppm") },
              verbose = verbose)
 
     # convert TS1 to soil_temperature
@@ -537,7 +543,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
              nc2 = nc2,
              var2 = "soil_temperature", units2 = "K",
              dim2 = dim,
-             conv = function(x) { udunits2::ud.convert(x, "degC", "K") },
+             conv = function(x) { PEcAn.utils::ud_convert(x, "degC", "K") },
              verbose = verbose)
 
     # copy RH to relative_humidity
@@ -553,7 +559,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
     rh <- rh/100
     ta <- ncdf4::ncvar_get(nc = nc1, varid = "TA")
     ta[ta == -6999 | ta == -9999] <- NA
-    ta <- udunits2::ud.convert(ta, "degC", "K")
+    ta <- PEcAn.utils::ud_convert(ta, "degC", "K")
     sh <- rh2qair(rh = rh, T = ta)
     var <- ncdf4::ncvar_def(name = "specific_humidity", units = "kg/kg", dim = dim, missval = -6999,
                      verbose = verbose)
@@ -590,7 +596,7 @@ met2CF.ALMA <- function(in.path, in.prefix, outfolder, start_date, end_date, ove
              nc2 = nc2,
              var2 = "surface_downwelling_photosynthetic_photon_flux_in_air", units2 = "mol m-2 s-1",
              dim2 = dim,
-             conv = function(x) { udunits2::ud.convert(x, "umol m-2 s-1", "mol m-2 s-1") },
+             conv = function(x) { PEcAn.utils::ud_convert(x, "umol m-2 s-1", "mol m-2 s-1") },
              verbose = verbose)
 
     # copy WD to wind_direction (not official CF)

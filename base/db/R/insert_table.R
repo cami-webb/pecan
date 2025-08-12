@@ -20,8 +20,8 @@
 #' dplyr::tbl(irisdb, "iris")
 insert_table <- function(values, table, con, coerce_col_class = TRUE, drop = TRUE) {
   values_fixed <- match_dbcols(values, table, con, coerce_col_class, drop = TRUE)
-  insert_query <- build_insert_query(values_fixed, table, .con = con)
-  db.query(insert_query, con)
+
+  DBI::dbAppendTable(con, table, values_fixed)
 }
 
 #' Match column names and classes between local and SQL table
@@ -42,10 +42,10 @@ match_dbcols <- function(values, table, con, coerce_col_class = TRUE, drop = TRU
   )
   values_sub <- values[, use_cols]
   # Load one row to get column types
-  sql_row <- dplyr::tbl(con, table) %>% head(1) %>% dplyr::collect()
+  sql_row <- dplyr::tbl(con, table) %>% utils::head(1) %>% dplyr::collect()
   sql_types <- purrr::map(sql_row, class) %>%
-    purrr::map_chr(1) %>%
-    .[use_cols]
+    purrr::map_chr(1) 
+  sql_types <- sql_types[use_cols]
   values_types <- purrr::map(values_sub, class) %>% purrr::map_chr(1)
   type_mismatch <- sql_types != values_types
   if (sum(type_mismatch) > 0) {
@@ -69,7 +69,7 @@ match_dbcols <- function(values, table, con, coerce_col_class = TRUE, drop = TRU
         "Coercing local column types to match SQL."
       )
       # Coerce values data frame to these types
-      values_fixed <- purrr::map2_dfc(values_sub, sql_types, as)
+      values_fixed <- purrr::map2_dfc(values_sub, sql_types, methods::as)
     }
   } else {
     values_fixed <- values_sub
@@ -90,23 +90,4 @@ match_colnames <- function(values, table, con) {
   table_cols <- dplyr::tbl_vars(tbl_db)
   values_cols <- colnames(values)
   intersect(values_cols, table_cols)
-}
-
-#' Build query to insert R data frame into SQL table
-#'
-#' @inheritParams insert_table
-#' @inheritParams glue::glue_sql
-build_insert_query <- function(values, table, .con) {
-  value_list <- purrr::map(seq_len(nrow(values)), ~as.list(values[.x, ]))
-
-  insert_list <- value_list %>%
-    purrr::map(unname) %>%
-    purrr::map(dbplyr::escape, con = .con) %>%
-    purrr::map(dbplyr::sql_vector, con = .con)
-
-  glue::glue_sql(
-    "INSERT INTO {`table`} ({`colnames(values)`*}) ",
-    "VALUES {insert_list*}",
-    .con = .con
-  )
 }

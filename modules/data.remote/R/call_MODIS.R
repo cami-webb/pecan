@@ -3,7 +3,7 @@
 ##' @name call_MODIS
 ##' @title call_MODIS
 ##' @export
-##' @param outdir where the output file will be stored. Default is NULL
+##' @param outdir where the output file will be stored. Default is NULL and in this case only values are returned. When path is provided values are returned and written to disk.  
 ##' @param var the simple name of the modis dataset variable (e.g. lai)
 ##' @param site_info Bety list of site info for parsing MODIS data: list(site_id, site_name, lat, 
 ##' lon, time_zone)
@@ -35,14 +35,14 @@
 ##'   lon = 90,
 ##'   time_zone = "UTC")
 ##' test_modistools <- call_MODIS(
-##'   outdir = NULL,
 ##'   var = "lai",
-##'   site_info = site_info,
-##'   product_dates = c("2001150", "2001365"),
-##'   run_parallel = TRUE,
-##'   ncores = NULL,
 ##'   product = "MOD15A2H",
 ##'   band = "Lai_500m",
+##'   site_info = site_info,
+##'   product_dates = c("2001150", "2001365"),
+##'   outdir = NULL,
+##'   run_parallel = TRUE,
+##'   ncores = NULL,
 ##'   package_method = "MODISTools",
 ##'   QC_filter = TRUE,
 ##'   progress = FALSE)
@@ -50,12 +50,12 @@
 ##' @importFrom foreach %do% %dopar%
 ##' @author Bailey Morrison
 ##'
-call_MODIS <- function(outdir = NULL,  
-                       var, site_info, 
-                       product_dates, 
+call_MODIS <- function(var, product, 
+                       band, site_info, 
+                       product_dates,
+                       outdir = NULL, 
                        run_parallel = FALSE, 
-                       ncores = NULL, 
-                       product, band,  
+                       ncores = NULL,
                        package_method = "MODISTools", 
                        QC_filter = FALSE, 
                        progress = FALSE) {
@@ -147,7 +147,7 @@ call_MODIS <- function(outdir = NULL,
     {
       PEcAn.logger::logger.severe(
         "Start and end date (", start_date, ", ", end_date,
-        ") are not within MODIS data product date range (", modis_dates[1], ", ", modis_dates(length(modis_dates)),
+        ") are not within MODIS data product date range (", modis_dates[1], ", ", modis_dates[length(modis_dates)],
         "). Please choose another date.")
     }
        
@@ -217,34 +217,39 @@ call_MODIS <- function(outdir = NULL,
     if (run_parallel) 
     {
       qc <- foreach::foreach(i=seq_along(site_info$site_id), .combine = rbind) %dopar% 
-        MODISTools::mt_subset(lat = site_coords$lat[i],lon = site_coords$lon[i],
+        MODISTools::mt_subset(lat = site_coords$lat[i],
+                              lon = site_coords$lon[i],
                               product = product,
                               band = qc_band,
                               start = dates[1],
                               end = dates[length(dates)],
                               km_ab = size, km_lr = size,
                               progress = progress)
-      } else {
-        qc <- MODISTools::mt_subset(lat = site_coords$lat[i],lon = site_coords$lon[i],
-                                    product = product,
-                                    band = qc_band,
-                                    start = dates[1],
-                                    end = dates[length(dates)],
-                                    km_ab = size, km_lr = size,
-                                    progress = progress)
-        
-      }
-    
+    } else {
+      qc <- MODISTools::mt_subset(lat = site_coords$lat[i],
+                                  lon = site_coords$lon[i],
+                                  product = product,
+                                  band = qc_band,
+                                  start = dates[1],
+                                  end = dates[length(dates)],
+                                  km_ab = size, km_lr = size,
+                                  progress = progress)
+
+    }
+
     output$qc <- as.character(qc$value)
     
     #convert QC values and keep only okay values
     for (i in seq_len(nrow(output)))
     {
-      convert <- paste(binaryLogic::as.binary(as.integer(output$qc[i]), n = 8), collapse = "")
-      output$qc[i] <- substr(convert, nchar(convert) - 2, nchar(convert))
+      # QC flags are stored as an 8-bit mask
+      # we only care about the 3 least-significant bits
+      qc_flags <- intToBits(as.integer(output$qc[i])) # NB big-endian (ones place first)
+      qc_flags <- as.integer(rev(utils::head(qc_flags, 3))) # now ones place last
+      output$qc[i] <- paste(qc_flags, collapse = "")
     }
     good <- which(output$qc %in% c("000", "001"))
-    if (length(good) > 0 || !(is.null(good)))
+    if (length(good) > 0)
     {
       output <- output[good, ]
     } else {
@@ -278,7 +283,7 @@ call_MODIS <- function(outdir = NULL,
         fname <- paste(site_info$site_id[i], "/", product, "_", band, "_", start_date, "-", end_date, "_unfiltered.csv", sep = "")
       }
       fname <- file.path(outdir, fname)
-      write.csv(site, fname, row.names = FALSE)
+      utils::write.csv(site, fname, row.names = FALSE)
     }
     
   }

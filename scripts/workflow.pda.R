@@ -13,7 +13,6 @@ args <- commandArgs(trailingOnly = TRUE)
 # Load required libraries
 # ----------------------------------------------------------------------
 library(PEcAn.all)
-library(RCurl)
 
 #--------------------------------------------------------------------------------#
 # Functions used to write STATUS used by history
@@ -76,11 +75,7 @@ if (length(which(commandArgs() == "--continue")) == 0) {
     # met conversion
     if (input.tag == "met") {
       if (is.null(input$path)) {
-        if (is.null(settings$browndog)) {
-          status.start("MET Process")
-        } else {
-          status.start("BrownDog")
-        }
+        status.start("MET Process")
         result <- PEcAn.data.atmosphere::met.process(site = settings$run$site, 
                                                      input_met = settings$run$inputs$met, 
                                                      start_date = settings$run$start.date, 
@@ -88,8 +83,7 @@ if (length(which(commandArgs() == "--continue")) == 0) {
                                                      model = settings$model$type, 
                                                      host = settings$host, 
                                                      dbparms = settings$database$bety, 
-                                                     dir = settings$database$dbfiles, 
-                                                     browndog = settings$browndog)
+                                                     dir = settings$database$dbfiles)
         settings$run$inputs[[i]][["path"]] <- result
         status.end()
       }
@@ -160,7 +154,7 @@ if (length(which(commandArgs() == "--continue")) == 0) {
 # Start ecosystem model runs
 if (check.status("MODEL") == 0) {
   status.start("MODEL")
-  PEcAn.remote::start.model.runs(settings, settings$database$bety$write)
+  PEcAn.workflow::start_model_runs(settings, settings$database$bety$write)
   status.end()
 }
 
@@ -216,7 +210,7 @@ if (!is.null(settings$assim.batch)) {
   
   # Start ecosystem model runs
   status.start("PDA.MODEL")
-  PEcAn.remote::start.model.runs(settings, settings$database$bety$write)
+  PEcAn.workflow::start_model_runs(settings, settings$database$bety$write)
   status.end()
   
   # Get results of model runs

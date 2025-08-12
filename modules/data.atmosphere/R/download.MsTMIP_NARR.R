@@ -2,11 +2,16 @@
 ##' @name download.MsTMIP_NARR
 ##' @title download.MsTMIP_NARR
 ##' @export
-##' @param outfolder
+##'
+##' @param outfolder location where output is stored
 ##' @param start_date YYYY-MM-DD
+##' @param site_id BETY site id
+##' @param lat.in latitude of site
+##' @param lon.in longitude of site
+##' @param overwrite overwrite existing files? Default is FALSE
+##' @param verbose Default is FALSE, used in ncdf4::ncvar_def
+##' @param ... Other inputs
 ##' @param end_date YYYY-MM-DD
-##' @param lat decimal degrees [-90, 90]
-##' @param lon decimal degrees [-180, 180]
 ##'
 ##' @author James Simkins
 download.MsTMIP_NARR <- function(outfolder, start_date, end_date, site_id, lat.in, lon.in,
@@ -16,8 +21,18 @@ download.MsTMIP_NARR <- function(outfolder, start_date, end_date, site_id, lat.i
   end_date   <- as.POSIXlt(end_date, tz = "UTC")
   start_year <- lubridate::year(start_date)
   end_year   <- lubridate::year(end_date)
-  site_id    <- as.numeric(site_id)
-  outfolder  <- paste0(outfolder, "_site_", paste0(site_id%/%1e+09, "-", site_id%%1e+09))
+
+  site_id <- tryCatch(
+    as.numeric(site_id),
+    warning = function(w) as.character(site_id)
+  )
+  if (is.numeric(site_id) && site_id > 1e+09) {
+    # Assume this is a BETY id, condense for readability
+    siteid_str <- paste0(site_id %/% 1e+09, "-", site_id %% 1e+09)
+  } else {
+    siteid_str <- as.character(site_id)
+  }
+  outfolder <-  paste0(outfolder, "_site_", siteid_str)
 
   lat.in    <- as.numeric(lat.in)
   lon.in    <- as.numeric(lon.in)
@@ -48,7 +63,7 @@ download.MsTMIP_NARR <- function(outfolder, start_date, end_date, site_id, lat.i
   for (i in seq_len(rows)) {
     year <- ylist[i]
 
-    ntime <- udunits2::ud.convert(PEcAn.utils::days_in_year(year), "days", "hours") / 3 - 1 # Number of 3 hour timesteps in one year
+    ntime <- PEcAn.utils::ud_convert(PEcAn.utils::days_in_year(year), "days", "hours") / 3 - 1 # Number of 3 hour timesteps in one year
 
     loc.file <- file.path(outfolder, paste("MsTMIP_NARR", year, "nc", sep = "."))
 

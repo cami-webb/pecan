@@ -2,7 +2,7 @@
 % Please edit documentation in R/r2bugs.distributions.R
 \name{bugs.rdist}
 \alias{bugs.rdist}
-\title{bugs.rdist}
+\title{Sample from an R distribution using JAGS}
 \usage{
 bugs.rdist(
   prior = data.frame(distn = "norm", parama = 0, paramb = 1),
@@ -13,17 +13,14 @@ bugs.rdist(
 \arguments{
 \item{prior}{dataframe with distribution name and parameters}
 
-\item{n.iter}{number of samples, output will have n.iter/4 samples}
+\item{n.iter}{number of MCMC samples. Output will have n.iter/4 samples}
 
-\item{n}{}
+\item{n}{number of randomly chosen samples to return.}
 }
 \value{
 vector of samples
 }
 \description{
-Sample from an R distribution using JAGS
-}
-\details{
 Takes a distribution with R parameterization, converts it to a
 BUGS parameterization, and then samples from the distribution using
 JAGS

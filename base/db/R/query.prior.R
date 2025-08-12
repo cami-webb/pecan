@@ -1,12 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------------------------#
 ##' Query Priors
 ##'
 ##' Query priors associated with a plant functional type and a set of traits.
@@ -41,16 +32,9 @@ query.priors <- function(pft, trstr = NULL, con = NULL, ...){
   if (is.null(con)) {
     params <- list(...)
     if (!length(params)) {
-      PEcAn.logger::logger.warn(paste0(
-        "No connection (`con`) or params (`...`) specified. ",
-        'Trying to connect from `settings[[c("database", "bety")]]`.'
-      ))
-      if (!exists("settings")) {
-        PEcAn.logger::logger.severe(
-          "`settings` object not found. Unable to connect to database."
-        )
-      }
-      params <- settings[[c("database", "bety")]]
+      PEcAn.logger::logger.severe(
+        "No connection (`con`) specified and no connection parameters given in `...`.",
+        "Unable to connect to database.")
     }
     con <- db.open(params)
     on.exit(db.close(con), add = TRUE)

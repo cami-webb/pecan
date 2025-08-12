@@ -2,9 +2,9 @@
 % Please edit documentation in R/download.url.R
 \name{download.url}
 \alias{download.url}
-\title{Download file from the url.}
+\title{Try and download a file.}
 \usage{
-download.url(url, file, timeout = 600, .opts = list(), retry404 = TRUE)
+download.url(url, file, timeout = 600, .opts = list(), retry = TRUE)
 }
 \arguments{
 \item{url}{the url of the file to download}
@@ -16,16 +16,13 @@ download.url(url, file, timeout = 600, .opts = list(), retry404 = TRUE)
 \item{.opts}{list of options for curl, for example to download from a
 protected site use list(userpwd=userpass, httpauth = 1L)}
 
-\item{retry404}{retry on a 404, this is used by Brown Dog}
+\item{retry}{retry if url not found yet, this is used by Brown Dog}
 }
 \value{
 returns name of file if successful or NA if not.
 }
 \description{
-Try and download a file.
-}
-\details{
-This will download a file, if retry404 and 404 is returned it will
+This will download a file, if retry is set and 404 is returned it will
 wait until the file is available. If the file is still not available
 after timeout tries, it will return NA. If the file is downloaded
 it will return the name of the file

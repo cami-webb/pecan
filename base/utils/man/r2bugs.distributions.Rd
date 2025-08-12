@@ -7,15 +7,14 @@
 r2bugs.distributions(priors, direction = "r2bugs")
 }
 \arguments{
-\item{priors}{data.frame with columns distn = distribution name, parama, paramb using R default parameterizations}
+\item{priors}{data.frame with columns distn = distribution name, parama, paramb using R default parameterizations.}
+
+\item{direction}{One of "r2bugs" or "bugs2r"}
 }
 \value{
 priors dataframe using JAGS default parameterizations
 }
 \description{
-convert R parameterizations to BUGS paramaterizations
-}
-\details{
 R and BUGS have different parameterizations for some distributions. This function transforms the distributions from R defaults to BUGS defaults. BUGS is an implementation of the BUGS language, and these transformations are expected to work for bugs.
 }
 \examples{

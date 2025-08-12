@@ -7,16 +7,19 @@
 # http://opensource.ncsa.illinois.edu/license.html
 #-------------------------------------------------------------------------------
 
-library(PEcAn.utils)
-library(PEcAn.DB)
-
-##' convert x into a table
-##'
-##' @title fia.to.psscss
-##' @param create pss/css files based on data in the fia database
-##' @return nothing
-##' @export
-##' @author Mike Dietze, Rob Kooper, Ryan Kelly
+#' Create pss/css files based on data in the fia database
+#'
+#' @param settings PEcAn settings object
+#' @param lat,lon site location in decimal degrees.
+#'  Defults to values passed in `settings`.
+#' @param year defaults to year of start date passed in settings
+#' @param gridres grid resolution in degrees
+#' @param min.year,max.year limits on years of FIA data to look for
+#' @param overwrite logical: regenerate files already in the database?
+#'
+#' @return modified settings, invisibly
+#' @export
+#' @author Mike Dietze, Rob Kooper, Ryan Kelly
 fia.to.psscss <- function(settings, 
                           lat = as.numeric(settings$run$site$lat),
                           lon = as.numeric(settings$run$site$lon),
@@ -37,14 +40,14 @@ fia.to.psscss <- function(settings,
   lonmin <- lon - gridres
   
   ## connect to database
-  con <- db.open(settings$database$bety)
-  on.exit(db.close(con), add = TRUE)
+  con <- PEcAn.DB::db.open(settings$database$bety)
+  on.exit(PEcAn.DB::db.close(con), add = TRUE)
   
   # Check whether inputs exist already
   if(!overwrite) {
     existing.files <- list()
     for(format in formatnames) {
-      existing.files[[format]] <- dbfile.input.check(
+      existing.files[[format]] <- PEcAn.DB::dbfile.input.check(
         siteid     = settings$run$site$id,
         startdate  = startdate,
         enddate    = enddate,
@@ -82,10 +85,10 @@ fia.to.psscss <- function(settings,
       query <- paste0(query, " OR bp.name = '", pft$name, "'")
     }
   }
-  pfts <- db.query(query, con = con)
+  pfts <- PEcAn.DB::db.query(query, con = con)
   
   # Convert PFT names to ED2 Numbers
-  data(pftmapping)
+  utils::data(pftmapping)
   for (pft.i in settings$pfts) {
     pft.number <- NULL
     pft.number <- pft.i$constants$num
@@ -109,11 +112,11 @@ fia.to.psscss <- function(settings,
   bad <- pfts$spcd[duplicated(pfts$spcd)]
   if (length(bad) > 0) {
     # Coerce spcds back into species names using data from FIA manual. Makes a more readable warning.
-    symbol.table <- db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
+    symbol.table <- PEcAn.DB::db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
     names(symbol.table) <- tolower(names(symbol.table))
     
     # grab the names where we have bad spcds in the symbol.table, exclude NAs
-    name.list <- na.omit(symbol.table$symbol[symbol.table$spcd %in% bad])
+    name.list <- stats::na.omit(symbol.table$symbol[symbol.table$spcd %in% bad])
     
     PEcAn.logger::logger.severe(paste0("The following species are found in multiple PFTs: ", 
                          paste(name.list[1:min(10, length(name.list))], collapse = ", "), 
@@ -121,8 +124,8 @@ fia.to.psscss <- function(settings,
   }
   
   ## connect to database
-  fia.con <- db.open(settings$database$fia)
-  on.exit(db.close(fia.con), add = TRUE)
+  fia.con <- PEcAn.DB::db.open(settings$database$fia)
+  on.exit(PEcAn.DB::db.close(fia.con), add = TRUE)
   
   ##################
   ##              ##
@@ -137,7 +140,7 @@ fia.to.psscss <- function(settings,
                  " AND p.lat <= ", latmax, " AND p.measyear >= ", min.year, 
                  " AND p.measyear <= ", max.year, " GROUP BY p.cn")
   
-  pss <- db.query(query, con = fia.con)
+  pss <- PEcAn.DB::db.query(query, con = fia.con)
   if (nrow(pss) == 0) {
     PEcAn.logger::logger.severe("No pss data found.")
   }
@@ -195,7 +198,7 @@ fia.to.psscss <- function(settings,
                   " and p.lon < ", lonmax, 
                   " and p.lat >= ", latmin,
                   " and p.lat < ", latmax)
-  css <- db.query(query, con = fia.con)
+  css <- PEcAn.DB::db.query(query, con = fia.con)
   names(css) <- tolower(names(css))
   if (nrow(css) == 0) {
     PEcAn.logger::logger.severe("No FIA data found.")
@@ -232,10 +235,10 @@ fia.to.psscss <- function(settings,
   
   if (length(pft.only) > 0) {
     if (!exists("symbol.table")) {
-      symbol.table <- db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
+      symbol.table <- PEcAn.DB::db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
       names(symbol.table) <- tolower(names(symbol.table))
     }
-    name.list <- na.omit(symbol.table$symbol[symbol.table$spcd %in% pft.only])
+    name.list <- stats::na.omit(symbol.table$symbol[symbol.table$spcd %in% pft.only])
     PEcAn.logger::logger.warn(paste0("The selected PFTs contain the following species for which the FIA database ",
                        "contains no data at ", lat, " and ", lon, ": ", 
                        paste(name.list[1:min(10, length(name.list))], collapse = ", "), "."))
@@ -247,10 +250,10 @@ fia.to.psscss <- function(settings,
   
   if (length(fia.only) > 0) {
     if (!exists("symbol.table")) {
-      symbol.table <- db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
+      symbol.table <- PEcAn.DB::db.query("SELECT spcd, \"Symbol\" FROM species where spcd IS NOT NULL", con = con)
       names(symbol.table) <- tolower(names(symbol.table))
     }
-    name.list <- na.omit(symbol.table$symbol[symbol.table$spcd %in% fia.only])
+    name.list <- stats::na.omit(symbol.table$symbol[symbol.table$spcd %in% fia.only])
     name.list <- name.list[name.list != "DEAD"]
     if (length(name.list) > 0) {
       PEcAn.logger::logger.warn(paste0("The FIA database expects the following species at ", lat, " and ", lon, 
@@ -276,7 +279,7 @@ fia.to.psscss <- function(settings,
   css$time[is.na(css$time)]     <- 1
   css$cohort[is.na(css$cohort)] <- 1:sum(is.na(css$cohort))
   css$dbh[is.na(css$dbh)]       <- 1  # assign nominal small dbh to missing
-  density.median                <- median(css$n[which(css$n > 0)])
+  density.median                <- stats::median(css$n[which(css$n > 0)])
   css$n[is.na(css$n) | css$n == 0]    <- density.median
   css$hite <- css$bdead <- css$balive <- css$lai <- rep(0, n.cohort)
   
@@ -306,8 +309,15 @@ fia.to.psscss <- function(settings,
   
   # ----- Write files 
   # Write files locally
-  site.string <- paste0(as.numeric(settings$run$site$id)%/%1e+09, "-", 
-                        as.numeric(settings$run$site$id)%%1e+09)
+  siteid <- tryCatch(
+    as.numeric(settings$run$site$id),
+    warning = function(w)as.character(settings$run$site$id)
+  )
+  if (is.numeric(siteid) && siteid > 1e9) {
+    site.string <- paste0(siteid %/% 1e+09, "-", siteid %% 1e+09)
+  } else {
+    site.string <- siteid
+  }
   if (settings$host$name == "localhost") {
     out.dir.local <- file.path(settings$database$dbfiles, paste0("FIA_ED2_site_", site.string))
   } else {
@@ -322,8 +332,8 @@ fia.to.psscss <- function(settings,
   site.file.local <- file.path(out.dir.local, paste0(prefix.site, ".site"))
   
   dir.create(out.dir.local, showWarnings = F, recursive = T)
-  write.table(pss, pss.file.local, quote = FALSE, row.names = FALSE)
-  write.table(css, css.file.local, quote = FALSE, row.names = FALSE)
+  utils::write.table(pss, pss.file.local, quote = FALSE, row.names = FALSE)
+  utils::write.table(css, css.file.local, quote = FALSE, row.names = FALSE)
   
   site.file.con <- file(site.file.local)
   writeLines(site, site.file.con)
@@ -347,7 +357,7 @@ fia.to.psscss <- function(settings,
   
   # Insert into DB
   for(i in seq_along(files)) {
-    dbfile.input.insert(
+    PEcAn.DB::dbfile.input.insert(
       in.path    = dirname(files[i]),
       in.prefix  = basename(files[i]),
       siteid     = settings$run$site$id,

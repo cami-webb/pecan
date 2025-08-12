@@ -1,11 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
 
 # R Code to convert NetCDF CF met files into MAESPA met files
 
@@ -24,6 +16,7 @@
 ##' @param end_date the end date of the data to be downloaded (will only use the year part of the date)
 ##' @param overwrite should existing files be overwritten
 ##' @param verbose should the function be very verbose
+##' @param ... further arguments, currently ignored
 ##'
 ##' @author Tony Gardella
 met2model.MAESPA <- function(in.path, in.prefix, outfolder, start_date, end_date, 
@@ -79,7 +72,7 @@ met2model.MAESPA <- function(in.path, in.prefix, outfolder, start_date, end_date
       nc <- ncdf4::nc_open(old.file)
       ## convert time to seconds
       sec <- nc$dim$time$vals
-      sec <- udunits2::ud.convert(sec, unlist(strsplit(nc$dim$time$units, " "))[1], "seconds")
+      sec <- PEcAn.utils::ud_convert(sec, unlist(strsplit(nc$dim$time$units, " "))[1], "seconds")
 
       dt <- PEcAn.utils::seconds_in_year(year) / length(sec)
       tstep <- round(86400 / dt)
@@ -107,11 +100,11 @@ met2model.MAESPA <- function(in.path, in.prefix, outfolder, start_date, end_date
         PAR <- PEcAn.data.atmosphere::sw2par(RAD)
       } else {
         # convert
-        PAR <- udunits2::ud.convert(PAR, "mol", "umol")
+        PAR <- PEcAn.utils::ud_convert(PAR, "mol", "umol")
       }
 
       # Convert air temperature to Celsius
-      TAIR <- udunits2::ud.convert(TAIR, "kelvin", "celsius")
+      TAIR <- PEcAn.utils::ud_convert(TAIR, "kelvin", "celsius")
 
       #### ppm. atmospheric CO2 concentration.
       ### Constant from Environ namelist used instead if CA is nonexistent

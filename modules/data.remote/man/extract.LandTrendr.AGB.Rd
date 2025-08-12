@@ -24,6 +24,8 @@ extract.LandTrendr.AGB(site_info, dataset = "median", buffer = NULL,
 
 \item{output_file}{Path to save LandTrendr_AGB_output.RData file containing the 
 output extraction list (see return)}
+
+\item{...}{Additional arguments, currently ignored}
 }
 \value{
 list of two containing the median AGB values per pixel and the corresponding 
@@ -37,10 +39,10 @@ extract.LandTrendr.AGB
 
 # Example 1 - using BETYdb site IDs to extract data
 # Database connection (optional)
-bety <- list(user='bety', password='bety', host='localhost',
-dbname='bety', driver='PostgreSQL',write=TRUE)
-con <- PEcAn.DB::db.open(bety)
-bety$con <- con
+
+con <- PEcAn.DB::db.open(
+  list(user='bety', password='bety', host='localhost',
+  dbname='bety', driver='PostgreSQL',write=TRUE))
 
 site_ID <- c(2000000023,1000025731,676,1000005149) # BETYdb site IDs
 suppressWarnings(site_qry <- glue::glue_sql("SELECT *, ST_X(ST_CENTROID(geometry)) AS lon, 

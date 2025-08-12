@@ -1,6 +1,6 @@
 # Remote execution with PEcAn {#pecan-remote}
 
-Remote execution allows the user to leverage the power and storage of high performance computing clusters, AWS instances, or specially configured virtual machines, but without leaving their local working environment.
+Remote execution allows the user to leverage the power and storage of high performance computing clusters and cloud environments without leaving their local working environment.
 PEcAn uses remote execution primarily to run ecosystem models.
 
 The infrastructure for remote execution lives in the `PEcAn.remote` package (`base/remote` in the PEcAn repository).
@@ -8,16 +8,16 @@ The infrastructure for remote execution lives in the `PEcAn.remote` package (`ba
 This section describes the following:
 
 1. Checking capabilities to connect to the remote machine correctly:
-+ Basics of command line SSH
-+ SSH authentication with keys and passwords
-+ Basics of SSH tunnels, and how they are used in PEcAn
+  - Basics of command line SSH
+  - SSH authentication with keys and passwords
+  - Basics of SSH tunnels, and how they are used in PEcAn
 
 2. Description of PEcAn related tools that control remote execution
-+ Basic remote execution R functions in `PEcAn.remote`
-
-3. SETUP- Configuration Files and settings
-+ Remote model execution configuration in the `pecan.xml` and `config.php`
-+ Additional information about preparing remote servers for execution
+  - Basic remote execution R functions in `PEcAn.remote`
+  
+2. SETUP- Configuration Files and settings
+  - Remote model execution configuration in the `pecan.xml` and `config.php`
+  - Additional information about preparing remote servers for execution
 
 
 ## Basics of SSH
@@ -63,6 +63,14 @@ The public key will be distributed to any remote machines to which you want the 
 On each remote machine, the public key should be added to a list of authorized keys located in the `~/.ssh/authorized_keys` file (on the remote machine).
 The authorized keys list indicates which machines (technically, which keys -- a single machine, and even a single user, can have many keys) are allowed to connect to it.
 This is the system used by all of the PEcAn servers (`pecan1`, `pecan2`, `test-pecan`).
+
+PEcAn provides a handy script for setting up SSH keys. Run:
+
+```sh
+./scripts/sshkey.sh
+```
+
+And follow the instructions.
 
 ## SSH tunneling
 
@@ -166,7 +174,7 @@ For additional functions related to remote file operations and other stuff, see 
 
 ## Remote model execution with PEcAn
 
-The workhorse of remote model execution is the `PEcAn.remote::start.model.runs` function, which distributes execution of each run in a list of runs (e.g. multiple runs in an ensemble) to the local machine or a remote based on the configuration in the PEcAn settings.
+The workhorse of remote model execution is the `PEcAn.workflow::start_model_runs` function, which distributes execution of each run in a list of runs (e.g. multiple runs in an ensemble) to the local machine or a remote based on the configuration in the PEcAn settings.
 
 Broadly, there are three major types of model execution:
 
@@ -308,8 +316,7 @@ will fall back on the older versions install site-library
 
 ```
 install.packages(c('udunits2', 'lubridate'), 
-   configure.args=c(udunits2='--with-udunits2-lib=/project/earth/packages/udunits-2.1.24/lib --with-udunits2-include=/project/earth/packages/udunits-2.1.24/include'),
-   repos='http://cran.us.r-project.org')
+   configure.args=c(udunits2='--with-udunits2-lib=/project/earth/packages/udunits-2.1.24/lib --with-udunits2-include=/project/earth/packages/udunits-2.1.24/include'))
 ```
 
 Finally to install support for both ED and SIPNET:

@@ -1,9 +1,9 @@
-##' @name met.process.stage
-##' @title met.process.stage
+##' met.process.stage
 ##' @export
 ##'
-##' @param input.id
-##' @param raw.id
+##' @param input.id bety db for input format
+##' @param raw.id format id for the raw met data
+##' @param con database connection
 ##'
 ##' @author Elizabeth Cowdery
 met.process.stage <- function(input.id, raw.id, con) {

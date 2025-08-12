@@ -1,7 +1,9 @@
-##' @title Clean_Tucson
-##' @name Clean_Tucson
-##' @description  tree core QAQC
-##' @export
+#' Clean_Tucson
+#'
+#' tree core QAQC
+#'
+#' @param file WinDendro output
+#' @export
 Clean_Tucson <- function(file) {
   lines <- scan(file, character(), sep = "\n")
   split <- strsplit(lines, " ")
@@ -36,15 +38,17 @@ Clean_Tucson <- function(file) {
   return(newfile)
 } # Clean_Tucson
 
-##' @title Read_Tucson
-##' @name Read_Tucson
-##' @export
-##' @description wrapper around read.tucson that loads a whole directory of tree ring files 
-##' and calls a 'clean' function that removes redundant records 
-##' (WinDendro can sometimes create duplicate records when editing)
+#' Read_Tucson
+#'
+#' wrapper around read.tucson that loads a whole directory of tree ring files 
+#' and calls a 'clean' function that removes redundant records 
+#' (WinDendro can sometimes create duplicate records when editing)
+#'
+#' @param folder path to read files from.
+#'  Will read all files at this path matching "TXT", "rwl", or "rw"
+#'
+#' @export
 Read_Tucson <- function(folder) {
-  
-  library(dplR)
   
   filenames <- dir(folder, pattern = "TXT", full.names = TRUE)
   filenames <- c(filenames, dir(folder, pattern = "rwl", full.names = TRUE))
@@ -56,7 +60,7 @@ Read_Tucson <- function(folder) {
   filedata <- list()
   for (file in filenames) {
     file <- Clean_Tucson(file)
-    filedata[[file]] <- read.tucson(file, header = FALSE)
+    filedata[[file]] <- dplR::read.tucson(file, header = FALSE)
   }
   
   return(filedata)

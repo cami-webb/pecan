@@ -1,12 +1,3 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------------------------#
 ##'  select plant id's associated with pft
 ##'
 ##' @title Query species given pft name
@@ -65,7 +56,7 @@ query.pft_species <- function(pft, modeltype = NULL, con) {
 query.pft_cultivars <- function(pft, modeltype = NULL, con) {
 
   pft_tbl <- (dplyr::tbl(con, "pfts")
-    %>% dplyr::filter(name == !!pft, pft_type == "cultivar"))
+    %>% dplyr::filter(.data$name == !!pft, .data$pft_type == "cultivar"))
 
   if (!is.null(modeltype)) {
     pft_tbl <- (pft_tbl
@@ -73,7 +64,7 @@ query.pft_cultivars <- function(pft, modeltype = NULL, con) {
         dplyr::tbl(con, "modeltypes"),
         by = c("modeltype_id" = "id"),
         suffix = c("", ".mt"))
-      %>% dplyr::filter(name.mt == !!modeltype))
+      %>% dplyr::filter(.data$name.mt == !!modeltype))
   }
 
   (pft_tbl
@@ -90,12 +81,12 @@ query.pft_cultivars <- function(pft, modeltype = NULL, con) {
       by=c("specie_id" = "id"),
       suffix=c("", ".sp"))
     %>% dplyr::select(
-      id = cultivar_id,
-      specie_id,
-      genus,
-      species,
-      scientificname,
-      cultivar = name.cv)
+      id = "cultivar_id",
+      "specie_id",
+      "genus",
+      "species",
+      "scientificname",
+      cultivar = "name.cv")
     %>% dplyr::collect())
 }
 

@@ -17,14 +17,14 @@ Obs.data.prepare.MultiSite <- function(obs.path, site.ids) {
   #
   #Filter all the obs just for the sites we are simulating
   point_list$median_AGB <-
-    point_list$median_AGB[[1]] %>% filter(Site_ID %in% site.ids)
+    point_list$median_AGB[[1]] %>% dplyr::filter(.data$Site_ID %in% site.ids)
   point_list$stdv_AGB  <-
-    point_list$stdv_AGB[[1]] %>% filter(Site_ID %in% site.ids)
+    point_list$stdv_AGB[[1]] %>% dplyr::filter(.data$Site_ID %in% site.ids)
   
   #Finding the orders
   site.order <-
     sapply(site.ids, function(x)
-      which(point_list$median_AGB$Site_ID %in% x))  %>% unlist() %>% as.numeric() %>% na.omit()
+      which(point_list$median_AGB$Site_ID %in% x))  %>% unlist() %>% as.numeric() %>% stats::na.omit()
   #Reordering
   point_list$median_AGB <- point_list$median_AGB[site.order, ]
   point_list$stdv_AGB <- point_list$stdv_AGB[site.order, ]
@@ -32,28 +32,28 @@ Obs.data.prepare.MultiSite <- function(obs.path, site.ids) {
   # truning lists to dfs  for both mean and cov
   date.obs <-
     strsplit(names(point_list$median_AGB), "_")[3:length(point_list$median_AGB)] %>%
-    map_chr( ~ .x[2]) %>% paste0(., "/12/31")
+    purrr::map_chr( ~ .x[2]) %>% paste0(., "/12/31")
   
   #Making in a format that we need
   obs.mean <-
     names(point_list$median_AGB)[3:length(point_list$median_AGB)] %>%
-    map(function(namesl) {
+    purrr::map(function(namesl) {
       ((point_list$median_AGB)[[namesl]] %>%
-         map( ~ .x %>% as.data.frame %>% `colnames<-`(c('AbvGrndWood'))) %>%
-         setNames(site.ids[1:length(.)])
+         purrr::map( ~ .x %>% as.data.frame %>% `colnames<-`(c('AbvGrndWood'))) %>%
+         stats::setNames(site.ids[1:length(.)])
       )
-    }) %>% setNames(date.obs)
+    }) %>% stats::setNames(date.obs)
   
   
   
   obs.cov <-
     names(point_list$stdv_AGB)[3:length(point_list$median_AGB)] %>%
-    map(function(namesl) {
+    purrr::map(function(namesl) {
       ((point_list$stdv_AGB)[[namesl]] %>%
-         map(~ (.x) ^ 2 %>% as.matrix()) %>%
-         setNames(site.ids[1:length(.)]))
+         purrr::map(~ (.x) ^ 2 %>% as.matrix()) %>%
+         stats::setNames(site.ids[1:length(.)]))
       
-    }) %>% setNames(date.obs)
+    }) %>% stats::setNames(date.obs)
   
   
   
@@ -67,10 +67,11 @@ Obs.data.prepare.MultiSite <- function(obs.path, site.ids) {
 #'
 #' @param settingPath The Path to the setting that will run SDA
 #' @param ObsPath  Path to the obs data which is expected to be an .Rdata.
+#' @param run.bash.args Shell commands to be run on the remote host before launching the SDA. See examples
 #'
 #' @export
 #' @return This function returns a list of two pieces of information. One the remote path that SDA is running and the PID of the active run.
-#' @example 
+#' @examples 
 #' \dontrun{
 #'  # This example can be found under inst folder in the package
 #'  library(PEcAn.all)
@@ -94,11 +95,12 @@ Obs.data.prepare.MultiSite <- function(obs.path, site.ids) {
 SDA_remote_launcher <-function(settingPath, 
                                ObsPath,
                                run.bash.args){
-
+  
+  future::plan(future::multisession)
   #---------------------------------------------------------------
   # Reading the settings
   #---------------------------------------------------------------
-  settings <- read.settings(settingPath)
+  settings <- PEcAn.settings::read.settings(settingPath)
   my_host <- list(name =settings$host$name , tunnel = settings$host$tunnel, user=settings$host$user)
   local_path <-settings$outdir
   if (is.null(run.bash.args)) run.bash.args <-""
@@ -108,7 +110,7 @@ SDA_remote_launcher <-function(settingPath,
   if (is.null(settings$host$folder)) {
     PEcAn.logger::logger.severe("You need to specify the <folder> tag in the <host> tag inside your pecan xml !")
     PEcAn.logger::logger.severe("The <folder> tag is a path which points to where you want to store/run your sda job on the remote machine. ")
-  } else if (!test_remote(my_host)) {
+  } else if (!PEcAn.remote::test_remote(my_host)) {
     PEcAn.logger::logger.severe("There is something wrong with your tunnel !")
     PEcAn.logger::logger.severe("You can learn more about how to setup your tunnel by checking out the `Remote execution with PEcAn` section in the documentation.")
     
@@ -133,10 +135,10 @@ SDA_remote_launcher <-function(settingPath,
     fname_p2<-""
       }
   
-
+  folder_name<-"SDA"
   folder_name <- paste0(c("SDA",fname_p1,fname_p2), collapse = "_")
   #creating a folder on remote
-  out <- remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"\")"),
+  out <- PEcAn.remote::remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"\")"),
                          host = my_host,
                          user = my_host$user,
                          scratchdir = ".")
@@ -145,7 +147,7 @@ SDA_remote_launcher <-function(settingPath,
   #---------------------------------------------------------------
   # test to see samples.Rdata
   if ("samples.Rdata" %in% list.files(settings$outdir)){
-    remote.copy.to(
+    PEcAn.remote::remote.copy.to(
       my_host,
       paste0(settings$outdir,"//","samples.Rdata"),
       paste0(settings$host$folder,"//",folder_name),
@@ -153,23 +155,44 @@ SDA_remote_launcher <-function(settingPath,
       stderr = FALSE
     )
   } else if("pft" %in% list.dirs(settings$outdir, full.names=F)) {#  test for PFT folder
-    remote.copy.to(
+    PEcAn.remote::remote.copy.to(
       my_host,
       paste0(settings$outdir,"//pft"),
       paste0(settings$host$folder,"//",folder_name,"//pft"),
       delete = FALSE,
       stderr = FALSE
     )
+    
+    # change the pft folder inside the setting
+
+
+    settings$pfts %>%
+      purrr::map('outdir') %>%
+      purrr::walk(function(pft.dir) {
+        settings <<-
+          rapply(settings, function(x)
+            ifelse(
+              x == pft.dir,
+              file.path(settings$host$folder,
+                        folder_name, "pft") ,
+              x
+            ),
+            how = "replace")
+      })
+    
+
+    
   } else {
     #
-    PEcAn.logger::logger.severe("You need to have either PFT folder or sample.Rdata !")
+    
+    PEcAn.logger::logger.severe("You need to have either PFT folder or samples.Rdata !")
   }
   #----------------------------------------------------------------
   # Obs
   #---------------------------------------------------------------
   # testing the obs path and copying over
   # testing to see if the path exsits on remote if not it should exist on local
-  test.remote.obs <- remote.execute.R(
+  test.remote.obs <- PEcAn.remote::remote.execute.R(
     script = paste0("dir.exists(\"/", ObsPath, "\")"),
     host = my_host,
     user = my_host$user,
@@ -179,7 +202,7 @@ SDA_remote_launcher <-function(settingPath,
   # if path is not remote then check for the local
   if (!test.remote.obs) {
     if (file.exists(ObsPath)) {
-      remote.copy.to(
+      PEcAn.remote::remote.copy.to(
         my_host,
         ObsPath,
         paste0(settings$host$folder, "//", folder_name, "//Obs//"),
@@ -195,7 +218,7 @@ SDA_remote_launcher <-function(settingPath,
   # Model binary check
   #---------------------------------------------------------------
 
-  model.binary.path <- remote.execute.R(
+  model.binary.path <- PEcAn.remote::remote.execute.R(
     script = paste0("file.exists(\"/", settings$model$binary, "\")"),
     host = my_host,
     user = my_host$user,
@@ -208,15 +231,16 @@ SDA_remote_launcher <-function(settingPath,
   # met check
   #---------------------------------------------------------------
   # Finding all the met paths in your settings
-  if (is.MultiSettings(settings)){
-    input.paths <-settings %>% map(~.x[['run']] ) %>% map(~.x[['inputs']] %>% map(~.x[['path']])) %>% unlist()
+  if (PEcAn.settings::is.MultiSettings(settings)){
+    input.paths <-settings$run %>% purrr::map(~.x[['inputs']] %>% purrr::map(~.x[['path']])) %>% unlist()
   } else {
-    input.paths <-settings$run$inputs %>% map(~.x[['path']]) %>% unlist()
+    input.paths <-settings$run$inputs %>% purrr::map(~.x[['path']]) %>% unlist()
   }
 
   # see if we can find those mets on remote
-  missing.inputs <- input.paths %>% map_lgl(function(.x) {
-    out <- remote.execute.R(
+  missing.inputs <- input.paths %>%
+    purrr::map_lgl(function(.x) {
+    out <- PEcAn.remote::remote.execute.R(
       script = paste0("file.exists(\"/", .x, "\")"),
       host = my_host,
       user = my_host$user,
@@ -229,35 +253,56 @@ SDA_remote_launcher <-function(settingPath,
   # if there some missing inputs, lets create a folder and transfer them
   if (!any(missing.inputs)){
     #creating a folder on remote
-    out <-remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"//inputs","\")"),
+    out <-PEcAn.remote::remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"//inputs","\")"),
                            host = my_host,
                            user = my_host$user,
                            scratchdir = ".")
   }
   
+  # Do the Rsync to copy all the main dir of the inputs
+  need.copy <- input.paths[!missing.inputs]
+  
+  need.copy.dirs <- dirname(need.copy) %>%
+    unique() %>%
+    purrr::discard(~ .x %in% c("."))
+  
+  
+  need.copy.dirs %>%
+    purrr::walk( ~   #copy over
+                   PEcAn.remote::remote.copy.to(
+                     my_host,
+                     .x,
+                     file.path(settings$host$folder, folder_name, "inputs"),
+                     delete = FALSE,
+                     stderr = FALSE
+                   ))
 
   
-  input.paths[!missing.inputs] %>%
-    walk(function(missing.input){
-      tryCatch(
-        {
+
+  need.copy%>%
+    furrr::future_map(function(missing.input){
+
+       tryCatch({
+         
+         PEcAn.logger::logger.info(paste0("Trying modify the path to the following missing input :", missing.input))
+        
           path.break <- strsplit(missing.input, "/")[[1]]
           #since I'm keeping all the inputs in one folder, I have to combine site folder name with file name
-          fname <-paste0(path.break[length(path.break) - 1], "_", path.break[length(path.break)])
+          fdir <-path.break[length(path.break) - 1]
+          fdir <- ifelse(length(fdir)==0, "", fdir)
+          fname <-path.break[length(path.break)]
           
-          # copy the missing
-          remote.copy.to(
-            my_host,
-            missing.input,
-            paste0(settings$host$folder, "/", folder_name, "/inputs/", fname),
-            delete = FALSE,
-            stderr = FALSE
-          )
-          
+
           #replace the path
-          settings <<-rapply(settings, function(x) ifelse(x==missing.input,
-                                                          paste0(settings$host$folder,"/",folder_name,"/inputs/",fname) ,x),
-                             how = "replace")
+          settings <<-
+            rapply(settings, function(x)
+              ifelse(
+                x == missing.input,
+                file.path(settings$host$folder,
+                          folder_name, "inputs", fdir, fname) ,
+                x
+              ),
+              how = "replace")
           
           
         },
@@ -273,7 +318,7 @@ SDA_remote_launcher <-function(settingPath,
   #---------------------------------------------------------------
   #Create the scratch dir
   remote_settings <- settings
-  out <-remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"//scratch","\")"),
+  out <-PEcAn.remote::remote.execute.R(script=paste0("dir.create(\"/",settings$host$folder,"//",folder_name,"//scratch","\")"),
                          host = my_host,
                          user = my_host$user,
                          scratchdir = ".")
@@ -294,10 +339,10 @@ SDA_remote_launcher <-function(settingPath,
   PEcAn.settings::write.settings(remote_settings, basename(settingPath), save.setting.dir)
   
   # copying over the settings
-  remote.copy.to(
+  PEcAn.remote::remote.copy.to(
     my_host,
     file.path(save.setting.dir, basename(settingPath)),
-    settings$outdir,
+    file.path(settings$host$folder, folder_name),
     delete = FALSE,
     stderr = FALSE
   )
@@ -305,17 +350,17 @@ SDA_remote_launcher <-function(settingPath,
   # Copying over the luncher and sending the command
   #---------------------------------------------------------------
   # copying over the luncher
-  remote.copy.to(
+  PEcAn.remote::remote.copy.to(
     my_host,
-    system.file("RemoteLauncher", "SDA_launcher.R", package = "PEcAn.assim.sequential"),
-    settings$outdir,
+    system.file("RemoteLauncher", "SDA_launcher.R", package = "PEcAnAssimSequential"),
+    file.path(settings$host$folder,folder_name),
     delete = FALSE,
     stderr = FALSE
   )
   
   cmd <- paste0("Rscript ",
-                settings$outdir,"/SDA_launcher.R ", # remote luncher
-                settings$outdir,"/",basename(settingPath), # path to settings
+                remote_settings$outdir,"/SDA_launcher.R ", # remote luncher
+                remote_settings$outdir, "/" ,basename(settingPath), # path to settings
                 " Obs//", basename(ObsPath)
   )
   
@@ -325,12 +370,12 @@ SDA_remote_launcher <-function(settingPath,
    PEcAn.logger::logger.info(cmd)
   
    #create the bash file
-   bashfile<-readLines(system.file("RemoteLauncher", "Run.bash", package = "PEcAn.assim.sequential"))
+   bashfile<-readLines(system.file("RemoteLauncher", "Run.bash", package = "PEcAnAssimSequential"))
    tmpdir <- tempdir()
    unlink(paste0(tmpdir,"/Run.bash")) # delete if there is already one exists
    writeLines(c(bashfile, run.bash.args, cmd), paste0(tmpdir, "/Run.bash"))
    #copy over the bash file
-   remote.copy.to(
+   PEcAn.remote::remote.copy.to(
      my_host,
      paste0(tmpdir,"/Run.bash"),
      paste0(settings$host$folder, "/", folder_name, "/RunBash.sh"),
@@ -353,7 +398,7 @@ SDA_remote_launcher <-function(settingPath,
                                    )
 
    # Let's see what is the job id of the job doing
-   out.job.id<-qsub_get_jobid(out = out.job.id[length(out.job.id)], qsub.jobid = settings$host$qsub.jobid, stop.on.error = stop.on.error)
+   out.job.id<-PEcAn.remote::qsub_get_jobid(out = out.job.id[length(out.job.id)], qsub.jobid = settings$host$qsub.jobid, stop.on.error = stop.on.error)
    
    if (length(out.job.id)==0 | is.null(out.job.id)){
      PEcAn.logger::logger.severe("Something broke the run before it starts!")
@@ -366,19 +411,19 @@ SDA_remote_launcher <-function(settingPath,
   
 }
 
-#' Remote.Sync.launcher
+#' Remote_Sync_launcher
 #'
 #' @param settingPath Path to your local setting .
 #' @param remote.path Path generated by SDA_remote_launcher which shows the path to your remote SDA run.
 #' @param PID PID generated by SDA_remote_launcher which shows the active PID running your SDA job.
 #'
 #' @export
-Remote.Sync.launcher <- function(settingPath, remote.path, PID) {
+Remote_Sync_launcher <- function(settingPath, remote.path, PID) {
   
-  settings <- read.settings(settingPath)
+  settings <- PEcAn.settings::read.settings(settingPath)
   
   system(paste0("nohup Rscript ",
-                system.file("RemoteLauncher", "Remote_sync.R", package = "PEcAn.assim.sequential")," ",
+                system.file("RemoteLauncher", "Remote_sync.R", package = "PEcAnAssimSequential")," ",
                 settingPath, " ", 
                 remote.path, " ",
                 PID,
@@ -399,7 +444,7 @@ Remote.Sync.launcher <- function(settingPath, remote.path, PID) {
 #' @export 
 #'
 #' 
-#' @example 
+#' @examples  
 #' \dontrun{
 #'  library(tictoc)
 #'  tic("Analysis")
@@ -415,8 +460,8 @@ alltocs <-function(fname="tocs.csv") {
     get(".Data",
         get(".tictoc", envir = baseenv())) %>%
       seq_along() %>%
-      map_dfr(function(x) {
-        s <- toc(quiet = T, log = T)
+      purrr::map_dfr(function(x) {
+        s <- tictoc::toc(quiet = T, log = T)
         dfout <- data.frame(
           Task = s$msg %>%  as.character(),
           TimeElapsed = round(s$toc - s$tic, 1),
@@ -424,11 +469,10 @@ alltocs <-function(fname="tocs.csv") {
         )
         return(dfout)
       }) %>%
-      mutate(ExecutionTimeP = c(min(TimeElapsed), diff(TimeElapsed))) %>%
-      write.table(
+      dplyr::mutate(ExecutionTimeP = c(min(.data$TimeElapsed), diff(.data$TimeElapsed))) %>%
+      utils::write.table(
         file = fname,
         append = T,
-        sep = ",",
         row.names = F,
         col.names = F
       )

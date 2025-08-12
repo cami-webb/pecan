@@ -52,10 +52,10 @@ if ($authentication) {
 					<?php foreach ($_REQUEST as $k => $v) {
 						if (is_array($v)) {
 							foreach($v as $x) {
-								echo "<input type=\"hidden\" name=\"${k}[]\" value=\"${x}\" />\n";
+								echo "<input type=\"hidden\" name=\"{$k}[]\" value=\"{$x}\" />\n";
 							}
 						} else {
-							echo "<input type=\"hidden\" name=\"${k}\" value=\"${v}\" />\n";
+							echo "<input type=\"hidden\" name=\"{$k}\" value=\"{$v}\" />\n";
 						}
 					} ?>
 				</form>
@@ -64,10 +64,10 @@ if ($authentication) {
 					<?php foreach ($_REQUEST as $k => $v) {
 						if (is_array($v)) {
 							foreach($v as $x) {
-								echo "<input type=\"hidden\" name=\"${k}[]\" value=\"${x}\" />\n";
+								echo "<input type=\"hidden\" name=\"{$k}[]\" value=\"{$x}\" />\n";
 							}
 						} else {
-							echo "<input type=\"hidden\" name=\"${k}\" value=\"${v}\" />\n";
+							echo "<input type=\"hidden\" name=\"{$k}\" value=\"{$v}\" />\n";
 						}
 					} ?>
 				</form>
@@ -80,9 +80,9 @@ if ($authentication) {
 <p>
   <a href="https://pecan.gitbooks.io/pecan-documentation/content/" target="_blank">Documentation</a>
   <br>
-  <a href="https://join.slack.com/t/pecanproject/shared_invite/enQtMzkyODUyMjQyNTgzLWEzOTM1ZjhmYWUxNzYwYzkxMWVlODAyZWQwYjliYzA0MDA0MjE4YmMyOTFhMjYyMjYzN2FjODE4N2Y4YWFhZmQ" target="_blank">Chat Room</a>
+  <a href="https://join.slack.com/t/pecanproject/shared_invite/enQtMzkyODUyMjQyNTgzLWEzOTM1ZjhmYWUxNzYwYzkxMWVlODAyZWQwYjliYzA0MDA0MjE4YmMyOTFhMjYyMjYzN2FjODE4N2Y4YWFhZmQ" target="_blank">Slack Channel</a>
   <br>
-  <a href="http://pecanproject.github.io/Report_an_issue.html" target="_blank">Bug Report</a>
+  <a href="https://github.com/PecanProject/pecan/issues/new/choose" target="_blank">Bug Report</a>
 </p>
 			</div>
 			<div id="output"><?php echo $_REQUEST['msg']; ?></div>

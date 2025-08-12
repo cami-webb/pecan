@@ -1,62 +1,54 @@
-#-------------------------------------------------------------------------------
-# Copyright (c) 2012 University of Illinois, NCSA.
-# All rights reserved. This program and the accompanying materials
-# are made available under the terms of the 
-# University of Illinois/NCSA Open Source License
-# which accompanies this distribution, and is available at
-# http://opensource.ncsa.illinois.edu/license.html
-#-------------------------------------------------------------------------------
-
-##' Read model output
-##'
-##' Reads the output of a single model run
-##'
-##' Generic function to convert model output from model-specific format to 
-##' a common PEcAn format. This function uses MsTMIP variables except that units of
-##'  (kg m-2 d-1)  are converted to kg ha-1 y-1. Currently this function converts
-##' Carbon fluxes: GPP, NPP, NEE, TotalResp, AutoResp, HeteroResp,
-##' DOC_flux, Fire_flux, and Stem (Stem is specific to the BioCro model)
-##' and Water fluxes: Evaporation (Evap), Transpiration (TVeg),
-##' surface runoff (Qs), subsurface runoff (Qsb), and rainfall (Rainf).
-##' For more details, see the [MsTMIP
-##' variables](http://nacp.ornl.gov/MsTMIP_variables.shtml)
-##' documentation.
-##'
-##' @param runid the ID distinguishing the model run. Can be omitted
-##'   if `ncfiles` is set.
-##' @param outdir the directory that the model's output was sent to.
-##'   Can be omitted if `ncfiles` is set.
-##' @param variables Character vector of variables to be read from
-##'   model output. Default = `"GPP"`. If `NULL`, try to read all
-##'   variables in output file..
-##' @param dataframe Logical: if TRUE, will return output in a
-##'   `data.frame` format with a posix column. Useful for
-##'   [PEcAn.benchmark::align.data()] and plotting.
-##' @param pft.name character string, name of the plant functional
-##'   type (PFT) to read PFT-specific output. If `NULL` no
-##'   PFT-specific output will be read even the variable has PFT as a
-##'   dimension.
-##' @param ncfiles Custom character vector of full paths to NetCDF
-##'   files. If `NULL` (default), this list is constructed
-##'   automatically by looking for `YYYY.nc` files in
-##'   `file.path(outdir, runid)`.
-##' @param verbose Logical. If `TRUE`, print status as every year and
-##'   variable is read, as well as all NetCDF diagnostics (from
-##'   `verbose` argument to, e.g., [ncdf4::nc_open()]) (default =
-##'   `FALSE`).
-##' @param print_summary Logical. If `TRUE` (default), calculate and
-##'   print a summary of the means of each variable for each year.
-##' @param start.year,end.year first and last year of output to read.
-##'   Specify as a date-time (only the year portion is used) or as a
-##'   four-digit number or string. If `NA`, reads all years found in
-##'   `outdir`.
-##' @return If `dataframe = FALSE`, a vector of output variables. If
-##'   `dataframe = TRUE`, a `data.frame` of output variables with
-##'   POSIXct timestamps added (`posix` column). The `posix` column
-##'   is in seconds after January 1 of `start.year`, or 1970 if
-##'   `start.year` is not provided.
-##' @export
-##' @author Michael Dietze, David LeBauer, Alexey Shiklomanov
+#' Read model output
+#'
+#' Reads the output of a single model run
+#'
+#' Generic function to convert model output from model-specific format to
+#' a common PEcAn format. This function uses MsTMIP variables except that units of
+#'  (kg m-2 d-1)  are converted to kg ha-1 y-1. Currently this function converts
+#' Carbon fluxes: GPP, NPP, NEE, TotalResp, AutoResp, HeteroResp,
+#' DOC_flux, Fire_flux, and Stem (Stem is specific to the BioCro model)
+#' and Water fluxes: Evaporation (Evap), Transpiration (TVeg),
+#' surface runoff (Qs), subsurface runoff (Qsb), and rainfall (Rainf).
+#'
+#' For more details, see the [MsTMIP
+#' variables](http://nacp.ornl.gov/MsTMIP_variables.shtml)
+#' documentation.
+#'
+#' @param runid the ID distinguishing the model run. Can be omitted
+#'   if `ncfiles` is set.
+#' @param outdir the directory that the model's output was sent to.
+#'   Can be omitted if `ncfiles` is set.
+#' @param variables Character vector of variables to be read from
+#'   model output. Default = `"GPP"`. If `NULL`, try to read all
+#'   variables in output file..
+#' @param dataframe Logical: if TRUE, will return output in a
+#'   `data.frame` format with a posix column. Useful for
+#'   `PEcAn.benchmark::align.data` and plotting.
+#' @param pft.name character string, name of the plant functional
+#'   type (PFT) to read PFT-specific output. If `NULL` no
+#'   PFT-specific output will be read even the variable has PFT as a
+#'   dimension.
+#' @param ncfiles Custom character vector of full paths to NetCDF
+#'   files. If `NULL` (default), this list is constructed
+#'   automatically by looking for `YYYY.nc` files in
+#'   `file.path(outdir, runid)`.
+#' @param verbose Logical. If `TRUE`, print status as every year and
+#'   variable is read, as well as all NetCDF diagnostics (from
+#'   `verbose` argument to, e.g., [ncdf4::nc_open()]) (default =
+#'   `FALSE`).
+#' @param print_summary Logical. If `TRUE` (default), calculate and
+#'   print a summary of the means of each variable for each year.
+#' @param start.year,end.year first and last year of output to read.
+#'   Specify as a date-time (only the year portion is used) or as a
+#'   four-digit number or string. If `NA`, reads all years found in
+#'   `outdir`.
+#' @return If `dataframe = FALSE`, a vector of output variables. If
+#'   `dataframe = TRUE`, a `data.frame` of output variables with
+#'   POSIXct timestamps added (`posix` column). The `posix` column
+#'   is in seconds after January 1 of `start.year`, or 1970 if
+#'   `start.year` is not provided.
+#' @export
+#' @author Michael Dietze, David LeBauer, Alexey Shiklomanov
 read.output <- function(runid, outdir,
                         start.year = NA,
                         end.year = NA,
@@ -218,7 +210,7 @@ read.output <- function(runid, outdir,
       }
 
       if (dataframe) {
-        seconds <- udunits2::ud.convert(
+        seconds <- ud_convert(
           nc$dim$time$vals,
           nc$dim$time$units,
           paste("seconds since", run_origin)
@@ -236,7 +228,7 @@ read.output <- function(runid, outdir,
         # check if the variable has 'pft' as a dimension
         if ("pft" %in% sapply(nc$var[[v]]$dim, `[[`, "name")) {
           # means there are PFT specific outputs we want
-          # the variable *PFT* in standard netcdfs has *pft* dimension, 
+          # the variable *PFT* in standard netcdfs has *pft* dimension,
           # numbers as values, and full pft names as an attribute
           # parse pft names and match the requested
           pft.string <- ncdf4::ncatt_get(nc, "PFT", verbose = verbose)
@@ -260,11 +252,11 @@ read.output <- function(runid, outdir,
             }
           }
         } # end of per-pft read
-        
+
         # Dropping attempt to provide more sensible units because of graph unit errors,
         # issue #792
         # if (v %in% c(cflux, wflux)) {
-        #   newresult <- udunits2::ud.convert(newresult, 'kg m-2 s-1', 'kg ha-1 yr-1')
+        #   newresult <- ud_convert(newresult, 'kg m-2 s-1', 'kg ha-1 yr-1')
         # }
         result[[v]] <- abind::abind(result[[v]], newresult)
       }
@@ -273,7 +265,7 @@ read.output <- function(runid, outdir,
 
     if (print_summary) {
       result_means <- vapply(result, mean, numeric(1), na.rm = TRUE)
-      result_medians <- vapply(result, median, numeric(1), na.rm = TRUE)
+      result_medians <- vapply(result, stats::median, numeric(1), na.rm = TRUE)
       summary_matrix <- signif(cbind(Mean = result_means, Median = result_medians), 3)
       rownames(summary_matrix) <- names(result)
       PEcAn.logger::logger.info(
