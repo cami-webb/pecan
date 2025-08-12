@@ -26,10 +26,11 @@
 soilgrids_ic_process <- function(settings, dir, overwrite = FALSE, verbose = FALSE) {
   start_time <- proc.time()
   
-  site_info <- settings$run$site %>% 
-    {
-      if (is.list(.) && !is.null(.$id)) list(.) else .
-    } %>% 
+  site_info <- settings$run$site
+  if (is.list(site_info) && !is.null(site_info$id)) {
+    site_info <- list(site_info)
+  }
+  site_info <- site_info %>% 
     purrr::map(function(site) {
       site$lat <- as.numeric(site$lat)
       site$lon <- as.numeric(site$lon)
