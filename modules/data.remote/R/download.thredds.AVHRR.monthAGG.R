@@ -25,10 +25,10 @@
 ##'   outdir = NULL)
 ##' }
 ##' @importFrom foreach %do% %dopar%
-##' @export
+##' @noRd
 ##' @author Bailey Morrison
 ##'
-download_thredds <- function(site_info, years, months, varid, dir_url, data_url,run_parallel = FALSE, outdir = NULL) {
+download_thredds_AVHRR_monthly <- function(site_info, years, months, varid, dir_url, data_url,run_parallel = FALSE, outdir = NULL) {
   
   #until the issues with parallel runs are fixed.
   run_parallel = FALSE
@@ -76,11 +76,11 @@ download_thredds <- function(site_info, years, months, varid, dir_url, data_url,
           # cl <- parallel::makeCluster(ncores, outfile="")
           # doParallel::registerDoParallel(cl)
           # out <- foreach(i = urls, .combine = rbind) %dopar% 
-          #   extract_thredds_nc(site_info = site_info, url_info = i)
+          #   extract_thredds_nc_AVHRR(site_info = site_info, url_info = i)
           # parallel::stopCluster(cl)
         } else {
           out <- foreach::foreach(i = urls, .combine = rbind) %do% 
-            extract_thredds_nc(site_info, url_info = i)
+            extract_thredds_nc_AVHRR(site_info, url_info = i)
           
           # get max LAI for each site instead of all days with missing NA fillers
           test = foreach::foreach(i = unique(out$site_id), .combine = rbind) %do%

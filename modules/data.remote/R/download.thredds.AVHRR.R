@@ -24,10 +24,10 @@
 ##'   outdir = NULL)
 ##' }
 ##' @importFrom foreach %do% %dopar%
-##' @export
+##' @noRd
 ##' @author Bailey Morrison
 ##'
-download_thredds <- function(site_info, dates, varid, dir_url, data_url,run_parallel = FALSE, outdir = NULL) {
+download_thredds_AVHRR <- function(site_info, dates, varid, dir_url, data_url,run_parallel = FALSE, outdir = NULL) {
   
   #until the issues with parallel runs are fixed.
   run_parallel = FALSE
@@ -90,12 +90,12 @@ download_thredds <- function(site_info, dates, varid, dir_url, data_url,run_para
           # cl <- parallel::makeCluster(ncores, outfile="")
           # doParallel::registerDoParallel(cl)
           # out <- foreach(i = urls, .combine = rbind) %dopar% 
-          #   extract_thredds_nc(site_info = site_info, url_info = i)
+          #   extract_thredds_nc_AVHRR(site_info = site_info, url_info = i)
           # parallel::stopCluster(cl)
         } else {
           #start_time <- Sys.time()
           out <- foreach::foreach(j = urls, .combine = rbind) %do% 
-            extract_thredds_nc(site_info, url_info = j)
+            extract_thredds_nc_AVHRR(site_info, url_info = j)
           # end_time <- Sys.time()
           # end_time - start_time
         }
@@ -133,10 +133,10 @@ download_thredds <- function(site_info, dates, varid, dir_url, data_url,run_para
 ##'   site_info = site_info,
 ##'   url = thredds_url)
 ##'}
-##' @export
+##' @noRd
 ##' @author Bailey Morrison
 ##'
-extract_thredds_nc <- function(site_info, url)
+extract_thredds_nc_AVHRR <- function(site_info, url)
 {
   index = regexpr(pattern = "_[0-9]{8}_", url_info)
   date<- as.Date(substr(url_info, index+1, index+8), "%Y%m%d")
