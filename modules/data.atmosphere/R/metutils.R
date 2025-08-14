@@ -69,31 +69,100 @@ get.vpd <- function(rh, temp) {
   ## calculate saturation vapor pressure
   es <- get.es(temp)
   ## calculate vapor pressure deficit
-  return(((100 - rh)/100) * es)
+  return(((100 - rh) / 100) * es)
 } # get.vpd
 
-##' Calculate saturation vapor pressure
-##'
-##' @title get es
-##' @param temp temperature in degrees C
-##' @return saturation vapor pressure in mb
-##' @export
-##' @author David LeBauer
-##' @examples
-##' temp <- -30:30
-##' plot(temp, get.es(temp))
-get.es <- function(temp) {
-  return(6.11 * exp((2500000/461) * (1/273 - 1/(273 + temp))))
-} # get.es
+#' Saturation vapor pressure
+#'
+#' @md
+#' Compute saturation vapor pressure from temperature using one of the
+#' following methods:
+#' - "Magnus" — Alduchov & Eskridge (1996)
+#' - "ClausiusClapeyron" — FAO-56-style with constant L
+#' - "GoffGratch" — Goff & Gratch (1946; over liquid)
+#'
+#' Each method uses different units internally, users can specify units
+#' for both inputs and outputs, with defaults "degC" and "kPa", respectively.
+#' @param temp numeric vector of temperatures
+#' @param method c("Magnus","ClausiusClapeyron","GoffGratch")
+#' @param temp_units input temperature units ("degC","K","degF"), default "degC"
+#' @param out_units output pressure units ("kPa","hPa","Pa","mb"), default "kPa"
+#' @return numeric vector in `out_units`
+#'
+#' @references
+#' Alduchov & Eskridge (1996) J. Appl. Meteor. 35:601–609.
+#' Allen et al. (1998) FAO-56.
+#' Goff & Gratch (1946) Trans. ASHVE 52:95–122.
+#'
+#' @export
+sat_vapor_pressure <- function(
+    temp,
+    method = c("Magnus", "ClausiusClapeyron", "GoffGratch"),
+    temp_units = "degC",
+    out_units = "kPa") {
+  method <- match.arg(method)
+  # normalize common alias
+  if (tolower(out_units) == "mb") out_units <- "hPa"
 
-## TODO: merge SatVapPress with get.es; add option to choose method
+  if (method == "Magnus") {
+    # canonical temp: degC; canonical pressure: kPa
+    Tc <- units::ud_convert(temp, temp_units, "degC")
+    es_kPa <- 0.61078 * exp((17.27 * Tc) / (Tc + 237.3))
+    return(units::ud_convert(es_kPa, "kPa", out_units))
+  }
+
+  if (method == "ClausiusClapeyron") {
+    # canonical temp: degC; canonical pressure: hPa
+    Tc <- units::ud_convert(temp, temp_units, "degC")
+    L <- 2.5e6 # J kg^-1
+    Rv <- 461 # J kg^-1 K^-1
+    es_hPa <- 6.11 * exp((L / Rv) * (1 / 273 - 1 / (273 + Tc)))
+    return(units::ud_convert(es_hPa, "hPa", out_units))
+  }
+
+  if (method == "GoffGratch") {
+    # canonical temp: K; canonical pressure: hPa
+    Tk <- units::ud_convert(temp, temp_units, "K")
+    Tst <- 373.15 # K
+    est <- 1013.246 # hPa at steam point
+    lg10 <- function(z) log10(z)
+    log10_es <- -7.90298 * (Tst / Tk - 1) +
+      5.02808 * lg10(Tst / Tk) -
+      1.3816e-7 * (10^(11.344 * (1 - Tk / Tst)) - 1) +
+      8.1328e-3 * (10^(-3.49149 * (Tst / Tk - 1)) - 1) +
+      lg10(est)
+    es_hPa <- 10^log10_es
+    return(units::ud_convert(es_hPa, "hPa", out_units))
+  }
+
+  PEcAn.logger::logger.severe("Unhandled method: ", method)
+}
+
+# ---- Aliases for backward-compatibility ----
+
+#' @rdname sat_vapor_pressure
+#' @md
+#' @export
+get.es <- function(temp) {
+  sat_vapor_pressure(
+    temp = temp,
+    method = "ClausiusClapeyron",
+    temp_units = "degC",
+    out_units = "hPa"
+  )
+}
+
+#' @rdname sat_vapor_pressure
+#' @md
+#' @export
 SatVapPres <- function(T) {
-  # /estimates saturation vapor pressure (kPa) Goff-Gratch 1946 /input: T = absolute temperature
-  T_st <- 373.15  ##steam temperature (K)
-  e_st <- 1013.25  ##/saturation vapor pressure at steam temp (hPa)
-  return(0.1 * exp(-7.90298 * (T_st/T - 1) + 5.02808 * log(T_st/T) - 1.3816e-07 * (10^(11.344 * (1 - T/T_st)) -
-    1) + 0.0081328 * (10^(-3.49149 * (T_st/T - 1)) - 1) + log(e_st)))
-} # SatVapPres
+  sat_vapor_pressure(
+    temp = T,
+    method = "GoffGratch",
+    temp_units = "K",
+    out_units = "kPa"
+  )
+}
 
 
 ##' Calculate RH from temperature and dewpoint
