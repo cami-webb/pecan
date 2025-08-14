@@ -60,7 +60,6 @@
 #' }
 #' @export
 #' 
-#' @importFrom purrr %>%
 #' @author Dongchen Zhang, Akash
 
 download.ERA5_cds <- function(outfolder, start_date, end_date, 
@@ -82,9 +81,9 @@ download.ERA5_cds <- function(outfolder, start_date, end_date,
   options(timeout=timeout)
   # convert arguments to CDS API specific arguments.
   years <- sort(unique(lubridate::year(seq(lubridate::date(start_date), lubridate::date(end_date), "1 year"))))
-  months <- sort(unique(lubridate::month(seq(lubridate::date(start_date), lubridate::date(end_date), "1 month")))) %>% 
+  months <- sort(unique(lubridate::month(seq(lubridate::date(start_date), lubridate::date(end_date), "1 month")))) |> 
     purrr::map(function(d)sprintf("%02d", d))
-  days <- sort(unique(lubridate::day(seq(lubridate::date(start_date), lubridate::date(end_date), "1 day")))) %>% 
+  days <- sort(unique(lubridate::day(seq(lubridate::date(start_date), lubridate::date(end_date), "1 day")))) |> 
     purrr::map(function(d)sprintf("%02d", d))
   
   # handle time argument: all hours if Null
