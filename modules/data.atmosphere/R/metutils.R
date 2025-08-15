@@ -103,6 +103,17 @@ get.vpd <- function(rh, temp) {
 #' WMO (2014) Guide to Instruments and Methods of Observation (WMO-No. 8), ch. 4.
 #' @md
 #' @author David LeBauer
+#' @examples
+#' # Calculate saturation vapor pressure at 20°C
+#' sat_vapor_pressure(20)
+#' t2es(20)
+#' 
+#' # Using different methods
+#' t2es(c(10, 20, 30), method = "Magnus")
+#' t2es(283.15, temp_units = "K", method = "GoffGratch")
+#' 
+#' # Different output units
+#' t2es(20, out_units = "hPa")
 #' @export
 sat_vapor_pressure <- function(
     temp,
@@ -156,6 +167,12 @@ get.es <- function(temp) {
     temp_units = "degC",
     out_units = "hPa"
   )
+}
+
+#' @rdname sat_vapor_pressure
+#' @export
+t2es <- function(temp, temp_units = "degC", out_units = "kPa", method = "ClausiusClapeyron") {
+  sat_vapor_pressure(temp = temp, temp_units = temp_units, out_units = out_units, method = method)
 }
 
 ##' Calculate RH from temperature and dewpoint
