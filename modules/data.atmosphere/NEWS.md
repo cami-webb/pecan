@@ -2,7 +2,7 @@
 
 * `ERA5_met_process()` can now process ensemble data efficiently in parallel using new option `n_cores`
 * Dependency `ggplot2` is now suggested rather than required. It is used in two vignettes and for optional diagnostic plots from `debias_met_regression`.
-
+* New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
 
 # PEcAn.data.atmosphere 1.9.0
 

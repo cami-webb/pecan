@@ -6,6 +6,7 @@
 ## Changed
 * utility function `zero.bounded.density` is now exported.
 * Roxygen fixes
+* Add CH4 and N2O to standard_vars
 
 
 # PEcAn.utils 1.8.0

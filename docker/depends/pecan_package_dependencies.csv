@@ -681,6 +681,7 @@
 "withr","*","models/sipnet","Suggests",FALSE
 "withr","*","modules/allometry","Suggests",FALSE
 "withr","*","modules/data.atmosphere","Suggests",FALSE
+"withr","*","modules/data.land","Suggests",FALSE
 "xgboost","*","modules/assim.sequential","Suggests",FALSE
 "XML","*","base/workflow","Imports",FALSE
 "XML","*","models/biocro","Imports",FALSE
