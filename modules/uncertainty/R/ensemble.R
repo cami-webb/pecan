@@ -331,7 +331,7 @@ for (input_tag in names(settings$run$inputs)) {
                   input_indices <- input_design[[input_tag]]
 
                  samples[[input_tag]] <- list(
-                 samples = lapply(input_indices, function(idx) input_paths[[idx]])
+                   samples = lapply(input_indices, function(idx) input_paths[[idx]])
                  )
     }
 
