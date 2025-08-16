@@ -52,6 +52,7 @@ parse_desc <- function(path) {
       package = d$get_field("Package"),
       package_dir = dirname(path)),
     remotes = remote_sources,
+    roxygen_version = d$get_field("RoxygenNote"),
     deps = deps)
 }
 
@@ -72,7 +73,9 @@ files <- list.files(
   recursive = TRUE
 )
 # ...but don't do anything with these ones
-ignore <- c("modules/data.mining")
+# TODO consider parsing the active pkg list from Makefile
+# rather than duplicate exclusions here?
+ignore <- c("models/cable", "models/preles", "modules/data.mining")
 files <- files[!(dirname(files) %in% ignore)]
 
 
@@ -83,8 +86,20 @@ deps <- pkgs_parsed |>
   # ignore R version requirements (e.g. "Depends: R (>= 3.2.0)")
   dplyr::filter(package != "R") |>
   dplyr::mutate(is_pecan = grepl("^PEcAn", package)) |>
-  dplyr::select(package, version, needed_by_dir, tidyselect::everything()) |>
-  dplyr::arrange(package, version, needed_by_dir)
+  dplyr::select(package, version, needed_by_dir, tidyselect::everything())
+
+# Add Roxygen, used to build all packages but not declared as a dependency
+roxy <- pkgs_parsed |>
+  purrr::map_dfr(
+    ~c(needed_by_dir = .$mapping$package_dir, version = .$roxygen_version)) |>
+  dplyr::mutate(
+    package = "roxygen2",
+    version = paste("==", version),
+    type = "Roxygen",
+    is_pecan = FALSE)
+deps <- deps |>
+  rbind(roxy) |>
+  dplyr::arrange(package, version, needed_by_dir, .locale = "en_US")
 
 # Save these for use at install time
 write.csv(deps, "docker/depends/pecan_package_dependencies.csv", row.names = FALSE)

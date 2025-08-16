@@ -1,5 +1,14 @@
-#' @title sda.enkf.multisite
-#' @name  sda.enkf.multisite
+#' State Variable Data Assimilation: Ensemble Kalman Filter and Generalized ensemble filter
+#'
+#' Check out SDA_control function for more details on the control arguments.
+#'
+#' Restart mode:  Basic idea is that during a restart (primary case envisioned
+#' as an iterative forecast), a new workflow folder is created and the previous
+#' forecast for the start_time is copied over. During restart the initial run
+#' before the loop is skipped, with the info being populated from the previous
+#' run. The function then dives right into the first Analysis, then continues
+#' on like normal.
+#' 
 #' @author Michael Dietze, Ann Raiho and Alexis Helgeson \email{dietze@@bu.edu}
 #' 
 #' @param settings  PEcAn settings object
@@ -22,11 +31,7 @@
 #' `forceRun` decide if we want to proceed the Bayesian MCMC sampling without observations;
 #' `run_parallel` decide if we want to run the SDA under parallel mode for the `future_map` function;
 #' `MCMC.args` include lists for controling the MCMC sampling process (iteration, nchains, burnin, and nthin.).
-#'
-#’ @details
-#’ Restart mode:  Basic idea is that during a restart (primary case envisioned as an iterative forecast), a new workflow folder is created and the previous forecast for the start_time is copied over. During restart the initial run before the loop is skipped, with the info being populated from the previous run. The function then dives right into the first Analysis, then continues on like normal.
-#' 
-#' @description State Variable Data Assimilation: Ensemble Kalman Filter and Generalized ensemble filter. Check out SDA_control function for more details on the control arguments.
+#' @param ...       Additional arguments, currently ignored
 #' 
 #' @return NONE
 #' @import nimble furrr
@@ -350,17 +355,47 @@ sda.enkf.multisite <- function(settings,
       #reformatting params
       new.params <- sda_matchparam(settings, ensemble.samples, site.ids, nens)
     }
-      #sample met ensemble members
-      #TODO: incorporate Phyllis's restart work
-      #      sample all inputs specified in the settings$ensemble not just met
-      inputs <- PEcAn.settings::papply(conf.settings,function(setting) {
-        PEcAn.uncertainty::input.ens.gen(
-          settings = setting,
-          input = "met",
-          method = setting$ensemble$samplingspace$met$method,
-          parent_ids = NULL 
-        )
-       })
+      
+ 
+  #TODO: incorporate Phyllis's restart work
+  #sample all inputs specified in the settings$ensemble
+  #now looking into the xml
+  samp <- conf.settings$ensemble$samplingspace
+  #finding who has a parent
+  parents <- lapply(samp,'[[', 'parent')
+  #order parents based on the need of who has to be first
+  order <- names(samp)[lapply(parents, function(tr) which(names(samp) %in% tr)) %>% unlist()] 
+  #new ordered sampling space
+  samp.ordered <- samp[c(order, names(samp)[!(names(samp) %in% order)])]
+  #performing the sampling
+  inputs <- vector("list", length(conf.settings))
+  #for the tags specified in the xml, do the sampling for a random site and then replicate the same sample ids for the remaining sites for each ensemble member 
+  for (i in seq_along(samp.ordered)) {
+    random_site <- sample(1:length(conf.settings),1)
+    if (is.null(inputs[[random_site]])) {
+      inputs[[random_site]] <- list() 
+    }
+    input_tag<-names(samp.ordered)[i]
+    #call the function responsible for generating the ensemble for the random site
+    inputs[[random_site]][[input_tag]] <- PEcAn.uncertainty::input.ens.gen(settings=conf.settings[[random_site]],
+                                                        input=input_tag,
+                                                        method=samp.ordered[[i]]$method,
+                                                        parent_ids=NULL)
+    #replicate the same ids for the remaining sites
+    for (s in seq_along(conf.settings)) {
+      if (s!= random_site) {
+        if (is.null(inputs[[s]])) {
+          inputs[[s]] <- list() 
+        }
+        input_path <- conf.settings[[s]]$run$inputs[[tolower(input_tag)]]$path
+        inputs[[s]][[input_tag]]$ids<-inputs[[random_site]][[input_tag]]$ids
+        inputs[[s]][[input_tag]]$samples<- input_path[inputs[[random_site]][[input_tag]]$ids]
+      }
+    }
+  }
+  
+      
+
   ###------------------------------------------------------------------------------------------------###
   ### loop over time                                                                                 ###
   ###------------------------------------------------------------------------------------------------###
@@ -375,7 +410,7 @@ sda.enkf.multisite <- function(settings,
         #for next time step split the met if model requires
         #-Splitting the input for the models that they don't care about the start and end time of simulations and they run as long as their met file.
         inputs.split <- metSplit(conf.settings, inputs, settings, model, no_split = FALSE, obs.times, t, nens, restart_flag = FALSE, my.split_inputs)
-        
+    
         #---------------- setting up the restart argument for each site separately and keeping them in a list
         restart.list <-
           furrr::future_pmap(list(out.configs, conf.settings %>% `class<-`(c("list")), params.list, inputs.split),
@@ -407,9 +442,8 @@ sda.enkf.multisite <- function(settings,
         X <- X
       }else{
         if (control$debug) browser()
-        out.configs <- conf.settings %>%
-          `class<-`(c("list")) %>%
-          furrr::future_map2(restart.list, function(settings, restart.arg) {
+        
+        out.configs <-furrr::future_pmap(list(conf.settings %>% `class<-`(c("list")),restart.list, inputs), function(settings, restart.arg, inputs) {
             # Loading the model package - this is required bc of the furrr
             library(paste0("PEcAn.",settings$model$type), character.only = TRUE)
             # wrtting configs for each settings - this does not make a difference with the old code
@@ -420,10 +454,18 @@ sda.enkf.multisite <- function(settings,
               model = settings$model$type,
               write.to.db = settings$database$bety$write,
               restart = restart.arg,
+              samples=inputs,
               rename = TRUE
             )
           }) %>%
           stats::setNames(site.ids)
+        
+        #if it's a rabbitmq job sumbmission, we will first copy and paste the whole run folder within the SDA to the remote host.
+        if (!is.null(settings$host$rabbitmq)) {
+          settings$host$rabbitmq$prefix <- paste0(obs.year, ".nc")
+          cp2cmd <- gsub("@RUNDIR@", settings$host$rundir, settings$host$rabbitmq$cp2cmd)
+          try(system(cp2cmd, intern = TRUE))
+        }
         
         #I'm rewriting the runs because when I use the parallel approach for writing configs the run.txt will get messed up; because multiple cores want to write on it at the same time.
         runs.tmp <- list.dirs(rundir, full.names = F)
@@ -432,7 +474,11 @@ sda.enkf.multisite <- function(settings,
         paste(file.path(rundir, 'runs.txt'))  ## testing
         Sys.sleep(0.01)                       ## testing
         if(control$parallel_qsub){
-          PEcAn.remote::qsub_parallel(settings, files=PEcAn.remote::merge_job_files(settings, control$jobs.per.file), prefix = paste0(obs.year, ".nc"))
+          if (is.null(control$jobs.per.file)) {
+            PEcAn.remote::qsub_parallel(settings, prefix = paste0(obs.year, ".nc"))
+          } else {
+            PEcAn.remote::qsub_parallel(settings, files=PEcAn.remote::merge_job_files(settings, control$jobs.per.file), prefix = paste0(obs.year, ".nc"))
+          }
         }else{
           PEcAn.workflow::start_model_runs(settings, write=settings$database$bety$write)
         }
@@ -496,7 +542,7 @@ sda.enkf.multisite <- function(settings,
       ###-------------------------------------------------------------------###---- 
       #To trigger the analysis function with free run, you need to first specify the control$forceRun as TRUE,
       #Then specify the settings$state.data.assimilation$scalef as 0, and settings$state.data.assimilation$free.run as TRUE.
-      if (!is.null(obs.mean[[t]][[1]]) | as.logical(settings$state.data.assimilation$free.run) & control$forceRun) {
+      if (!is.null(obs.mean[[t]][[1]]) | (as.logical(settings$state.data.assimilation$free.run) & control$forceRun)) {
         # TODO: as currently configured, Analysis runs even if all obs are NA, 
         #  which clearly should be triggering the `else` of this if, but the
         #  `else` has not been invoked in a while an may need updating
@@ -697,8 +743,7 @@ sda.enkf.multisite <- function(settings,
       colnames(analysis) <- colnames(X)
       ##### Mapping analysis vectors to be in bounds of state variables
       for(i in 1:ncol(analysis)){
-        int.save <- state.interval[which(startsWith(colnames(analysis)[i],
-                                                    var.names)),]
+        int.save <- state.interval[which(colnames(analysis)[i]==var.names),]
         analysis[analysis[,i] < int.save[1],i] <- int.save[1]
         analysis[analysis[,i] > int.save[2],i] <- int.save[2]
       }
@@ -745,6 +790,7 @@ sda.enkf.multisite <- function(settings,
       system2(sendmail, c("-f", paste0("\"", control$send_email$from, "\""), paste0("\"", control$send_email$to, "\""), "<", mailfile))
       unlink(mailfile)
     }
+      gc()
     # useful for debugging to keep .nc files for assimilated years. T = 2, because this loops removes the files that were run when starting the next loop
 #    if (keepNC && t == 1){
 #      unlink(list.files(outdir, "*.nc", recursive = TRUE, full.names = TRUE))
@@ -752,3 +798,4 @@ sda.enkf.multisite <- function(settings,
       ## MCD: I commented the above "if" out because if you are restarting from a previous forecast, this might delete the files in that earlier folder
   } ### end loop over time
 } # sda.enkf
+      

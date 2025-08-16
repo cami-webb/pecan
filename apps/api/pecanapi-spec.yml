@@ -18,8 +18,8 @@ info:
   contact:
     email: "pecanproj@gmail.com"
   license:
-    name: University of Illinois/NCSA Open Source License
-    url: https://opensource.org/licenses/NCSA
+    name: BSD-3
+    url: https://opensource.org/license/bsd-3-clause
 externalDocs:
   description: Find out more about PEcAn Project
   url: https://pecanproject.github.io/
@@ -1037,7 +1037,7 @@ paths:
       parameters:
         - in: query
           name: pft_id
-          description: If provided, returns all posteriors for the provided model_id
+          description: If provided, returns all posteriors for the provided pft_id
           required: false
           schema:
             type: string
@@ -1131,14 +1131,14 @@ paths:
             type: string
       responses:
         '200':
-          description: Contents of the desired input file  
+          description: Contents of the desired posterior file  
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
         '400':
-          description: Bad request. Input ID points to directory & filename is not specified
+          description: Bad request. Posterior ID points to directory & filename is not specified
         '401':
           description: Authentication required
         '403':
