@@ -28,8 +28,9 @@ run.write.configs <- function(settings, input_design, write = TRUE,
   
   if(is.null(input_design)) {
     stop("`input_design` is required and must not be NULL.")
-     }
-     ## Skip database connection if settings$database is NULL or write is False
+  }
+
+  ## Skip database connection if settings$database is NULL or write is False
   if (!isTRUE(write) && is.null(settings$database)) {
     PEcAn.logger::logger.info("Not writing this run to database, so database connection skipped")
     con <- NULL  # Set con to NULL to avoid errors in subsequent code
