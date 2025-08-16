@@ -1,22 +1,21 @@
 Package: PEcAn.data.atmosphere
 Type: Package
 Title: PEcAn Functions Used for Managing Climate Driver Data
-Version: 1.8.0.9000
-Authors@R: c(
-    person("Mike", "Dietze", role = c("aut"),
-        email = "dietze@bu.edu"),
-    person("David", "LeBauer", role = c("aut", "cre"),
-        email = "dlebauer@email.arizona.edu"),
-    person("Carl", "Davidson", role = c("aut"),
-        email = "davids14@illinois.edu"),
-    person("Rob", "Kooper", role = c("aut"),
-        email = "kooper@illinois.edu"),
-    person("Deepak", "Jaiswal", role = c("aut"),
-        email = "djaiswal@djaiswal.edu"),
-    person("Chris", "Black", role = c("ctb"),
-        email = "chris@ckblack.org",
-        comment = c(ORCID="https://orcid.org/0000-0001-8382-298X")),
- person("University of Illinois, NCSA", role = c("cph")))
+Version: 1.9.1
+Authors@R: c(person("Mike", "Dietze", role = c("aut"),
+                     email = "dietze@bu.edu"),
+             person("David", "LeBauer", role = c("aut", "cre"),
+                     email = "dlebauer@email.arizona.edu"),
+             person("Carl", "Davidson", role = c("aut"),
+                     email = "davids14@illinois.edu"),
+             person("Rob", "Kooper", role = c("aut"),
+                     email = "kooper@illinois.edu"),
+             person("Deepak", "Jaiswal", role = c("aut"),
+                     email = "djaiswal@djaiswal.edu"),
+             person("Chris", "Black", role = c("ctb"),
+                    email = "chris@ckblack.org",
+                    comment = c(ORCID="https://orcid.org/0000-0001-8382-298X")),
+             person("University of Illinois, NCSA", role = c("cph")))
 Description: The Predictive Ecosystem Carbon Analyzer (PEcAn) is a scientific
     workflow management tool that is designed to simplify the management of
     model parameterization, execution, and analysis. The PECAn.data.atmosphere
@@ -30,8 +29,8 @@ Imports:
     arrow,
     curl,
     dplyr (>= 0.8.1),
+    foreach,
     geonames (> 0.998),
-    ggplot2,
     glue,
     httr,
     jsonlite,
@@ -59,14 +58,17 @@ Imports:
     tidyselect,
     truncnorm,
     units,
+    utils,
     XML (>= 3.98-1.4),
     xts,
     zoo
 Suggests:
     doParallel,
-    foreach,
+    doSNOW,
     furrr,
     future,
+    getPass,
+    ggplot2,
     knitr,
     mockery,
     parallel,

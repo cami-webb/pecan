@@ -1,10 +1,12 @@
-# PEcAn.utils 1.8.0.9000
+# PEcAn.utils 1.8.1
 
 ## License change
 * PEcAn.utils is now distributed under the BSD three-clause license instead of the NCSA Open Source license.
 
-## Added
+## Changed
 * utility function `zero.bounded.density` is now exported.
+* Roxygen fixes
+* Add CH4 and N2O to standard_vars
 
 
 # PEcAn.utils 1.8.0

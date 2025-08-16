@@ -1,4 +1,10 @@
-# PEcAn.data.atmosphere 1.8.0.9000
+# PEcAn.data.atmosphere 1.9.1
+
+* `ERA5_met_process()` can now process ensemble data efficiently in parallel using new option `n_cores`
+* Dependency `ggplot2` is now suggested rather than required. It is used in two vignettes and for optional diagnostic plots from `debias_met_regression`.
+* New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
+
+# PEcAn.data.atmosphere 1.9.0
 
 ## Fixed
 
@@ -9,6 +15,17 @@
 ## Changed
 * Removed `sitename` and `username` from the formal arguments of `download.NOAA_GEFS`.
 	Before they were silently ignored, now they're treated as part of `...` (which is also ignored!).
+
+## Changed
+
+* Functions that take argument `site_id` now accept strings as well as BETYdb numeric IDs. 
+* `download.ERA5.old` renamed to `download.ERA5_cds`
+
+## Removed
+
+* Helper function `db.site.lat.lon` has been removed. Users should use `PEcAn.DB::query.site(id, con)[c("lat", "lon")]` instead [@Sweetdevil144, #3308]
+* Removed `browndog.net`; the Browndog service is defunct.
+
 
 # PEcAn.data.atmosphere 1.8.0
 
@@ -38,7 +55,6 @@
 ## Removed
 
 *  Helper function `robustly` has moved to package PEcAn.utils [@meetagrawal, #3096]
-*  Helper function `db.site.lat.lon` has been removed. Users should use `PEcAn.DB::query.site(id, con)[c("lat", "lon")]` instead [@Sweetdevil144, #3308]
 
 
 # PEcAn.data.atmosphere 1.7.1
