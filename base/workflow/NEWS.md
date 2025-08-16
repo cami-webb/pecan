@@ -1,3 +1,5 @@
+- Major update to joint ensemble sampling: now uses a shared set of parameter sample indices across sites and PFTs.
+- The default ensemble sampling method has changed from "uniform" to "random".
 # PEcAn.workflow 1.9.0
 
 * PEcAn.workflow is now distributed under the BSD 3-clause license instead of the NCSA Open Source license.
