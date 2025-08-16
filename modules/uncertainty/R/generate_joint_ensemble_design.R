@@ -3,8 +3,8 @@
 # (e.g., meteorology, parameters) to preserve spatial correlation and enable 
 # meaningful multi-site Sobol sensitivity analysis.
 
-generate_joint_ensemble_design <- function(settings, ensemble_size, 
-                                           ens.sample.method = "uniform") {
+generate_joint_ensemble_design <- function(settings, ensemble_size ) {
+  ens.sample.method <- settings$ensemble$samplingspace$parameters$method
   design_matrix <- data.frame()
   sampled_inputs <- list()
   posterior.files = rep(NA, length(settings$pfts))
