@@ -83,7 +83,7 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
                                  method = "random", param.names = NULL, ...) {
   
   if (is.null(method)) {
-    PEcAn.logger::logger.info("No sampling method supplied, defaulting to uniform random sampling")
+    PEcAn.logger::logger.info("No sampling method supplied, defaulting to random sampling")
     method <- "random"
   }
   
