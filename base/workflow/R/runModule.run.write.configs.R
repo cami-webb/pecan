@@ -13,7 +13,7 @@ runModule.run.write.configs <- function(settings, overwrite = TRUE, input_design
       PEcAn.logger::logger.warn("Existing runs.txt file will be removed.")
       unlink(file.path(settings$rundir, "runs.txt"))
     }
-    if(is.null(input_design)){
+    if (is.null(input_design)) {
        ensemble_size <- settings[[1]]$ensemble$size
        input_design <- PEcAn.uncertainty::generate_joint_ensemble_design(settings=settings[[1]],ensemble_size=ensemble_size)
       }
