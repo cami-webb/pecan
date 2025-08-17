@@ -163,7 +163,8 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
            same.i <- sample(nrow(pft.samples[[pft.i]][[1]]), ensemble.size, replace = TRUE)
         }
         else {
-            stop("Sampling method ", method, "is not recognized")}
+            stop("Sampling method ", method, "is not recognized")
+        }
         
       }
       
