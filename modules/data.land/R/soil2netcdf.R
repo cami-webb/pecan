@@ -81,7 +81,7 @@ soil2netcdf <- function(soil.data, new.file){
   
   ## add data
   for (i in seq_along(ncvar)) {
-    if(is.null(soil.data[[i]]) || (length(soil.data[[i]]) == 1 && is.na(soil.data[[i]]))) next
+    if(is.null(soil.data[[i]]) || all(is.na(soil.data[[i]]))) next
     ncdf4::ncvar_put(nc, ncvar[[i]], soil.data[[i]]) 
   }
   
