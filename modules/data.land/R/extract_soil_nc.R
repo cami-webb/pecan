@@ -1,18 +1,19 @@
 #' Extract soil data from gssurgo
+#' @details This function takes a single lat/lon point and creates a spatial grid 
+#' around it for sampling soil variability. The grid_size parameter determines 
+#' how many grid points (grid_size x grid_size) are created around the center point.
 #'
 #' @param outdir Output directory for writing down the netcdf file
-#' @param lat Latitude 
-#' @param lon Longitude
+#' @param lat Latitude of center point (single numeric value)
+#' @param lon Longitude of center point (single numeric value) 
 #' @param size Ensemble size
-#' @param grid_size Size of the spatial sampling grid (default: 3)
+#' @param grid_size Size of the spatial sampling grid around the center point (default: 3)
 #' @param grid_spacing Spacing between grid cells in meters (default: 10)
-#' @param depths  Standard set of soil depths in m to create the ensemble of soil profiles with.
+#' @param depths Standard set of soil depths in m to create the ensemble of soil profiles with.
 #'
 #' @return It returns the address for the generated soil netcdf file
 #'
 #' @importFrom rlang .data
-#' @importFrom sf st_as_sf st_transform
-#' @importFrom terra rast crds
 #' @examples
 #' \dontrun{
 #'    outdir  <- "~/paleon/envTest"
@@ -23,15 +24,16 @@
 #' @author Hamze Dokoohaki and Akash
 #' @export
 #' 
-extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spacing=10, depths=c(0.15,0.30,0.60)){
+extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spacing=10, depths=c(0.15,0.30,0.60)){
   # I keep all the ensembles here 
   all.soil.ens <-list()
-  
-  # Grid-based spatial sampling (via WFS queries)
+
+  # Grid-based spatial sampling around the center point (via WFS queries)
+  # This creates a grid_size x grid_size sampling grid centered on lat/lon
   proj_crs <- sf::st_crs("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs")
   wgs84_crs <- sf::st_crs(4326)
   
-  # Convert center lat/lon to projected coordinates
+  # Convert single center lat/lon to projected coordinates
   point_sf <- sf::st_sfc(sf::st_point(c(lon, lat)), crs = wgs84_crs)
   point_proj <- sf::st_transform(point_sf, proj_crs)
   coords_proj <- sf::st_coordinates(point_proj)
@@ -56,8 +58,10 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
   grid_wgs84 <- sf::st_transform(grid_sf, wgs84_crs)
   grid_coords_wgs84 <- sf::st_coordinates(grid_wgs84)
   
+  # Query gSSURGO for each grid point to capture spatial variability
   mukeys_all <- c()
   for (i in seq_len(nrow(grid_coords_wgs84))) {
+    # Extract coordinates for this grid point (not user input)
     this_lon <- grid_coords_wgs84[i, 1]
     this_lat <- grid_coords_wgs84[i, 2]
     
@@ -92,25 +96,39 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
     
     # mukey extraction with error recovery
     mukey_str <- tryCatch({
-      result <- XML::xpathApply(
-        doc = XML::xmlParse(temp_file),
-        path = "//MapUnitKeyList",
-        fun = XML::xmlValue)
-      if (is.list(result)) result[[1]] else result
-    }, error = function(e) {
       xml_doc <- XML::xmlParse(temp_file)
-      all_text <- XML::xpathSApply(xml_doc, "//text()", XML::xmlValue)
-      mukey_candidates <- all_text[grepl("^[0-9,]+$", all_text)]
-      if (length(mukey_candidates) > 0) mukey_candidates[1] else NULL
+      mapunit_nodes <- XML::getNodeSet(xml_doc, "//MapUnitKeyList")
+      
+      if (length(mapunit_nodes) > 0) {
+        mukey_data <- XML::xmlValue(mapunit_nodes[[1]])
+        if (!is.null(mukey_data) && nchar(trimws(mukey_data)) > 0) {
+          mukey_data
+        } else {
+          PEcAn.logger::logger.debug(paste("Empty MapUnitKeyList for coordinates", 
+                                           this_lat, ",", this_lon))
+          NULL
+        }
+      } else {
+        PEcAn.logger::logger.debug(paste("No MapUnitKeyList found for coordinates", 
+                                         this_lat, ",", this_lon, "skipping grid point"))
+        NULL
+      }
+    }, error = function(e) {
+      PEcAn.logger::logger.warn(paste("Failed to parse gSSURGO response for coordinates", 
+                                      this_lat, ",", this_lon, ":", e$message))
+      NULL
     })
     if (file.exists(temp_file)) unlink(temp_file)
+    if (is.null(mukey_str)) next
     
     mukeys <- strsplit(mukey_str, ",")[[1]]
     if (length(mukeys) == 0) next
     
     mukeys_all <- c(mukeys_all, mukeys)
   }
-  
+
+  # mukey occurrences across all grid points
+  mukey_counts <- table(mukeys_all)
   # Get unique mukeys from all grid points
   mukeys_all <- unique(mukeys_all)
   if (length(mukeys_all) == 0) {
@@ -132,16 +150,6 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
   
   # Area-weighted aggregation by mukey and horizon depth
   soilprop.weighted <- soilprop %>%
-    dplyr::mutate(
-      sandtotal_r = as.numeric(sandtotal_r),
-      silttotal_r = as.numeric(silttotal_r),
-      claytotal_r = as.numeric(claytotal_r),
-      hzdept_r = as.numeric(hzdept_r),
-      hzdepb_r = as.numeric(hzdepb_r),
-      om_r = as.numeric(om_r),
-      dbthirdbar_r = as.numeric(dbthirdbar_r),
-      comppct_r = as.numeric(comppct_r)
-    ) %>%
     dplyr::group_by(mukey, hzdept_r, hzdepb_r) %>%
     dplyr::summarise(
       sandtotal_r = weighted.mean(sandtotal_r, comppct_r, na.rm = TRUE),
@@ -165,13 +173,13 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
       mukey = "mukey") %>%
     dplyr::mutate(
       dplyr::across(c(dplyr::starts_with("fraction_of"), "soil_depth", "soil_depth_bottom"), 
-                    ~ as.numeric(.) / 100),
+                    ~ . / 100),
       horizon_thickness_m = soil_depth_bottom - soil_depth,
       # Van Bemmelen factor conversion: OM to SOC
       # Using factor of 2.0 based on recent literature (Pribyl, 2010)
-      soc_percent = organic_matter_pct / 2.0,  
+      soc_percent = organic_matter_pct / 1.724,  
       soc_kg_m2 = horizon_thickness_m * (soc_percent / 100) * bulk_density,
-      soil_organic_carbon_stock = units::set_units(soc_kg_m2, "kg/m^2") |> 
+      soil_organic_carbon_stock = units::set_units(soc_kg_m2, "kg/m^2") %>% 
                                   units::set_units("Mg/ha")
     ) %>%
     dplyr::filter(stats::complete.cases(.))
@@ -183,11 +191,11 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
   
   #converting it to list
   soil.data.gssurgo <- list(
-    fraction_of_sand_in_soil = as.numeric(soilprop.new$fraction_of_sand_in_soil),
-    fraction_of_silt_in_soil = as.numeric(soilprop.new$fraction_of_silt_in_soil),
-    fraction_of_clay_in_soil = as.numeric(soilprop.new$fraction_of_clay_in_soil),
-    soil_depth = as.numeric(soilprop.new$soil_depth),
-    soil_organic_carbon_stock = as.numeric(soilprop.new$soil_organic_carbon_stock)
+    fraction_of_sand_in_soil = soilprop.new$fraction_of_sand_in_soil,
+    fraction_of_silt_in_soil = soilprop.new$fraction_of_silt_in_soil,
+    fraction_of_clay_in_soil = soilprop.new$fraction_of_clay_in_soil,
+    soil_depth = soilprop.new$soil_depth,
+    soil_organic_carbon_stock = soilprop.new$soil_organic_carbon_stock
   )
   #This ensures that I have at least one soil ensemble in case the modeling part failed
   all.soil.ens <-c(all.soil.ens, list(soil.data.gssurgo))
@@ -221,7 +229,7 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
       purrr::map_df(function(DepthL.Data){
         tryCatch({
           # I model the soil properties for this depth
-          dir.model <-DepthL.Data[,c(1:3)]%>%
+          dir.model <-DepthL.Data[,c(1:3)] %>%
             as.matrix() %>%
             sirt::dirichlet.mle(.)
           # Monte Carlo sampling based on my dirichlet model
@@ -243,9 +251,9 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
           
           # Handle edge cases for SOC simulation
           if (nrow(DepthL.Data) == 1) {
-            simulated_soc <- rep(soc_mean, size)
+            simulated_soc <- rep(NA_real_, size)
           } else if (is.na(soc_sd) || soc_sd == 0) {
-            simulated_soc <- rep(soc_mean, size)
+            simulated_soc <- rep(NA_real_, size)
           } else {
             shape <- (soc_mean^2) / (soc_sd^2)
             rate <- soc_mean / (soc_sd^2)
@@ -274,24 +282,22 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
     # estimating the proportion of areas for those mukeys which are modeled
 
     # defining mukey_area
-    unique_mukeys <- unique(soilprop.new$mukey)
     mukey_area <- data.frame(
-      mukey = unique_mukeys,
-      Area = rep(1/length(unique_mukeys), length(unique_mukeys))
-    ) 
-    mukey_area <- mukey_area %>%
+      mukey = names(mukey_counts),
+      Area = as.numeric(mukey_counts) / sum(mukey_counts)
+    ) %>%
       dplyr::filter(mukey %in% unique(simulated.soil.props$mukey)) %>%
-      dplyr::mutate(Area=.data$Area/sum(.data$Area, na.rm = TRUE))
+      dplyr::mutate(Area = Area / sum(Area, na.rm = TRUE))
     #--- Mixing the depths
     soil.profiles<-simulated.soil.props %>% 
-      split(.$mukey)%>%   
+      split(.$mukey) %>%   
       purrr::map(function(soiltype.sim){
         sizein <- (mukey_area$Area[ mukey_area$mukey == unique(soiltype.sim$mukey)[1]])*size
         
         1:ceiling(sizein) %>%
           purrr::map(function(x){
             soiltype.sim %>% 
-              split(.$soil_depth)%>%
+              split(.$soil_depth) %>%
               purrr::map_dfr(~.x[x,])
           })
       }) %>%
@@ -299,13 +305,13 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
     #- add them to the list of all the ensembles ready to be converted to .nc file
     all.soil.ens<-soil.profiles %>%
       purrr::map(function(SEns){
-        SEns <- SEns[, setdiff(names(SEns), "mukey")]
+        SEns <- SEns[, names(SEns) != "mukey"]
         names(SEns) %>%
           purrr::map(function(var){
             as.numeric(unlist(SEns[, var]))
-          })%>% 
+          }) %>%
           stats::setNames(names(SEns))
-      })%>%
+      }) %>%
       c(all.soil.ens,.)
     
   },
@@ -325,7 +331,7 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
         new.file <- file.path(outdir, paste0(prefix, ".nc"))
         #sending it to the func where some new params will be added and then it will be written down as nc file.
         suppressWarnings({
-          soil2netcdf(all.soil.ens[[i]], new.file)
+          PEcAn.data.land::soil2netcdf(all.soil.ens[[i]], new.file)
         })
         new.file
       },
@@ -338,7 +344,7 @@ extract_soil_gssurgo<-function(outdir, lat, lon, size=1, grid_size=3, grid_spaci
   out.ense<- out.ense %>%
     purrr::discard(is.null)
   
-  out.ense<-out.ense%>% 
+  out.ense<-out.ense %>% 
     stats::setNames(rep("path", length(out.ense)))
   
   return(out.ense)
@@ -446,7 +452,7 @@ extract_soil_nc <- function(in.file,outdir,lat,lon){
   new.file <- file.path(outdir,paste0(prefix,".nc"))
   
   ## Calculate soil parameters and export to netcdf
-  soil2netcdf(soil.data,new.file)
+  PEcAn.data.land::soil2netcdf(soil.data,new.file)
   
   return(new.file)
   
