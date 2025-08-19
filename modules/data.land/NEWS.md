@@ -5,6 +5,7 @@
 
 # PEcAn.data.land 1.8.2
 - Removed unused parameter `machine` from put_veg_module()
+- Fixed "external pointer is not valid" error and addressed key bugs in `soilgrids_soilC_extract()` function (#3506)
 
 
 # PEcAn.data.land 1.8.1

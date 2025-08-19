@@ -2,7 +2,8 @@
 
 * `ERA5_met_process()` can now process ensemble data efficiently in parallel using new option `n_cores`
 * Dependency `ggplot2` is now suggested rather than required. It is used in two vignettes and for optional diagnostic plots from `debias_met_regression`.
-
+* `download.ERA5_cds` now uses the R package ecmwfr (replacing python dependency of cdsapi via reticulate), enabling direct NetCDF downloads; and made flexible for both reanalysis and ensemble data product.
+* New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
 
 # PEcAn.data.atmosphere 1.9.0
 
