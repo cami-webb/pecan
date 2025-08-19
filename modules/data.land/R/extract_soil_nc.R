@@ -8,7 +8,7 @@
 #' @param lon Longitude of center point (single numeric value) 
 #' @param size Ensemble size
 #' @param grid_size Size of the spatial sampling grid around the center point (default: 3)
-#' @param grid_spacing Spacing between grid cells in meters (default: 10)
+#' @param grid_spacing Spacing between grid cells in meters (default: 100)
 #' @param depths Standard set of soil depths in m to create the ensemble of soil profiles with.
 #'
 #' @return It returns the address for the generated soil netcdf file
@@ -24,7 +24,7 @@
 #' @author Hamze Dokoohaki and Akash
 #' @export
 #' 
-extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spacing=10, depths=c(0.15,0.30,0.60)){
+extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spacing=100, depths=c(0.15,0.30,0.60)){
   # I keep all the ensembles here 
   all.soil.ens <-list()
 
