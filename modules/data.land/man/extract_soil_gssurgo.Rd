@@ -10,7 +10,7 @@ extract_soil_gssurgo(
   lon,
   size = 1,
   grid_size = 3,
-  grid_spacing = 10,
+  grid_spacing = 100,
   depths = c(0.15, 0.3, 0.6)
 )
 }
@@ -25,7 +25,7 @@ extract_soil_gssurgo(
 
 \item{grid_size}{Size of the spatial sampling grid around the center point (default: 3)}
 
-\item{grid_spacing}{Spacing between grid cells in meters (default: 10)}
+\item{grid_spacing}{Spacing between grid cells in meters (default: 100)}
 
 \item{depths}{Standard set of soil depths in m to create the ensemble of soil profiles with.}
 }
