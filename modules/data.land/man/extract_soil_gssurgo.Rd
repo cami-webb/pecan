@@ -49,5 +49,5 @@ how many grid points (grid_size x grid_size) are created around the center point
 }
 }
 \author{
-Hamze Dokoohaki and Akash
+Hamze Dokoohaki, Akash
 }
