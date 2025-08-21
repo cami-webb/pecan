@@ -10,9 +10,7 @@
 #'   or single reanalysis dataset.
 #' @param overwrite Logical if files needs to be overwritten.
 #' @param verbose Logical flag defining if ouput of function be extra verbose.
-#' @param is_ensemble Logical. if TRUE (default), processes data as ensemble members. If FALSE, processes as single 
-#'   reanalysis dataset.
-#' @param ens_size Number of ensemble members to process. Default is 10.
+#' @param ens_size Number of ensemble members to process. Default is 1.
 
 #'
 #' @return list of dataframes
@@ -28,58 +26,22 @@ met2CF.ERA5<- function(lat,
                        out.xts,
                        overwrite = FALSE,
                        verbose = TRUE,
-                       is_ensemble = TRUE,
-                       ens_size = 10) {
+                       ens_size = 1) {
   
   years <- seq(lubridate::year(start_date),
                lubridate::year(end_date),
                1
   )
   
-  ensemblesN <- if(is_ensemble) seq(1, ens_size) else 1
+  ensemblesN <- seq(1, ens_size)
   
   start_date <- paste0(lubridate::year(start_date),"-01-01")  %>% as.Date()
   end_date <- paste0(lubridate::year(end_date),"-12-31") %>% as.Date()
 
-  era5_to_cf <- NULL
-  cf_units_map <- NULL
-  if (exists("pecan_standard_met_table", inherits = TRUE)) {
-    era5_tbl <- pecan_standard_met_table %>%
-      dplyr::filter(!is.na(.data$era5) & nzchar(.data$era5))
-    
-    if (nrow(era5_tbl) > 0) {
-      era5_to_cf <- stats::setNames(era5_tbl$cf_standard_name, era5_tbl$era5)
-      cf_units_map <- stats::setNames(era5_tbl$units, era5_tbl$cf_standard_name)
-    }
-  }
-  
-  # fallback mappings if table is missing or empty
-  if (is.null(era5_to_cf) || length(era5_to_cf) == 0) {
-    era5_to_cf <- c(
-      "t2m" = "air_temperature",
-      "sp" = "air_pressure",
-      "tp" = "precipitation_flux",
-      "u10" = "eastward_wind",
-      "v10" = "northward_wind",
-      "ssrd" = "surface_downwelling_shortwave_flux_in_air",
-      "strd" = "surface_downwelling_longwave_flux_in_air",
-      "swvl1" = "volume_fraction_of_condensed_water_in_soil"
-    )
-  }
-  
-  if (is.null(cf_units_map) || length(cf_units_map) == 0) {
-    cf_units_map <- c(
-      "air_temperature" = "K",
-      "air_pressure" = "Pa",
-      "precipitation_flux" = "kg m-2 s-1",
-      "eastward_wind" = "m s-1",
-      "northward_wind" = "m s-1",
-      "surface_downwelling_shortwave_flux_in_air" = "W m-2",
-      "surface_downwelling_longwave_flux_in_air" = "W m-2",
-      "specific_humidity" = "1",
-      "volume_fraction_of_condensed_water_in_soil" = "1"
-    )
-  }
+  era5_tbl <- pecan_standard_met_table %>%
+    dplyr::filter(!is.na(.data$era5) & nzchar(.data$era5))
+  era5_to_cf <- stats::setNames(era5_tbl$cf_standard_name, era5_tbl$era5)
+  cf_units_map <- stats::setNames(era5_tbl$units, era5_tbl$cf_standard_name)
   
   out.new <- ensemblesN %>%
     purrr::map(function(ensi) {
@@ -149,7 +111,6 @@ met2CF.ERA5<- function(lat,
       error = function(e) {
         PEcAn.logger::logger.severe("Something went wrong during the unit conversion in met2cf ERA5.",
                                     conditionMessage(e))
-        return(NULL)
       })
       
     })
@@ -194,7 +155,7 @@ met2CF.ERA5<- function(lat,
         stringsAsFactors = FALSE
       )
       
-      if (is_ensemble) {
+      if (ens_size > 1) {
         identifier <- paste("ERA5", sitename, i, sep = "_") 
       } else {
         identifier <- paste("ERA5", sitename, "Mean", sep = "_")
