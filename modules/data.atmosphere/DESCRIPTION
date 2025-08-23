@@ -26,7 +26,6 @@ Imports:
     assertthat,
     arrow,
     curl,
-    data.table,
     dplyr (>= 0.8.1),
     foreach,
     geonames (> 0.998),
