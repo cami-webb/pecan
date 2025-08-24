@@ -11,7 +11,8 @@ section for the next release.
 
 * Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
 * Add CH4 and N2O to standard_vars in PEcAn.utils
-
+* New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
+* 
 ## [1.9.0] - 2025-05-25
 
 ### Added
@@ -55,6 +56,7 @@ section for the next release.
     * Modules `PEcAn.allometry`, `PEcAn.assim.batch`, `PEcAn.data.mining`, `PEcAn.emulator`, `PEcAn.MA`, `PEcAn.photosynthesis`, `PEcAn.priors`, and `PEcAn.RTM`.
 - Renamed master branch to main
 - `PEcAn.all::pecan_version()` now reports commit hashes as well as version numbers for each installed package.
+- `download.ERA5_cds` now uses the R package ecmwfr (replacing python dependency of cdsapi via reticulate), enabling direct NetCDF downloads; and made flexible for both reanalysis and ensemble data product.
 
 ### Removed
 
