@@ -106,7 +106,7 @@ Tmin,air_temperature_max,K,Daily Maximum Temperature,Driver,real,lon,lat,time,NA
 Tmax,air_temperature_min,K,Daily Minimum Temperature,Driver,real,lon,lat,time,NA,Daily Minimum Temperature,
 Uwind,northward_wind,m s-1,Northward Component of Wind,Driver,real,lon,lat,time,NA,Northward Component of Wind,
 Vwind,eastward_wind,m s-1,Eastward Component of Wind,Driver,real,lon,lat,time,NA,Eastward Component of Wind,
-RH,relative_humidity,1,Relative Humidity,Driver,real,lon,lat,time,NA,Relative Humidity,
+RH,relative_humidity,%,Relative Humidity,Driver,real,lon,lat,time,NA,Relative Humidity,
 PAR,surface_downwelling_photosynthetic_photon_flux_in_air,mol m-2 s-1,Photosynthetically Active Radiation,Driver,real,lon,lat,time,NA,Photosynthetically Active Radiation,
 precipf,NA,kg m-2 s-1,Precipitation,Driver,real,lon,lat,time,NA,"The per unit area and time precipitation representing the sum of convective rainfall, stratiform rainfall, and snowfall",
 BA,NA,m2 ha-1,Basal area,Diversity,real,lon,lat,time,pft,Basal area by PFT,
