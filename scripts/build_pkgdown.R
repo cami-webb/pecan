@@ -45,14 +45,7 @@ for (pkg in packages) {
         template = list(
           bootstrap = 5,
           includes = list(
-            before_navbar = paste0(
-              "<style>",
-              ".custom-back-button{position: absolute; top: 10px;left:10px; z-index: 1000; background-color: #f5f5f5; color: #000;border:none }.navbar-brand{ margin-left: 50px }",
-              "</style>\n",
-              "<button onclick='window.location.href=\"../index.html\"' ",
-              "class='custom-back-button btn btn-primary'>",
-              "← All Packages</button>"
-            )
+            before_navbar = "<a href=\"../index.html\" style=\"padding: 0em 1em\">← Up</a>"
           )
         )
       )
