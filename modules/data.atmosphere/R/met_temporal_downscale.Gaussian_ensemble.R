@@ -55,11 +55,10 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
   )
   
   # Filter pecan_standard_met_table for only variables processed by your function
-  var <- PEcAn.data.atmosphere::pecan_standard_met_table %>% 
-    filter(cf_standard_name %in% processed_vars) %>%
-    select(cf_standard_name, units) %>%
-    rename(CF.name = cf_standard_name, 
-           units = units)
+  var <- pecan_standard_met_table %>% 
+    dplyr::filter(.data$cf_standard_name %in% processed_vars) %>%
+    dplyr::select(CF.name = .data$cf_standard_name, 
+                  .data$units)
   
   # Reading in the training data
   train <- list()
@@ -134,7 +133,7 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
     
     # Damping factor calculation
     if (length(valid_days) >= 10) {
-      damping_factor <- median(soil_range[valid_days] / air_range[valid_days], na.rm = TRUE)
+      damping_factor <- stats::median(soil_range[valid_days] / air_range[valid_days], na.rm = TRUE)
       # soil temperature amplitude is always reduced compared to air temperature (lower bound 0.3)
       # but never exceeds it (upper bound 1.0) at shallow depths.
       damping_factor <- min(max(damping_factor, 0.3), 1.0)
@@ -154,7 +153,7 @@ met_temporal_downscale.Gaussian_ensemble <- function(in.path, in.prefix, outfold
       soil_clean <- soil_detrend[valid_idx]
       max_lag <- min(48/reso, length(air_clean)/4)
       if (max_lag >= 1) {
-        ccf_res <- ccf(air_clean, soil_clean, lag.max = max_lag, plot = FALSE)
+        ccf_res <- stats::ccf(air_clean, soil_clean, lag.max = max_lag, plot = FALSE)
         lag_hr <- abs(ccf_res$lag[which.max(ccf_res$acf)]) * reso
         # depths of 5, 10, 20 and 30 cm the delay amounts to 1, 2, 4 and to about 8 h, respectively
         phase_lag_hr <- min(max(lag_hr,0),8)
