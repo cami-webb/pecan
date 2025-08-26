@@ -21,17 +21,18 @@ test_that("Gaussian ensemble function basic functionality", {
   # For now, testing the structure and parameter validation
   
   test_files <- setup_test_files()
-  
   # Test parameter validation
-  expect_error(
-    met_temporal_downscale.Gaussian_ensemble(
-      in.path = "", 
-      in.prefix = "",
-      outfolder = test_files$outfolder,
-      input_met = "nonexistent.nc",
-      train_met = "nonexistent.nc"
-    ),
-    "Error in nc_open"
+  suppressWarnings(
+    expect_error(
+      met_temporal_downscale.Gaussian_ensemble(
+        in.path = "", 
+        in.prefix = "",
+        outfolder = test_files$outfolder,
+        input_met = "nonexistent.nc",
+        train_met = "nonexistent.nc"
+      ),
+      "Error in nc_open trying to open file"
+    )
   )
 })
 
