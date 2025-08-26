@@ -191,31 +191,34 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     pft.traits <- as.numeric(pft.traits)
     
     # Leaf carbon concentration
-    leafC <- 0.48  #0.5
+    leafC <- 0.48
     if ("leafC" %in% pft.names) {
       leafC <- pft.traits[which(pft.names == "leafC")]
       id <- which(param[, 1] == "cFracLeaf")
-      param[id, 2] <- leafC * 0.01  # convert to percentage from 0 to 1
+      param[id, 2] <- leafC * 0.01  # convert from percentage to fraction
     }
     
     # Specific leaf area converted to SLW
+    # leafCSpWt [gC/m2 leaf], SLA [m2 leaf/kg C], leafC [percentage C]
     SLA <- NA
     id <- which(param[, 1] == "leafCSpWt")
     if ("SLA" %in% pft.names) {
       SLA <- pft.traits[which(pft.names == "SLA")]
-      param[id, 2] <- 1000 * leafC * 0.01 / SLA
+      param[id, 2] <- 10 * leafC / SLA
     } else {
-      SLA <- 1000 * leafC / param[id, 2]
+      SLA <- 10 * leafC / param[id, 2]
     }
     
     # Maximum photosynthesis
+    # amax [nmol CO2 * g^{-1} leaf * sec^{-1}]
+    # Amax [umol CO2 * m^2 leaf * sec^{-1}]
     Amax <- NA
     id <- which(param[, 1] == "aMax")
     if ("Amax" %in% pft.names) {
       Amax <- pft.traits[which(pft.names == "Amax")]
       param[id, 2] <- Amax * SLA
     } else {
-      Amax <- param[id, 2] * SLA
+      Amax <- param[id, 2] / SLA
     }
     # Daily fraction of maximum photosynthesis
     if ("AmaxFrac" %in% pft.names) {
