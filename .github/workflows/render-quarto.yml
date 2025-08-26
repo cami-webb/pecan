@@ -13,13 +13,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build PEcAn depends Docker image
-        run: |
-          docker build -t pecan/depends:latest -f docker/depends/Dockerfile .
-
       - name: Build PEcAn base Docker image
         run: |
-          docker build --build-arg PARENT_IMAGE=pecan/depends --build-arg IMAGE_VERSION=latest -t pecan-base-ci:latest -f docker/base/Dockerfile .
+          docker build -t pecan-base-ci:latest -f docker/base/Dockerfile .
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
@@ -39,6 +35,6 @@ jobs:
             }
           '"
 
-      - name: Render the Quarto notebook to PDF
+      - name: Render the Quarto notebook to HTML
         run: |
-          docker run --rm -v ${{ github.workspace }}:/work pecan-base-ci:latest bash -c "quarto install tinytex && quarto render /work/documentation/tutorials/Demo_1_Basic_Run/run_pecan.qmd --to pdf"
+          docker run --rm -v ${{ github.workspace }}:/work pecan-base-ci:latest bash -c "quarto render /work/documentation/tutorials/Demo_1_Basic_Run/run_pecan.qmd --to html"
