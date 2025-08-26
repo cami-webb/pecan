@@ -13,6 +13,12 @@
 #'
 #' @return It returns the address for the generated soil netcdf file
 #'
+#' @section Current Limitations:
+#' - MUKEY frequency weighting treats occurrence counts as proportional to area coverage
+#' - This approximation may introduce geometric bias for irregular polygon data
+#' - Buffer radius is set to grid_spacing/2 to reduce overlapping queries, but may still miss coverage
+#' - True area-weighted aggregation using polygon geometries is planned (see issue #3609)
+#'
 #' @importFrom rlang .data
 #' @examples
 #' \dontrun{
@@ -23,7 +29,7 @@
 #' }
 #' @author Hamze Dokoohaki, Akash
 #' @export
-#' 
+#'  
 extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spacing=100, depths=c(0.15,0.30,0.60)){
   # I keep all the ensembles here 
   all.soil.ens <-list()
@@ -59,6 +65,11 @@ extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spa
   grid_coords_wgs84 <- sf::st_coordinates(grid_wgs84)
   
   # Query gSSURGO for each grid point to capture spatial variability
+  buffer_radius <- grid_spacing / 2
+  PEcAn.logger::logger.warn(
+    "Buffer radius set to grid_spacing/2 to avoid overlap",
+    "results may be biased due to lack of area weighting and incomplete spatial coverage."
+  )
   mukeys_all <- c()
   for (i in seq_len(nrow(grid_coords_wgs84))) {
     # Extract coordinates for this grid point (not user input)
@@ -80,7 +91,7 @@ extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spa
             "<gml:Point>",
               "<gml:coordinates>", this_lon, ",", this_lat, "</gml:coordinates>",
             "</gml:Point>",
-            "<Distance%20units=%27m%27>", grid_spacing, "</Distance>",
+            "<Distance%20units=%27m%27>", buffer_radius, "</Distance>",
           "</DWithin>",
         "</Filter>",
       "&OUTPUTFORMAT=XMLMukeyList"
