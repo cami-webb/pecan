@@ -30,6 +30,10 @@ section for the next release.
 - The ERA5 NC extraction function can now handle multi-site instead of one.
 - Added function for merging images from the same tiling system (MODIS, GLANCE, ICESat-2, HLS, etc.).
 - Added function for converting images towards the GDAL-supported formats (H5, NetCDF, HDF4, GeoTIFF, etc .).
+- New utility script `IC_SOILGRID_Utilities.R` for processing SoilGrids data to generate soil carbon initial condition (IC) files. This includes  (#3508):
+  - **`soilgrids_ic_process`**: A function to extract, process, and generate ensemble members from SoilGrids250m data.
+  - **`preprocess_soilgrids_data`**: A helper function to handle missing values and ensure data integrity during preprocessing. 
+  - **`generate_soilgrids_ensemble`**: A function to create ensemble members for a site based on processed soil carbon data. 
 - `extract.nc.ERA5()` and `met2CF.ERA5` now supports both ensemble and reanalysis data processing .
 
 - Initial Quarto notebook `run_pecan.qmd` to run PEcAn Demo 1 workflow from a pre-configured `pecan.xml` file, enabling notebook-based model runs, analysis, and visualization.[#3531](https://github.com/PecanProject/pecan/pull/3531)

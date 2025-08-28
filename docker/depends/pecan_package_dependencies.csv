@@ -187,6 +187,7 @@
 "MASS","*","base/utils","Suggests",FALSE
 "MASS","*","modules/assim.batch","Imports",FALSE
 "MASS","*","modules/data.atmosphere","Imports",FALSE
+"MASS","*","modules/data.land","Suggests",FALSE
 "MASS","*","modules/meta.analysis","Imports",FALSE
 "MASS","*","modules/priors","Imports",FALSE
 "MASS","*","modules/rtm","Imports",FALSE

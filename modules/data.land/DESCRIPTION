@@ -23,7 +23,7 @@ Description: The Predictive Ecosystem Carbon Analyzer (PEcAn) is a scientific
     efficacy of scientific investigation.
 URL: https://pecanproject.github.io
 BugReports: https://github.com/PecanProject/pecan/issues
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.1.0)
 Imports:
     coda,
     curl,
@@ -59,7 +59,7 @@ Imports:
     tidyr,
     tidyselect,
     traits,
-    XML (>= 3.98-1.4)      
+    XML (>= 3.98-1.4)
 Suggests:
     dataone,
     datapack,
@@ -70,7 +70,8 @@ Suggests:
     raster,
     reticulate,
     testthat (>= 1.0.2),
-    withr
+    withr,
+    MASS
 Remotes:
     github::ropensci/traits
 License: BSD_3_clause + file LICENSE

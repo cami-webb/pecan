@@ -1,7 +1,10 @@
 # Unreleased
 
 * Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
-
+* New utility script `IC_SOILGRID_Utilities.R` for processing SoilGrids data to generate soil carbon initial condition (IC) files. This includes (#3508):
+  - **`soilgrids_ic_process`**: A function to extract, process, and generate ensemble members from SoilGrids250m data.
+  - **`preprocess_soilgrids_data`**: A helper function to handle missing values and ensure data integrity during preprocessing. 
+  - **`generate_soilgrids_ensemble`**: A function to create ensemble members for a site based on processed soil carbon data. 
 
 # PEcAn.data.land 1.8.2
 - Removed unused parameter `machine` from put_veg_module()
@@ -23,7 +26,7 @@
 * Included all relevant carbon pools (`ROOT_BIOMASS`, `AG_BIOMASS`, `SOIL_STOCK`, `LIT_BIOMASS`) in BADM-based IC extraction; excluded non-pool variables like `SOIL_CHEM`.
 * Added explicit support for `LIT_BIOMASS` to fully utilize **BADM** biomass capabilities.
 * Added `test-IC_BADM_Utilities.R` to validate BADM initial condition extraction and processing
-
+  
 ## Fixed
 
 * `gSSURGO.Query()` now always returns all the columns requested, even ones that are all NA. It also now always requires `mukeys` to be specified.
