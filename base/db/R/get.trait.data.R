@@ -31,7 +31,8 @@ get.trait.data <-
            database,
            forceupdate,
            write = FALSE,
-           trait.names = NULL) {
+           trait.names = NULL,
+           input_file= NULL) {
     
   if (!is.list(pfts)) {
     PEcAn.logger::logger.severe('pfts must be a list')
@@ -43,14 +44,18 @@ get.trait.data <-
   }
   
   #check for flatfile path if present use it 
-  use_flatfile <- !is.null(pfts$file_path) && file.exists(pfts$file_path)
-
+  file_path <- input_file 
+  if(is.null(file_path)){
+    file.path <- pfts$file_path
+  }
+  use_flatfile <- !is.null(file_path) && file.exists(file_path)
+  
   if (use_flatfile) {
     PEcAn.logger::logger.info("Using flat file for trait data instead of database")
-
+  
     # Load flat file as data.frame
     trait_data_flat <- read.csv(pfts$file_path, stringsAsFactors = FALSE)
-
+  
     # Build trait.names from flat file if not already provided
     if (is.null(trait.names)) {
       pft_names <- vapply(pfts, "[[", character(1), "name")
@@ -62,7 +67,7 @@ get.trait.data <-
         trait_data_flat$pft_id %in% pft_ids
       ])
     }
-
+    
     # Call get.trait.data.pft with trait_data instead of dbcon
     result <- lapply(pfts, get.trait.data.pft,
                      modeltype   = modeltype,
