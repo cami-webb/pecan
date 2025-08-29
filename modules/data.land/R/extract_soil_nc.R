@@ -162,6 +162,10 @@ extract_soil_gssurgo <- function(outdir, lat, lon, size=1, grid_size=3, grid_spa
   
   # Area-weighted aggregation by mukey and horizon depth
   soilprop.weighted <- soilprop %>%
+    dplyr::group_by(cokey, hzdept_r, hzdepb_r) %>%
+    dplyr::mutate(fragvol_r = pmin(sum(fragvol_r, na.rm = TRUE), 100)) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup() %>%
     dplyr::group_by(mukey, hzdept_r, hzdepb_r) %>%
     dplyr::summarise(
       sandtotal_r = weighted.mean(sandtotal_r, comppct_r, na.rm = TRUE),
