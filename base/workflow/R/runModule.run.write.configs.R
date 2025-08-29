@@ -1,8 +1,8 @@
 #' Generate model-specific run configuration files for one or more PEcAn runs
 #'
-#' @param input_design the input indices for samples 
 #' @param settings a PEcAn Settings or MultiSettings object
 #' @param overwrite logical: Replace config files if they already exist?
+#' @param input_design the input indices for samples 
 #' @return A modified settings object, invisibly
 #' @importFrom dplyr %>%
 #' @export
@@ -16,8 +16,8 @@ runModule.run.write.configs <- function(settings, overwrite = TRUE, input_design
       unlink(file.path(settings$rundir, "runs.txt"))
     }
     if (is.null(input_design)) {
-       ensemble_size <- settings$ensemble$size
-       input_design <- PEcAn.uncertainty::generate_joint_ensemble_design(settings=settings,ensemble_size=ensemble_size)
+      ensemble_size <- settings$ensemble$size
+      input_design <- PEcAn.uncertainty::generate_joint_ensemble_design(settings=settings[1],ensemble_size=ensemble_size)
       }
     return(PEcAn.settings::papply(settings, runModule.run.write.configs, overwrite = FALSE,input_design=input_design))
   } else if (PEcAn.settings::is.Settings(settings)) {
