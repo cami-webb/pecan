@@ -136,18 +136,14 @@ all_params <- ensemble.samples$temperate.deciduous.HPDA
 
 
 
-param_count <- ncol(all_params)  # Number of parameters (e.g., 13)
-param_count
-N_small <- ceiling(50 / (param_count + 2))  # ~2 for 50 rows; adjust as needed
-X1_small <- all_params[1:(N_small), ]  # First N rows
-X2_small <- all_params[(N_small + 1):(2 * N_small), ]  # Next N rows
-sobol_obj <- soboljansen(model = NULL, X1 = X1_small, X2 = X2_small)
-
-U <- sobol_obj$X
-
-length(U)
-
-
+#param_count <- ncol(all_params)  # Number of parameters (e.g., 13)
+#param_count
+#N_small <- ceiling(50 / (param_count + 2))  # ~2 for 50 rows; adjust as needed
+#X1_small <- all_params[1:(N_small), ]  # First N rows
+#X2_small <- all_params[(N_small + 1):(2 * N_small), ]  # Next N rows
+#sobol_obj <- soboljansen(model = NULL, X1 = X1_small, X2 = X2_small)
+#U <- sobol_obj$X
+#length(U)
 
 
 
@@ -223,7 +219,7 @@ for (i in run_ids) {
 
 y <- sapply(run_ids, function(rid) {
   out_list <- all_model_out[[rid]]
-  mean(out_list$GPP, na.rm = TRUE)  # Or other summary
+  mean(out_list$GPP, na.rm = TRUE) 
 })
 
 # Check lengths match
