@@ -35,10 +35,10 @@ section for the next release.
   - **`preprocess_soilgrids_data`**: A helper function to handle missing values and ensure data integrity during preprocessing. 
   - **`generate_soilgrids_ensemble`**: A function to create ensemble members for a site based on processed soil carbon data. 
 - `extract.nc.ERA5()` and `met2CF.ERA5` now supports both ensemble and reanalysis data processing .
-
 - Initial Quarto notebook `run_pecan.qmd` to run PEcAn Demo 1 workflow from a pre-configured `pecan.xml` file, enabling notebook-based model runs, analysis, and visualization.[#3531](https://github.com/PecanProject/pecan/pull/3531)
  - Directory structure for PEcAn Quarto notebooks under `pecan/documentation/tutorials/Demo_1_Basic_Run`
  - Support for inspecting and plotting NetCDF output variables within the notebook workflow.
+- added support for soil temperature, relative humidity, soil moisture, and PPFD downscaling to `met_temporal_downscale.Gaussian_ensemble`
 
 ### Fixed
 - api to correctly use x_var from request in plotResults #3528
