@@ -10,6 +10,8 @@ Authors@R: c(person("Martin", "De Kauwe", role = c("aut", "cre"),
 Author: Martin De Kauwe
 Maintainer: Martin De Kauwe <mdekauwe@gmail.com>
 Description: This module provides functions to link the GDAY model to PEcAn.
+URL: https://pecanproject.github.io
+BugReports: https://github.com/PecanProject/pecan/issues
 Depends:
     PEcAn.utils
 Imports:

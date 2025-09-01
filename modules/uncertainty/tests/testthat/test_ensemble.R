@@ -1,4 +1,5 @@
 context("input validation for write.ensemble.configs")
+library(testthat)
 
 # Mock a model write.configs function to avoid model-specific errors
 write.configs.SIPNET <- function(...) TRUE
@@ -108,6 +109,12 @@ test_that("multiple inputs and multiple samples", {
     )
   )
   
+  input_design <- data.frame(
+    met = c(1,7,3,5,6),
+    poolinitcond = c(43,48,4,21,39),
+    param = 1:5 # Or your actual param column
+  )
+  
   # Run test - should create directories and configs
   result <- expect_silent(
     write.ensemble.configs(
@@ -115,7 +122,8 @@ test_that("multiple inputs and multiple samples", {
       ensemble.samples = ensemble.samples,
       settings = settings,
       model = "SIPNET",
-      write.to.db = FALSE
+      write.to.db = FALSE,
+      input_design = input_design
     )
   )
   

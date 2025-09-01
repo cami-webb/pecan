@@ -80,11 +80,12 @@ read.ensemble.output <- function(ensemble.size, pecandir, outdir, start.year, en
 ##' @export
 ##' @author David LeBauer, Istem Fer
 get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples, 
-                                 method = "uniform", param.names = NULL, ...) {
-  
-  if (is.null(method)) {
-    PEcAn.logger::logger.info("No sampling method supplied, defaulting to uniform random sampling")
-    method <- "uniform"
+                                 method = "random", param.names = NULL, ...) {
+
+  # Define supported methods
+  supported_methods <- c("random", "uniform", "halton", "sobol", "lhc")
+  if (!method %in% supported_methods) {
+    stop("Invalid sampling method")
   }
   
   ## force as numeric for compatibility with Fortran code in halton()
@@ -139,48 +140,59 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
     
     
     ensemble.samples <- list()
-    
+    sampled.indices <- list()
     
     col.i <- 0
     for (pft.i in seq(pft.samples)) {
       ensemble.samples[[pft.i]] <- matrix(nrow = ensemble.size, ncol = length(pft.samples[[pft.i]]))
+      sampled.indices[[pft.i]] <- matrix(nrow = ensemble.size, ncol = length(pft.samples[[pft.i]]))
       
       # meaning we want to keep MCMC samples together
       if(length(pft.samples[[pft.i]])>0 & !is.null(param.names)){ 
         if (method == "halton") {
-          same.i <- round(randtoolbox::halton(ensemble.size) * length(pft.samples[[pft.i]][[1]]))
+          same.i <- floor(randtoolbox::halton(ensemble.size) * length(pft.samples[[pft.i]][[1]]))+1
         } else if (method == "sobol") {
-          same.i <- round(randtoolbox::sobol(ensemble.size, scrambling = 3) * length(pft.samples[[pft.i]][[1]]))
+          same.i <- floor(randtoolbox::sobol(ensemble.size, scrambling = 3) * length(pft.samples[[pft.i]][[1]]))+1
         } else if (method == "torus") {
-          same.i <- round(randtoolbox::torus(ensemble.size) * length(pft.samples[[pft.i]][[1]]))
+          same.i <- floor(randtoolbox::torus(ensemble.size) * length(pft.samples[[pft.i]][[1]]))+1
         } else if (method == "lhc") {
-          same.i <- round(c(PEcAn.emulator::lhc(t(matrix(0:1, ncol = 1, nrow = 2)), ensemble.size) * length(pft.samples[[pft.i]][[1]])))
+          same.i <- floor(c(PEcAn.emulator::lhc(t(matrix(0:1, ncol = 1, nrow = 2)), ensemble.size) * length(pft.samples[[pft.i]][[1]])))+1
         } else if (method == "uniform") {
           same.i <- sample.int(length(pft.samples[[pft.i]][[1]]), ensemble.size)
-        } else {
-          PEcAn.logger::logger.info("Method ", method, " has not been implemented yet, using uniform random sampling")
-          # uniform random
-          same.i <- sample.int(length(pft.samples[[pft.i]][[1]]), ensemble.size)
+        } else if (method == "random") {
+            PEcAn.logger::logger.info("Using random row sampling for MCMC draws")
+           same.i <- sample(nrow(pft.samples[[pft.i]][[1]]), ensemble.size, replace = TRUE)
+        }
+        else {
+          PEcAn.logger::logger.error("Sampling method %s is not recognized", method)
+        
         }
         
       }
       
       for (trait.i in seq(pft.samples[[pft.i]])) {
         col.i <- col.i + 1
-        if(names(pft.samples[[pft.i]])[trait.i] %in% param.names[[pft.i]]){ # keeping samples
-          ensemble.samples[[pft.i]][, trait.i] <- pft.samples[[pft.i]][[trait.i]][same.i]
-        }else{
+        if (names(pft.samples[[pft.i]])[trait.i] %in% param.names[[pft.i]]) { 
+             ensemble.samples[[pft.i]][, trait.i] <- pft.samples[[pft.i]][[trait.i]][same.i]
+             sampled.indices[[pft.i]][, trait.i] <- same.i
+       }else{
+          # Extract original trait values
+          trait.values <- pft.samples[[pft.i]][[trait.i]]
+          sampled.values <- stats::quantile(trait.values, random.samples[, col.i])
+
           ensemble.samples[[pft.i]][, trait.i] <- stats::quantile(pft.samples[[pft.i]][[trait.i]],
                                                                   random.samples[, col.i])
-        }
-      }  # end trait
-      ensemble.samples[[pft.i]] <- as.data.frame(ensemble.samples[[pft.i]])
-      colnames(ensemble.samples[[pft.i]]) <- names(pft.samples[[pft.i]])
-    }  #end pft
-    names(ensemble.samples) <- names(pft.samples)
-    ans <- ensemble.samples
+          sampled.indices[[pft.i]][, trait.i] <- sapply(sampled.values, function(val) {which.min(abs(trait.values - val)) })
+      }   
+    }  
+          ensemble.samples[[pft.i]] <- as.data.frame(ensemble.samples[[pft.i]])
+          colnames(ensemble.samples[[pft.i]]) <- names(pft.samples[[pft.i]])
+    
+  }  #end pft
+   names(ensemble.samples) <- names(pft.samples)
+   ans <- ensemble.samples
   }
-  return(ans)
+    return(list(ans,sampled.indices))
 } # get.ensemble.samples
 
 
@@ -190,6 +202,7 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
 ##' Given a pft.xml object, a list of lists as supplied by get.sa.samples, 
 ##' a name to distinguish the output files, and the directory to place the files.
 ##'
+##' @param input_design the input indices for samples 
 ##' @param defaults pft
 ##' @param ensemble.samples list of lists supplied by \link{get.ensemble.samples}
 ##' @param settings list of PEcAn settings
@@ -211,7 +224,7 @@ get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples,
 ##' @importFrom rlang .data
 ##' @export
 ##' @author David LeBauer, Carl Davidson, Hamze Dokoohaki
-write.ensemble.configs <- function(defaults, ensemble.samples, settings, model, 
+write.ensemble.configs <- function(defaults, ensemble.samples, settings, model, input_design ,
                                    clean = FALSE, write.to.db = TRUE, restart = NULL, samples = NULL, rename = FALSE) {
   
   
@@ -314,18 +327,21 @@ for (input_tag in names(settings$run$inputs)) {
     samp.ordered <- samp[c(order, names(samp)[!(names(samp) %in% order)])]
     if(is.null(samples)){
        #performing the sampling
-       samples<-list()
-       # For the tags specified in the xml I do the sampling
-      for(i in seq_along(samp.ordered)){
-         myparent<-samp.ordered[[i]]$parent # do I have a parent ?
-         #call the function responsible for generating the ensemble
-         samples[[names(samp.ordered[i])]] <- input.ens.gen(settings=settings,
-                                                         input=names(samp.ordered)[i],
-                                                         method=samp.ordered[[i]]$method,
-                                                         parent_ids=if( !is.null(myparent)) samples[[myparent]]) # if I have parent then give me their ids - this is where the ordering matters making sure the parent is done before it's asked
-       }
+      samples <- list()
+      input_tags <- names(settings$run$inputs)
+
+      for (input_tag in input_tags) {
+           if (input_tag %in% colnames(input_design)) {
+                  input_paths <- settings$run$inputs[[input_tag]]$path
+                  input_indices <- input_design[[input_tag]]
+
+                 samples[[input_tag]] <- list(
+                   samples = lapply(input_indices, function(idx) input_paths[[idx]])
+                 )
+    }
+
      }
-    
+    }
     # if there is a tag required by the model but it is not specified in the xml then I replicate n times the first element 
     required_tags%>%
       purrr::walk(function(r_tag){
