@@ -79,7 +79,7 @@ read.ensemble.output <- function(ensemble.size, pecandir, outdir, start.year, en
 ##' @return matrix of (quasi-)random samples from trait distributions
 ##' @export
 ##' @author David LeBauer, Istem Fer
-get.ensemble.samples <- function(ensemble.size, pft.samples, env.samples, 
+get.ensemble.samples <- function( ensemble.size, pft.samples, env.samples, 
                                  method = "random", param.names = NULL, ...) {
 
   # Define supported methods
@@ -547,6 +547,7 @@ for (input_tag in names(settings$run$inputs)) {
 #' @param input name of input to sample, e.g. "met", "veg", "pss"
 #' @param method Method for sampling - For now looping or sampling with replacement is implemented
 #' @param parent_ids This is basically the order of the paths that the parent is sampled.See Details.
+#' @param ensemble_size size of ensemble
 #'
 #' @return For a given input/tag in the pecan xml and a method, this function returns a list with $id showing the order of sampling and $samples with samples of that input.
 #' @details If for example met was a parent and it's sampling method resulted in choosing the first, third and fourth samples, these are the ids that need to be sent as
@@ -556,7 +557,7 @@ for (input_tag in names(settings$run$inputs)) {
 #' @examples
 #' \dontrun{input.ens.gen(settings,"met","sampling")}
 #'
-input.ens.gen <- function(settings, input, method = "sampling", parent_ids = NULL) {
+input.ens.gen <- function(settings, ensemble_size, input, method = "sampling", parent_ids = NULL) {
 
   #-- reading the dots and exposing them to the inside of the function
   samples <- list()
@@ -579,12 +580,12 @@ input.ens.gen <- function(settings, input, method = "sampling", parent_ids = NUL
   } else if (tolower(method) == "sampling") {
     samples$ids <- sample(
       seq_along(input_path),
-      settings$ensemble$size,
+      ensemble_size,
       replace = TRUE)
   } else if (tolower(method) == "looping") {
     samples$ids <- rep_len(
       seq_along(input_path),
-      length.out = settings$ensemble$size)
+      length.out = ensemble_size )
   }
   #using the sample ids
   samples$samples <- input_path[samples$ids]
