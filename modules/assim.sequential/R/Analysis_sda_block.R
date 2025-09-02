@@ -11,19 +11,15 @@
 ##' @param nt total length of time steps, corresponding to the `nt` variable in the `sda.enkf.multisite` function.
 ##' @param MCMC.args arguments for the MCMC sampling, details can be found in the roxygen strucutre for control list in the `sda.enkf.multisite` function.
 ##' @param block.list.all.pre pre-existed block.list.all object for passing the aqq and bqq to the current SDA run, the default is NULL. Details can be found in the roxygen structure for `pre_enkf_params` of the `sda.enkf.multisite` function.
-##' @param cores number of CPUs used for parallel computation. Default is NULL.
 ##' @details This function will add data and constants into each block that are needed for the MCMC sampling.
 ##'  
 ##' @description This function provides the block-based MCMC sampling approach.
 ##' 
 ##' @return It returns the `build.block.xy` object and the analysis results.
 ##' @importFrom dplyr %>%
-analysis_sda_block <- function (settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, block.list.all.pre = NULL, cores = NULL) {
+analysis_sda_block <- function (settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, block.list.all.pre = NULL) {
   # if we didn't assign cores.
-  if (is.null(cores)) {
-    cores <- parallel::detectCores() - 1
-    if (cores < 1) cores <- 1 # if we only have one CPU.
-  }
+  cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
   #convert from vector values to block lists.
   if ("try-error" %in% class(try(block.results <- build.block.xy(settings = settings, 
                                                                  block.list.all = block.list.all, 
