@@ -638,7 +638,10 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
 
       ## plantWoodInit gC/m2
       if ("wood" %in% names(IC.pools)) {
-        param[param[, 1] == "plantWoodInit", 2] <- PEcAn.utils::ud_convert(IC.pools$wood, "kg m-2", "g m-2")
+        fineRootFrac <- param[which(param[,1] == "fineRootFrac"),2]
+        coarseRootFrac <- param[which(param[,1] == "coarseRootFrac"),2]
+        # accounts for the fact that SIPNET take plantWoodInit as all woods (including roots).
+        param[which(param[, 1] == "plantWoodInit"), 2] <- PEcAn.utils::ud_convert(IC.pools$wood, "kg m-2", "g m-2")/(1-fineRootFrac-coarseRootFrac)
       }
       ## laiInit m2/m2
       lai <- IC.pools$LAI
