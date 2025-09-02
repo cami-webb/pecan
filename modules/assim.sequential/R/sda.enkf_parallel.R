@@ -44,6 +44,9 @@ sda.enkf_local <- function(settings,
   }
   # Tweak outdir if it's specified from outside.
   if (!is.null(outdir)) {
+    PEcAn.logger::logger.info(paste0("Replacing model output directories with ", outdir, "."))
+    PEcAn.logger::logger.info("Please note that the workflow will only work locally.")
+    PEcAn.logger::logger.info("Please swap the SDA function to `sda.enkf.multisite` function if you would like to run jobs through remote server.")
     settings$outdir <- outdir
     settings$rundir <- file.path(outdir, "run")
     settings$modeloutdir <- file.path(outdir, "out")
@@ -482,6 +485,7 @@ qsub_sda <- function(settings, obs.mean, obs.cov, Q, pre_enkf_params, ensemble.s
     num.folder <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$folder.num)
   }
   cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
+  qsub.cmd <- settings$state.data.assimilation$batch.settings$qsub.cmd
   # initialize parallel.
   cl <- parallel::makeCluster(cores)
   on.exit(parallel::stopCluster(cl), add = TRUE)
@@ -562,11 +566,19 @@ qsub_sda <- function(settings, obs.mean, obs.cov, Q, pre_enkf_params, ensemble.s
                              jobsh <- gsub("@FOLDER_PATH@", folder.path, jobsh)
                              writeLines(jobsh, con = file.path(folder.path, "job.sh"))
                              # qsub command.
-                             qsub <- "qsub -l h_rt=24:00:00 -l mem_per_core=4G -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
-                             qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
-                             qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
-                             qsub <- gsub("@STDERR@", file.path(folder.path, "stderr.log"), qsub)
-                             qsub <- gsub("@CORES@", cores, qsub)
+                             qsub <- qsub.cmd
+                             if (grepl("NAME", qsub.cmd, fixed = TRUE)) {
+                               qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
+                             }
+                             if (grepl("STDOUT", qsub.cmd, fixed = TRUE)) {
+                               qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
+                             }
+                             if (grepl("STDERR", qsub.cmd, fixed = TRUE)) {
+                               qsub <- gsub("@STDERR@", file.path(folder.path, "stderr.log"), qsub)
+                             }
+                             if (grepl("CORES", qsub.cmd, fixed = TRUE)) {
+                               qsub <- gsub("@CORES@", cores, qsub)
+                             }
                              qsub <- strsplit(qsub, " (?=([^\"']*\"[^\"']*\")*[^\"']*$)", perl = TRUE)
                              cmd <- qsub[[1]]
                              out <- system2(cmd, file.path(folder.path, "job.sh"), stdout = TRUE, stderr = TRUE)
