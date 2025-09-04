@@ -2,14 +2,14 @@
 % Please edit documentation in R/combine_model_netcdf.R
 \name{single_site_nc_merge}
 \alias{single_site_nc_merge}
-\title{Merge model outputted NetCDF files across ensembles for a single site.}
+\title{Merge model outputted netCDF files across ensembles for a single site.}
 \usage{
 single_site_nc_merge(model.outdir, nc.outdir, ens.num, site.id, lat, lon, time)
 }
 \arguments{
 \item{model.outdir}{character: physical path to the model output folder.}
 
-\item{nc.outdir}{character: physical path to the folder that contains the merged NetCDF files.}
+\item{nc.outdir}{character: physical path to the folder that contains the merged netCDF files.}
 
 \item{ens.num}{numeric: ensemble size.}
 
@@ -20,14 +20,14 @@ single_site_nc_merge(model.outdir, nc.outdir, ens.num, site.id, lat, lon, time)
 \item{lon}{numeric: longitude of the site.}
 }
 \value{
-character: file path to the merged NetCDF file.
+character: file path to the merged netCDF file.
 }
 \description{
-Merge model outputted NetCDF files across ensembles for a single site.
+Merge model outputted netCDF files across ensembles for a single site.
 }
 \details{
 The function is only tested for SIPNET model runs.
-Please make sure you have the same NetCDF formats if you want to proceed with different models.
+Please make sure you have the same netCDF formats if you want to proceed with different models.
 }
 \author{
 Dongchen Zhang

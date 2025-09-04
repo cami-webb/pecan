@@ -2,24 +2,24 @@
 % Please edit documentation in R/combine_model_netcdf.R
 \name{all_site_nc_merge_by_year}
 \alias{all_site_nc_merge_by_year}
-\title{Merge model outputted NetCDF files by time steps specified by pecan settings file.}
+\title{Merge model outputted netCDF files by time steps specified by pecan settings file.}
 \usage{
 all_site_nc_merge_by_year(settings.dir, nc.outdir)
 }
 \arguments{
 \item{settings.dir}{character: physical path to the pecan standard multi-settings file.}
 
-\item{nc.outdir}{character: physical path to the folder that contains the merged NetCDF files.}
+\item{nc.outdir}{character: physical path to the folder that contains the merged netCDF files.}
 }
 \value{
-character: file paths to the merged NetCDF files.
+character: file paths to the merged netCDF files.
 }
 \description{
-Merge model outputted NetCDF files by time steps specified by pecan settings file.
+Merge model outputted netCDF files by time steps specified by pecan settings file.
 }
 \details{
 The function is only tested for SIPNET model runs.
-Please make sure you have the same NetCDF formats if you want to proceed with different models.
+Please make sure you have the same netCDF formats if you want to proceed with different models.
 We could also have more functions that deal with different dimensions (e.g., by site instead of by year).
 }
 \author{
