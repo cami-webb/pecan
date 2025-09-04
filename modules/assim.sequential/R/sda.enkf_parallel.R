@@ -375,7 +375,7 @@ sda.enkf_local <- function(settings,
       #running analysis function.
       # forbid submitting jobs to remote.
       settings$state.data.assimilation$batch.settings$analysis <- NULL
-      enkf.params[[obs.t]] <- analysis_sda_block(settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, pre_enkf_params, cores)
+      enkf.params[[obs.t]] <- analysis_sda_block(settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, pre_enkf_params)
       enkf.params[[obs.t]] <- c(enkf.params[[obs.t]], RestartList = list(restart.list %>% stats::setNames(site.ids)))
       block.list.all <- enkf.params[[obs.t]]$block.list.all
       #Forecast
