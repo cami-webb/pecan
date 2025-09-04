@@ -17,7 +17,8 @@ runModule.run.write.configs <- function(settings, overwrite = TRUE, input_design
     }
     if (is.null(input_design)) {
       ensemble_size <- settings$ensemble$size
-      input_design <- PEcAn.uncertainty::generate_joint_ensemble_design(settings=settings[1],ensemble_size=ensemble_size)
+      design_result <- PEcAn.uncertainty::generate_joint_ensemble_design(settings=settings[1],ensemble_size=ensemble_size)
+      input_design <- design_result$X
     }
     return(PEcAn.settings::papply(settings, runModule.run.write.configs, overwrite = FALSE,input_design=input_design))
   } else if (PEcAn.settings::is.Settings(settings)) {
@@ -27,8 +28,9 @@ runModule.run.write.configs <- function(settings, overwrite = TRUE, input_design
     }
     if (is.null(input_design)) {
       ensemble_size <- settings$ensemble$size
-      input_design <- PEcAn.uncertainty::generate_joint_ensemble_design( settings = settings, ensemble_size = ensemble_size )
-    }
+      design_result <- PEcAn.uncertainty::generate_joint_ensemble_design( settings = settings, ensemble_size = ensemble_size )
+      input_design <- design_result$X
+      }
     
     
     

@@ -7,8 +7,8 @@
 #'
 #'
 #' @param settings a PEcAn settings list
-#' @param write should the runs be written to the database?
 #' @param input_design input indices for samples 
+#' @param write should the runs be written to the database?
 #' @param posterior.files Filenames for posteriors for drawing samples for ensemble and sensitivity
 #'    analysis (e.g. post.distns.Rdata, or prior.distns.Rdata)
 #' @param overwrite logical: Replace output files that already exist?

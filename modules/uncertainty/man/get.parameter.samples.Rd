@@ -6,7 +6,7 @@
 \usage{
 get.parameter.samples(
   settings,
-  ensemble.size,
+  ensemble.size = 1,
   posterior.files = rep(NA, length(settings$pfts)),
   ens.sample.method = "uniform"
 )

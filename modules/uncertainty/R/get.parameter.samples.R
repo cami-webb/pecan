@@ -10,7 +10,7 @@
 ##' @author David LeBauer, Shawn Serbin, Istem Fer
 #' @importFrom purrr `%||%`
 ### Identify PFTs in the input settings.xml file
-get.parameter.samples <- function(settings, ensemble.size,
+get.parameter.samples <- function(settings, ensemble.size = 1,
                                   posterior.files = rep(NA, length(settings$pfts)), 
                                   ens.sample.method = "uniform") {
   pfts      <- settings$pfts
@@ -192,8 +192,7 @@ get.parameter.samples <- function(settings, ensemble.size,
                                      quantiles = quantiles)
   }
   if ("ensemble" %in% names(settings)) {
-    #if it's not there it's one probably
-    if (is.null(ensemble.size)) ensemble.size <- 1
+   
     if (ensemble.size == 1) {
       ## run at median if only one run in ensemble
       ensemble.samples <- PEcAn.utils::get.sa.sample.list(
