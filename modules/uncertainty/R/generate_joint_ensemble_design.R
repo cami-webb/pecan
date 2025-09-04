@@ -70,5 +70,5 @@ generate_joint_ensemble_design <- function(settings, ensemble_size, sobol = FALS
   
   
   
-  return(design_matrix)
+  return(list(X=design_matrix))
 }
