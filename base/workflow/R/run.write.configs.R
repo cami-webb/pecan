@@ -7,6 +7,7 @@
 #'
 #'
 #' @param settings a PEcAn settings list
+#' @param ensemble.size number of ensemble runs
 #' @param input_design input indices for samples 
 #' @param write should the runs be written to the database?
 #' @param posterior.files Filenames for posteriors for drawing samples for ensemble and sensitivity
@@ -24,7 +25,7 @@
 #'
 #' @author David LeBauer, Shawn Serbin, Ryan Kelly, Mike Dietze
 
-run.write.configs <- function(settings, input_design, write = TRUE,  
+run.write.configs <- function(settings, ensemble.size, input_design, write = TRUE,  
                               posterior.files = rep(NA, length(settings$pfts)), 
                               overwrite = TRUE) {
   
@@ -179,6 +180,7 @@ run.write.configs <- function(settings, input_design, write = TRUE,
   ### Write ENSEMBLE
   if ("ensemble" %in% names(settings)) {
     ens.runs <- PEcAn.uncertainty::write.ensemble.configs(defaults = settings$pfts,
+                                                          ensemble.size = ensemble.size,
                                                           ensemble.samples = ensemble.samples, 
                                                           settings = settings,
                                                           model = model, 
