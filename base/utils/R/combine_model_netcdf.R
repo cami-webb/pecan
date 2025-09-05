@@ -15,7 +15,7 @@
 #' @importFrom foreach %dopar%
 all_site_nc_merge_by_year <- function (settings.dir, nc.outdir) {
   # check shell environments.
-  if (suppressWarnings(system2("which", "cdo", stdout = FALSE)) != 0) {
+  if ("try-error" %in% class(try(temp <- system("which cdo", intern = T), silent = T))) {
     PEcAn.logger::logger.info("The cdo function is not detected in shell command.")
     return(NA)
   }
