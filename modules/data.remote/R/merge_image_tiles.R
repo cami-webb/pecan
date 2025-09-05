@@ -35,7 +35,7 @@ merge_image_tiles <- function(in.path,
                                                  COMPRESS = "DEFLATE")) {
   # Detect if we have the gdalwarp module installed.
   # check shell environments.
-  if ("try-error" %in% class(try(temp <- system("which gdalwarp", intern = T), silent = T))) {
+  if (suppressWarnings(system2("which", "gdalwarp", stdout = FALSE)) != 0) {
     PEcAn.logger::logger.info("The gdalwarp function is not detected in shell command.")
     return(NA)
   }
@@ -222,7 +222,7 @@ get_subdatasets <- function(in_path) {
 #' @author Dongchen Zhang
 gdal_translate <- function (from, to) {
   # grab gdal installation path.
-  if ("try-error" %in% class(try(gdal_path <- system("which gdal_translate", intern = TRUE)))) {
+  if (suppressWarnings(system2("which", "gdal_translate", stdout = FALSE)) != 0) {
     PEcAn.logger::logger.info("Please make sure the gdal_translate module is installed correctly!")
     return(0)
   }
