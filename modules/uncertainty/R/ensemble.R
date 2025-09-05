@@ -203,6 +203,7 @@ get.ensemble.samples <- function( ensemble.size, pft.samples, env.samples,
 ##' a name to distinguish the output files, and the directory to place the files.
 ##'
 ##' @param input_design the input indices for samples 
+##' @param ensemble.size size of ensemble
 ##' @param defaults pft
 ##' @param ensemble.samples list of lists supplied by \link{get.ensemble.samples}
 ##' @param settings list of PEcAn settings
@@ -224,7 +225,7 @@ get.ensemble.samples <- function( ensemble.size, pft.samples, env.samples,
 ##' @importFrom rlang .data
 ##' @export
 ##' @author David LeBauer, Carl Davidson, Hamze Dokoohaki
-write.ensemble.configs <- function(defaults, ensemble.samples, settings, model, input_design ,
+write.ensemble.configs <- function(input_design , ensemble.size, defaults, ensemble.samples, settings, model, 
                                    clean = FALSE, write.to.db = TRUE, restart = NULL, samples = NULL, rename = FALSE) {
   
   
@@ -339,7 +340,7 @@ for (input_tag in names(settings$run$inputs)) {
     # if there is a tag required by the model but it is not specified in the xml then I replicate n times the first element 
     required_tags%>%
       purrr::walk(function(r_tag){
-        if (is.null(samples[[r_tag]]) & r_tag!="parameters") samples[[r_tag]]$samples <<- rep(settings$run$inputs[[tolower(r_tag)]]$path[1], settings$ensemble$size)
+        if (is.null(samples[[r_tag]]) & r_tag!="parameters") samples[[r_tag]]$samples <<- rep(settings$run$inputs[[tolower(r_tag)]]$path[1], ensemble.size)
       })
     
     # Reading the site.pft specific tags from xml
@@ -367,7 +368,7 @@ for (input_tag in names(settings$run$inputs)) {
     }
     
     # if no ensemble piece was in the xml I replicate n times the first element in params
-    if ( is.null(samp$parameters) )            samples$parameters$samples <- ensemble.samples %>% purrr::map(~.x[rep(1, settings$ensemble$size) , ])
+    if ( is.null(samp$parameters) )            samples$parameters$samples <- ensemble.samples %>% purrr::map(~.x[rep(1, ensemble.size) , ])
     # This where we handle the parameters - ensemble.samples is already generated in run.write.config and it's sent to this function as arg - 
     if ( is.null(samples$parameters$samples) ) samples$parameters$samples <- ensemble.samples
     #------------------------End of generating ensembles-----------------------------------
@@ -377,7 +378,7 @@ for (input_tag in names(settings$run$inputs)) {
     
     # write configuration for each run of the ensemble
     runs <- data.frame()
-    for (i in seq_len(settings$ensemble$size)) {
+    for (i in seq_len(ensemble.size)) {
       if (!is.null(con) && write.to.db) {
         paramlist <- paste("ensemble=", i, sep = "")
         # inserting this into the table and getting an id back
@@ -433,7 +434,7 @@ for (input_tag in names(settings$run$inputs)) {
       cat("runtype     : ensemble\n",
           "workflow id : ", format(workflow.id, scientific = FALSE), "\n",
           "ensemble id : ", format(ensemble.id, scientific = FALSE), "\n",
-          "run         : ", i, "/", settings$ensemble$size, "\n",
+          "run         : ", i, "/", ensemble.size, "\n",
           "run id      : ", format(run.id, scientific = FALSE), "\n",
           "pft names   : ", as.character(lapply(settings$pfts, function(x) x[["name"]])), "\n",
           "model       : ", model, "\n",
@@ -511,7 +512,7 @@ for (input_tag in names(settings$run$inputs)) {
     }
     
     # stop and start time are required by bc we are wrtting them down into job.sh
-    for (i in seq_len(settings$ensemble$size)) {
+    for (i in seq_len(ensemble.size)) {
       input_list <- list()
       for (input_tag in names(inputs)) {
         if (!is.null(inputs[[input_tag]]$samples[[i]])) 
