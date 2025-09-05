@@ -13,7 +13,9 @@ nc_merge_single_site(model.outdir, nc.outdir, ens.num, site.id, time)
 
 \item{ens.num}{numeric: ensemble size.}
 
-\item{site.id}{numeric: identification number of the site.
+\item{site.id}{numeric: identification number of the site.}
+
+\item{time}{numeric or character: the current time of netCDF files to be extracted.
 See details for use with non-numeric siteIDs}
 }
 \value{

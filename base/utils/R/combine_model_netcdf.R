@@ -156,6 +156,7 @@ nc_merge_all_sites_by_year <- function (settings.dir = NULL,
 #' @param nc.outdir  character: physical path to the folder that contains the merged netCDF files.
 #' @param ens.num numeric: ensemble size.
 #' @param site.id numeric: identification number of the site.
+#' @param time numeric or character: the current time of netCDF files to be extracted.
 #'   See details for use with non-numeric siteIDs
 #' @return character: file path to the merged netCDF file.
 #' 
