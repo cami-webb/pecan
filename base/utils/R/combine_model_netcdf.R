@@ -23,15 +23,15 @@
 #' @author Dongchen Zhang
 #' @importFrom magrittr %>%
 #' @importFrom foreach %dopar%
-all_site_nc_merge_by_year <- function (settings.dir = NULL, 
-                                       nc.outdir, 
-                                       ancillary.inputs = list(model.outdir = NULL,
-                                                               ens.num = NULL,
-                                                               site.ids = NULL,
-                                                               cores = NULL,
-                                                               start.date = NULL,
-                                                               end.date = NULL,
-                                                               time.step = NULL)) {
+nc_merge_all_sites_by_year <- function (settings.dir = NULL, 
+                                        nc.outdir, 
+                                        ancillary.inputs = list(model.outdir = NULL,
+                                                                ens.num = NULL,
+                                                                site.ids = NULL,
+                                                                cores = NULL,
+                                                                start.date = NULL,
+                                                                end.date = NULL,
+                                                                time.step = NULL)) {
   # check shell environments.
   if (suppressWarnings(system2("which", "cdo", stdout = FALSE)) != 0) {
     PEcAn.logger::logger.info("The cdo function is not detected in shell command.")
@@ -107,7 +107,7 @@ all_site_nc_merge_by_year <- function (settings.dir = NULL,
       foreach::foreach(s = seq_along(site.ids), 
                        .packages = c("Kendall", "purrr", "ncdf4"), 
                        .options.snow=opts) %dopar% {
-                         single_site_nc_merge(model.outdir = model.outdir, 
+                         nc_merge_single_site(model.outdir = model.outdir, 
                                               nc.outdir = nc.outdir, 
                                               ens.num = ens.num, 
                                               # cdo collgrid only works for numeric data type.
@@ -160,7 +160,7 @@ all_site_nc_merge_by_year <- function (settings.dir = NULL,
 #' @export
 #' 
 #' @author Dongchen Zhang
-single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, time) {
+nc_merge_single_site <- function (model.outdir, nc.outdir, ens.num, site.id, time) {
   # grab basic formats from the first nc file of the site.
   # create the folder name associated with first ensemble and first site.
   prefix <- "ENS-"
