@@ -35,9 +35,9 @@ nc_merge_all_sites_by_year <- function (model.outdir,
     return(NA)
   }
   # calculate time points.
-  time.points <- lubridate::year(seq(lubridate::date(ancillary.inputs$start.date), 
-                                     lubridate::date(ancillary.inputs$end.date), 
-                                     ancillary.inputs$time.step))
+  time.points <- lubridate::year(seq(lubridate::date(start.date), 
+                                     lubridate::date(end.date), 
+                                     time.step))
   
   # loop over time.
   # initialize parallel.
