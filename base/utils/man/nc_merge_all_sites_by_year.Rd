@@ -5,15 +5,12 @@
 \title{Combine many netCDFs into one file per year}
 \usage{
 nc_merge_all_sites_by_year(
-  settings.dir = NULL,
   nc.outdir,
   ancillary.inputs = list(model.outdir = NULL, ens.num = NULL, site.ids = NULL, cores =
     NULL, start.date = NULL, end.date = NULL, time.step = NULL)
 )
 }
 \arguments{
-\item{settings.dir}{character: physical path to the pecan standard multi-settings file.}
-
 \item{nc.outdir}{character: physical path to the folder that contains the merged netCDF files.}
 
 \item{ancillary.inputs}{list: necessary arguments if settings.dir is NULL. See

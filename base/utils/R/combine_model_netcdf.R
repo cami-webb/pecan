@@ -6,7 +6,6 @@
 #' Please make sure you have the same netCDF formats if you want to proceed with different models.
 #' We could also have more functions that deal with different dimensions (e.g., by site instead of by year).
 #' 
-#' @param settings.dir character: physical path to the pecan standard multi-settings file.
 #' @param nc.outdir  character: physical path to the folder that contains the merged netCDF files.
 #' @param ancillary.inputs list: necessary arguments if settings.dir is NULL. See 
 #' `model.outdir` path to the folder that contains model outputs; 
@@ -23,8 +22,7 @@
 #' @author Dongchen Zhang
 #' @importFrom magrittr %>%
 #' @importFrom foreach %dopar%
-nc_merge_all_sites_by_year <- function (settings.dir = NULL, 
-                                        nc.outdir, 
+nc_merge_all_sites_by_year <- function (nc.outdir, 
                                         ancillary.inputs = list(model.outdir = NULL,
                                                                 ens.num = NULL,
                                                                 site.ids = NULL,
@@ -37,31 +35,8 @@ nc_merge_all_sites_by_year <- function (settings.dir = NULL,
     PEcAn.logger::logger.info("The cdo function is not detected in shell command.")
     return(NA)
   }
-  # if we specify settings.dir.
-  if (!is.null(settings.dir)) {
-    # read settings.
-    settings <- PEcAn.settings::read.settings(settings.dir)
-    # grab model outdir.
-    model.outdir <- settings$modeloutdir
-    # grab ensemble size.
-    ens.num <- settings$ensemble$size %>% as.numeric
-    # grab number of CPUs for parallel computation.
-    cores <- as.numeric(settings$host$cores)
-    # if we didn't assign number of CPUs in the settings.
-    if (is.null(cores)) {
-      cores <- parallel::detectCores() - 1
-      # if we only have one CPU.
-      if (cores < 1) cores <- 1
-    }
-    # grab site info.
-    site.ids <- settings$run %>% purrr::map(function(s){s$site$id}) %>% unlist
-    # grab time points.
-    time.points <- lubridate::year(seq(lubridate::date(settings$state.data.assimilation$start.date), 
-                                       lubridate::date(settings$state.data.assimilation$end.date), 
-                                       paste0("1 ", settings$state.data.assimilation$forecast.time.step)))
-    # if we didn't specify settings.dir 
-    # but we have manually inputted the arguments in the ancillary.inputs list.
-  } else if (all(!is.null(unlist(ancillary.inputs)))) {
+  # load arguments from the ancillary.inputs.
+  if (all(!is.null(unlist(ancillary.inputs)))) {
     # grab model outdir.
     model.outdir <- ancillary.inputs$modeloutdir
     # grab ensemble size.
