@@ -4,12 +4,26 @@
 \alias{all_site_nc_merge_by_year}
 \title{Merge model outputted netCDF files by time steps specified by pecan settings file.}
 \usage{
-all_site_nc_merge_by_year(settings.dir, nc.outdir)
+all_site_nc_merge_by_year(
+  settings.dir = NULL,
+  nc.outdir,
+  ancillary.inputs = list(model.outdir = NULL, ens.num = NULL, site.ids = NULL, cores =
+    NULL, start.date = NULL, end.date = NULL, time.step = NULL)
+)
 }
 \arguments{
 \item{settings.dir}{character: physical path to the pecan standard multi-settings file.}
 
 \item{nc.outdir}{character: physical path to the folder that contains the merged netCDF files.}
+
+\item{ancillary.inputs}{list: necessary arguments if settings.dir is NULL. See
+\code{model.outdir} path to the folder that contains model outputs;
+\code{ens.num} number of ensembles for the model run;
+\code{site.ids} vector of site ids across locations;
+\code{cores} number of CPUs for the parallel computation;
+\code{start.date} start date of the model run;
+\code{end.date} end date of the model run.
+\code{time.step} time step of the model run (e.g., 1 year).}
 }
 \value{
 character: file paths to the merged netCDF files.

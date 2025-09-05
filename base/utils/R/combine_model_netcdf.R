@@ -6,6 +6,14 @@
 #' 
 #' @param settings.dir character: physical path to the pecan standard multi-settings file.
 #' @param nc.outdir  character: physical path to the folder that contains the merged netCDF files.
+#' @param ancillary.inputs list: necessary arguments if settings.dir is NULL. See 
+#' `model.outdir` path to the folder that contains model outputs; 
+#' `ens.num` number of ensembles for the model run;
+#' `site.ids` vector of site ids across locations;
+#' `cores` number of CPUs for the parallel computation;
+#' `start.date` start date of the model run;
+#' `end.date` end date of the model run.
+#' `time.step` time step of the model run (e.g., 1 year).
 #'
 #' @return character: file paths to the merged netCDF files.
 #' @export
@@ -13,37 +21,73 @@
 #' @author Dongchen Zhang
 #' @importFrom purrr %>%
 #' @importFrom foreach %dopar%
-all_site_nc_merge_by_year <- function (settings.dir, nc.outdir) {
+all_site_nc_merge_by_year <- function (settings.dir = NULL, 
+                                       nc.outdir, 
+                                       ancillary.inputs = list(model.outdir = NULL,
+                                                               ens.num = NULL,
+                                                               site.ids = NULL,
+                                                               cores = NULL,
+                                                               start.date = NULL,
+                                                               end.date = NULL,
+                                                               time.step = NULL)) {
   # check shell environments.
   if (suppressWarnings(system2("which", "cdo", stdout = FALSE)) != 0) {
     PEcAn.logger::logger.info("The cdo function is not detected in shell command.")
     return(NA)
   }
-  # read settings.
-  settings <- PEcAn.settings::read.settings(settings.dir)
-  # grab model outdir.
-  model.outdir <- settings$modeloutdir
-  # grab ensemble size.
-  ens.num <- settings$ensemble$size %>% as.numeric
-  # grab number of CPUs for parallel computation.
-  cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
-  # if we didn't assign number of CPUs in the settings.
-  if (is.null(cores)) {
-    cores <- parallel::detectCores() - 1
-    # if we only have one CPU.
-    if (cores < 1) cores <- 1
+  # if we specify settings.dir.
+  if (!is.null(settings.dir)) {
+    # read settings.
+    settings <- PEcAn.settings::read.settings(settings.dir)
+    # grab model outdir.
+    model.outdir <- settings$modeloutdir
+    # grab ensemble size.
+    ens.num <- settings$ensemble$size %>% as.numeric
+    # grab number of CPUs for parallel computation.
+    cores <- as.numeric(settings$host$cores)
+    # if we didn't assign number of CPUs in the settings.
+    if (is.null(cores)) {
+      cores <- parallel::detectCores() - 1
+      # if we only have one CPU.
+      if (cores < 1) cores <- 1
+    }
+    # grab site info.
+    site.ids <- settings$run %>% purrr::map(function(s){s$site$id}) %>% unlist
+    # grab time points.
+    time.points <- lubridate::year(seq(lubridate::date(settings$state.data.assimilation$start.date), 
+                                       lubridate::date(settings$state.data.assimilation$end.date), 
+                                       paste0("1 ", settings$state.data.assimilation$forecast.time.step)))
+    # if we didn't specify settings.dir 
+    # but we have manually inputted the arguments in the ancillary.inputs list.
+  } else if (all(!is.null(unlist(ancillary.inputs)))) {
+    # grab model outdir.
+    model.outdir <- ancillary.inputs$modeloutdir
+    # grab ensemble size.
+    ens.num <- ancillary.inputs$ens.num
+    # grab number of CPUs for parallel computation.
+    cores <- ancillary.inputs$cores
+    # if we didn't assign number of CPUs in the settings.
+    if (is.null(cores)) {
+      cores <- parallel::detectCores() - 1
+      # if we only have one CPU.
+      if (cores < 1) cores <- 1
+    }
+    # grab site info.
+    site.ids <- ancillary.inputs$site.ids
+    # grab time points.
+    time.points <- lubridate::year(seq(lubridate::date(ancillary.inputs$start.date), 
+                                       lubridate::date(ancillary.inputs$end.date), 
+                                       ancillary.inputs$time.step))
+    # if we have missing variables from the ancillary.inputs list.
+  } else {
+    # record the missing inputs.
+    arg.names <- names(ancillary.inputs)
+    missing.inds <- which(ancillary.inputs %>% purrr::map(is.null) %>% unlist)
+    missing.vars.message <- paste(arg.names[missing.inds], collapse = ", ")
+    PEcAn.logger::logger.info(paste0("The following inputs are missing from the ancillary.inputs list: ", missing.vars.message))
+    return(0)
   }
-  # grab site info.
-  site_info <- settings %>% purrr::map(~.x[["run"]]) %>% 
-    purrr::map("site") %>% purrr::map(function(s) {
-      temp <- as.numeric(c(s$id, s$lon, s$lat))
-      names(temp) <- c("site_id", "lon", "lat")
-      temp
-    }) %>% dplyr::bind_rows() %>% as.data.frame()
-  # grab time points.
-  time.points <- lubridate::year(seq(lubridate::date(settings$state.data.assimilation$start.date), 
-                                     lubridate::date(settings$state.data.assimilation$end.date), 
-                                     paste0("1 ", settings$state.data.assimilation$forecast.time.step)))
+  
   # loop over time.
   # initialize parallel.
   cl <- parallel::makeCluster(as.numeric(cores))
@@ -65,9 +109,7 @@ all_site_nc_merge_by_year <- function (settings.dir, nc.outdir) {
                                               nc.outdir = nc.outdir, 
                                               ens.num = ens.num, 
                                               # cdo collgrid only works for numeric data type.
-                                              site.id = as.numeric(site_info$site_id[s]), 
-                                              lat = site_info$lat[s], 
-                                              lon = site_info$lon[s], 
+                                              site.id = site_info$site_id[s], 
                                               time)
                        } %>% unlist
     # merge across sites using CDO command.
@@ -75,7 +117,14 @@ all_site_nc_merge_by_year <- function (settings.dir, nc.outdir) {
     cmd <- gsub("@CORES@", cores, cmd)
     cmd <- gsub("@NC.OUTDIR@", nc.outdir, cmd)
     cmd <- gsub("@OUTFILE@", file.path(nc.outdir, paste0(time, ".nc")), cmd)
-    out <- system(cmd, intern = TRUE)
+    out <- system(cmd, intern = TRUE, ignore.stdout = TRUE, ignore.stderr = TRUE)
+    # if we have site ids in character format.
+    if (all(is.character(site_info$site_id))) {
+      nc <- ncdf4::nc_open(file.path(nc.outdir, paste0(time, ".nc")))
+      site_dim <- ncdf4::ncdim_def("site", units = "", vals = site_info$lat)
+      site_id_var <- ncdf4::ncvar_def("site_id", units = "", dim = site_dim, prec = "char")
+      ncdf4::ncvar_put(nc, varid = "site_id", vals = site_info$site_id)
+    }
     # record the current nc path.
     nc.paths <- c(nc.paths, file.path(nc.outdir, paste0(time, ".nc")))
     # remove nc files for each site.
@@ -97,13 +146,11 @@ all_site_nc_merge_by_year <- function (settings.dir, nc.outdir) {
 #' @param nc.outdir  character: physical path to the folder that contains the merged netCDF files.
 #' @param ens.num numeric: ensemble size.
 #' @param site.id numeric: identification number of the site.
-#' @param lat numeric: latitude of the site.
-#' @param lon numeric: longitude of the site.
 #' @return character: file path to the merged netCDF file.
 #' @export
 #' 
 #' @author Dongchen Zhang
-single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, lat, lon, time) {
+single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, time) {
   # grab basic formats from the first nc file of the site.
   # create the folder name associated with first ensemble and first site.
   prefix <- "ENS-"
@@ -112,6 +159,8 @@ single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, lat
   nc <- ncdf4::nc_open(file.path(model.outdir, folder.name, paste0(time, ".nc")))
   nc.vars <- nc$var # grab variable definitions.
   time.values <- nc$dim$time # grab time dimensions.
+  lat <- nc$dim$lat$vals
+  lon <- nc$dim$lon$vals
   ncdf4::nc_close(nc) # close nc connection.
   # dimension and variable definitions.
   # site dimension.
@@ -138,7 +187,7 @@ single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, lat
       var.mat[,ens] <- ncdf4::ncvar_get(nc, var = var)
       ncdf4::nc_close(nc)
     }
-    # define the current SIPNET variable.
+    # define the current model variable.
     temp_var <- ncdf4::ncvar_def(nc.vars[[i]]$name, 
                                  units = nc.vars[[i]]$units, 
                                  dim = list(site_dim, ens_dim, time_dim), 

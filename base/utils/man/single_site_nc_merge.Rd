@@ -4,7 +4,7 @@
 \alias{single_site_nc_merge}
 \title{Merge model outputted netCDF files across ensembles for a single site.}
 \usage{
-single_site_nc_merge(model.outdir, nc.outdir, ens.num, site.id, lat, lon, time)
+single_site_nc_merge(model.outdir, nc.outdir, ens.num, site.id, time)
 }
 \arguments{
 \item{model.outdir}{character: physical path to the model output folder.}
@@ -14,10 +14,6 @@ single_site_nc_merge(model.outdir, nc.outdir, ens.num, site.id, lat, lon, time)
 \item{ens.num}{numeric: ensemble size.}
 
 \item{site.id}{numeric: identification number of the site.}
-
-\item{lat}{numeric: latitude of the site.}
-
-\item{lon}{numeric: longitude of the site.}
 }
 \value{
 character: file path to the merged netCDF file.
