@@ -103,6 +103,7 @@ nc_merge_all_sites_by_year <- function (settings.dir = NULL,
   for (t in seq_along(time.points)) {
     time <- time.points[t] # grab the current time point.
     # loop over sites.
+    s <- NULL # For passing the GitHub actions.
     nc.files <- 
       foreach::foreach(s = seq_along(site.ids), 
                        .packages = c("Kendall", "purrr", "ncdf4"), 
