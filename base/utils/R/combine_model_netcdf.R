@@ -182,6 +182,7 @@ single_site_nc_merge <- function (model.outdir, nc.outdir, ens.num, site.id, tim
     # loop over ensembles.
     var.mat <- matrix(NA, time.values$len, ens.num)
     for (ens in 1:ens.num) {
+      # TODO: add checks to make sure every thing in files are in the same shape and format.
       folder.name <- paste0(prefix, sprintf("%05d", ens), "-", site.id)
       nc <- ncdf4::nc_open(file.path(model.outdir, folder.name, paste0(time, ".nc")))
       var.mat[,ens] <- ncdf4::ncvar_get(nc, var = var)
