@@ -35,7 +35,7 @@ nc_merge_all_sites_by_year <- function (nc.outdir,
     PEcAn.logger::logger.info("The cdo function is not detected in shell command.")
     return(NA)
   }
-  # if we didn't assign number of CPUs in the settings.
+  # if we didn't specify the number of CPUs.
   if (is.null(cores)) {
     cores <- parallel::detectCores() - 1
     # if we only have one CPU.
