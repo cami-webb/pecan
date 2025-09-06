@@ -18,11 +18,12 @@ compute_sobol_indices <- function(outdir,
                                   stat_fun = mean) {
  
  
-  
+ 
   runs_file <- file.path(outdir, "runs.txt")
   if (!file.exists(runs_file)) {
     PEcAn.logger::logger.error("runs.txt not found in ", outdir)
-  }
+   }
+  run_ids <- readLines(runs_file) 
   
 
   
@@ -40,5 +41,5 @@ compute_sobol_indices <- function(outdir,
   sobol_obj <- tell(sobol_obj, y)
   
   # Return the updated object
-  invisible(sobol_obj)
+  return(invisible(sobol_obj))
 }
