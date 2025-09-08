@@ -55,6 +55,11 @@ nc_merge_all_sites_by_year <- function (model.outdir,
   nc.paths <- c()
   for (t in seq_along(time.points)) {
     time <- time.points[t] # grab the current time point.
+    # record previous file.
+    if (file.exists(file.path(nc.outdir, paste0(time, ".nc")))) {
+      nc.paths <- c(nc.paths, file.path(nc.outdir, paste0(time, ".nc")))
+      next
+    }
     # loop over sites.
     s <- NULL # For passing the GitHub actions.
     nc.files <- 
