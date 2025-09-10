@@ -64,7 +64,19 @@ planting_annual <- ca_fields |>
     date = paste0(year, "-03-15"),
     site_id = site_id,
     # required for planting
-    leaf_c_kg_m2 = 500,
+    leaf_c_kg_m2 = 0.05,
+    crop = crop
+  )
+
+# Planting (woody): first year
+planting_woody <- ca_fields |>
+  dplyr::filter(pft == "woody perennial crop") |>
+  dplyr::filter(year == first_year) |>
+  dplyr::transmute(
+    event_type = "planting",
+    date = paste0(year, "-03-15"),
+    site_id = site_id,
+    leaf_c_kg_m2 = 0.2,
     crop = crop
   )
 
@@ -90,18 +102,6 @@ organic_matter_addition <- ca_fields |>
     org_c_kg_m2 = 0.5,
     nh4_n_kg_m2 = 0.0,
     no3_n_kg_m2 = 0.0
-  )
-
-# Planting (woody): first year
-planting_woody <- ca_fields |>
-  dplyr::filter(pft == "woody perennial crop") |>
-  dplyr::filter(year == first_year) |>
-  dplyr::transmute(
-    event_type = "planting",
-    date = paste0(year, "-03-15"),
-    site_id = site_id,
-    leaf_c_kg_m2 = 1,
-    crop = crop
   )
 
 # Harvest
