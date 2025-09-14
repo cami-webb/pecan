@@ -30,7 +30,7 @@ compute_sobol_indices <- function(outdir,
   # Load outputs and compute response vector y
   y <- vapply(run_ids, function(rid) {
     fpath <- file.path(outdir, rid)
-    out   <- read.output(runid = rid, outdir = fpath)
+    out   <- PEcAn.utils::read.output(runid = rid, outdir = fpath)
     if (!is.list(out) || !var %in% names(out)) {
       PEcAn.logger::logger.error("Variable '", var, "' missing in output for run ", rid)
     }
