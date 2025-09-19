@@ -1,55 +1,82 @@
-#' Debias preprocessing utilities (helpers for SDA debias step)
+#' Debias preprocessing utilities (internal)
 #'
-#' These functions encapsulate the small-but-fiddly preprocessing bits used by
-#' the debias step in sda.enkf.multisite(): mapping obs to columns, collecting
-#' covariates for the correct year, and organizing comparison/diagnostic tables.
+#' Helper functions for the SDA debias step in `sda.enkf.multisite()`:
+#' (1) map observations to state columns; (2) collect covariates for the
+#' correct year and align them to X's column layout; (3) build diagnostics.
 #'
-#' All functions are pure (no hidden state) and accept `settings` explicitly.
-#' Keep `settings$covariates_df` and `settings$site_coords` populated upstream.
+#' These helpers are pure (stateless) and do not use `settings`.
 #'
-#' @author Shashank Ramachandran
-#' @noRd
+#' @section Tidy-eval safety:
+#' Uses `rlang::.data` in dplyr calls to avoid R CMD check notes.
+#'
+#' @keywords internal
+#' @name debias_helpers
+#' @importFrom dplyr filter right_join arrange
+#' @importFrom tibble tibble
+#' @importFrom rlang .data
+#' @importFrom lubridate year
+NULL
 
-# ---- Name mapping (edit here if variable names differ between OBS and STATE) ----
+#' @rdname debias_helpers
+#' @keywords internal
+#' @author Shashank Ramachandran
+# ---- Name mapping (edit if OBS names differ from STATE col names) ----
 debias_name_map <- c(
   AGB   = "AbvGrndWood",
   LAI   = "LAI",
   SMP   = "SoilMoistFrac",
   SoilC = "TotSoilCarb"
 )
-
+#' @rdname debias_helpers
+#' @keywords internal
 # ---- Covariate accessor for a given observation datetime ----
-debias_get_covariates_for_date <- function(settings, obs_date) {
+# Ensures we have rows for all sites we actually use (from site_index)
+debias_get_covariates_for_date <- function(covariates_df, obs_date, site_index) {
   yr <- lubridate::year(obs_date)
+  sites_used <- unique(as.character(site_index))
   
-  if (is.null(settings$covariates_df)) {
-    stop("settings$covariates_df is NULL. Supply covariate table with columns: site, year, <features...>.")
-  }
-  if (is.null(settings$site_coords)) {
-    stop("settings$site_coords is NULL. Supply a data.frame with a 'site' column listing site IDs in use.")
+  if (is.null(covariates_df)) {
+    stop("covariates_df is NULL. Provide a table with columns: site, year, <features...>.")
   }
   
-  settings$covariates_df %>%
-    dplyr::filter(.data$year == yr) %>%
-    dplyr::right_join(dplyr::select(settings$site_coords, .data$site), by = "site") %>%
+  df_year <- covariates_df |>
+    dplyr::filter(.data$year == !!yr)
+  
+  # enforce presence & order of the sites we’re using this step
+  df_year <- df_year |>
+    dplyr::right_join(tibble::tibble(site = sites_used), by = "site") |>
     dplyr::arrange(.data$site)
+  
+  # sanity check
+  if (any(is.na(df_year$year))) {
+    missing_sites <- df_year$site[is.na(df_year$year)]
+    stop("Missing covariates for sites in year ", yr, ": ",
+         paste(missing_sites, collapse = ", "))
+  }
+  
+  df_year
 }
-
-# ---- Expand covariates to match columns of X (site-wise repetition) ----
-debias_cov_by_columns <- function(settings, obs_date, site_index) {
-  df <- debias_get_covariates_for_date(settings, obs_date)
-  idx <- match(site_index, df$site)  # repeats each site's row per (site,var) column
-  as.matrix(df[idx, setdiff(names(df), c("site","year")), drop = FALSE])
+#' @rdname debias_helpers
+#' @keywords internal
+# ---- Expand covariates to match columns of X (row-per-column) ----
+debias_cov_by_columns <- function(covariates_df, obs_date, site_index) {
+  df_year <- debias_get_covariates_for_date(covariates_df, obs_date, site_index)
+  feat_cols <- setdiff(names(df_year), c("site","year"))
+  
+  idx <- match(as.character(site_index), df_year$site)  # repeat per (site,var) column
+  if (any(is.na(idx))) {
+    stop("Internal error aligning covariates to site_index; check site labels.")
+  }
+  
+  as.matrix(df_year[idx, feat_cols, drop = FALSE])
 }
-
+#' @rdname debias_helpers
+#' @keywords internal
 # ---- Build an observation vector aligned to X's columns ----
-# col_vars: character vector of state-variable names, length ncol(X)
-# site_index: attribute vector (same length as col_vars) labeling columns by site
 debias_obs_vec_for_time <- function(t_idx, site_index, col_vars, obs.mean, name_map = debias_name_map) {
   om  <- obs.mean[[t_idx]]
   out <- rep(NA_real_, length(col_vars))
   
-  # Allow mapping OBS variable names -> STATE variable names
   for (s in unique(site_index)) {
     vals <- om[[as.character(s)]]
     if (is.null(vals)) next
@@ -68,8 +95,9 @@ debias_obs_vec_for_time <- function(t_idx, site_index, col_vars, obs.mean, name_
   }
   out
 }
-
-# ---- Convenience: build tidy comparison table for diagnostics ----
+#' @rdname debias_helpers
+#' @keywords internal
+# ---- Diagnostics helpers (unchanged) ----
 debias_build_comp_df <- function(site_index, col_vars, pre_mean, post_mean, obs_vec) {
   df <- data.frame(
     site = site_index,
@@ -81,8 +109,8 @@ debias_build_comp_df <- function(site_index, col_vars, pre_mean, post_mean, obs_
   )
   df[order(df$var, df$site), ]
 }
-
-# ---- Small RMSE summary by variable ----
+#' @rdname debias_helpers
+#' @keywords internal
 debias_rmse_by_var <- function(comp_df) {
   rmse <- function(a, b) sqrt(mean((a - b)^2, na.rm = TRUE))
   do.call(
@@ -97,5 +125,6 @@ debias_rmse_by_var <- function(comp_df) {
     })
   )
 }
+
 
 

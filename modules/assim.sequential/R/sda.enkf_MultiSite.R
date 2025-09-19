@@ -31,7 +31,10 @@
 #' `forceRun` decide if we want to proceed the Bayesian MCMC sampling without observations;
 #' `run_parallel` decide if we want to run the SDA under parallel mode for the `future_map` function;
 #' `MCMC.args` include lists for controling the MCMC sampling process (iteration, nchains, burnin, and nthin.).
+#' @param cov_dir Directory containing yearly covariate stacks named like "covariates_YYYY.tiff".
+#' @param debias_mode Logical; if TRUE, run the residual debias step each cycle (t > 1).
 #' @param ...       Additional arguments, currently ignored
+#' 
 #' 
 #' @return NONE
 #' @import nimble furrr
@@ -58,6 +61,8 @@ sda.enkf.multisite <- function(settings,
                                             forceRun = TRUE,
                                             run_parallel = TRUE,
                                             MCMC.args = NULL),
+                               cov_dir = NULL, 
+                               debias_mode = FALSE,
                                ...) {
   #add if/else for when restart points to folder instead if T/F set restart as T
   if(is.list(restart)){
@@ -124,6 +129,12 @@ sda.enkf.multisite <- function(settings,
   FORECAST    <- ANALYSIS <- ens_weights <- list()
   enkf.params <- list()
   restart.list <- NULL
+  covariates_df <- NULL
+  if (!is.null(cov_dir)) {
+    covariates_df <- generate_covariates_df(settings, cov_dir)
+    message("Loaded covariates for ", length(unique(covariates_df$year)),
+            " years and ", length(unique(covariates_df$site)), " sites.")
+  }
   #create SDA folder to store output
   if(!dir.exists(settings$outdir)) dir.create(settings$outdir, showWarnings = FALSE)
   
@@ -355,7 +366,7 @@ sda.enkf.multisite <- function(settings,
         load(file.path(settings$outdir, "samples.Rdata"))
       }
       #reformatting params
-      new.params <- PEcAnAssimSequential:::sda_matchparam(settings, ensemble.samples, site.ids, nens)
+      new.params <- sda_matchparam(settings, ensemble.samples, site.ids, nens)
       
     }
       
@@ -403,6 +414,12 @@ sda.enkf.multisite <- function(settings,
   train_buf <- new.env(parent = emptyenv()) 
   # --- New: containers for storing debias weights over time ---
   DEBIAS_WEIGHTS <- list()   # nested list: DEBIAS_WEIGHTS[[time]][[var]] = named vector (KNN weight, TREE weight)
+  # Flat, tidy log of learner weights over time (easier to write/export/plot).
+  # Columns:
+  #   time    : character label for the time step (e.g., "2012-12-31")
+  #   var     : state variable name (e.g., "LAI", "AbvGrndWood")
+  #   learner : model id / learner name ("KNN", "TREE", etc.)
+  #   weight  : numeric weight for that learner at that time/variable
   DEBIAS_WEIGHTS_DF <- data.frame(
     time    = character(),
     var     = character(),
@@ -410,6 +427,14 @@ sda.enkf.multisite <- function(settings,
     weight  = numeric(),
     stringsAsFactors = FALSE
   )
+  # Small helper to append one row per learner into DEBIAS_WEIGHTS_DF.
+  # Args:
+  #   t_label : time label for the current step (character)
+  #   var     : variable name (character)
+  #   w_named : *named* numeric vector of weights (e.g., c(KNN=0.6, TREE=0.4)).
+  #             If unnamed, we auto-name as "learner_1", "learner_2", ...
+  # Returns:
+  #   A data.frame with columns (time, var, learner, weight) ready to rbind().
   .append_weights_row <- function(t_label, var, w_named) {
     if (is.null(names(w_named))) names(w_named) <- paste0("learner_", seq_along(w_named))
     data.frame(
@@ -420,6 +445,12 @@ sda.enkf.multisite <- function(settings,
       stringsAsFactors = FALSE
     )
   }
+  # Flat RMSE tracker across all times and variables.
+  # Columns:
+  #   time      : time label
+  #   var       : variable name
+  #   rmse_pre  : RMSE before debias (raw ensemble mean vs obs)
+  #   rmse_post : RMSE after debias (corrected mean vs obs)
   DIAG <- list()  # per-time: DIAG[[time]] = list(comp=..., rmse=...)
   RMSE_DF <- data.frame(
     time      = character(),
@@ -519,7 +550,7 @@ sda.enkf.multisite <- function(settings,
         #put building of X into a function that gets called
         max_t <- 0
         while("try-error" %in% class(
-          try(reads <- PEcAnAssimSequential:::build_X(out.configs = out.configs, 
+          try(reads <- build_X(out.configs = out.configs, 
                                settings = settings, 
                                new.params = new.params, 
                                nens = nens, 
@@ -575,107 +606,29 @@ sda.enkf.multisite <- function(settings,
       FORECAST[[obs.t]] <- X
       name_map <- debias_name_map
       #DEBIAS STEP 
-      if (t > 1) {
-        obs_prev_vec <- debias_obs_vec_for_time(t - 1, site_index, col_vars, obs.mean, name_map)
-        cov_prev_mat <- debias_cov_by_columns(settings,obs.times[t - 1], site_index)
-        cov_t_mat    <- debias_cov_by_columns(settings,obs.times[t],     site_index)
-        pred_resid <- rep(0, ncol(X))
-        
-        for (v in unique(col_vars)) {
-          cols_v <- which(col_vars == v)
-          # training rows at t-1
-          y_v_all   <- obs_prev_vec[cols_v] - as.numeric(raw_prev[cols_v])
-          Xprev_all <- cbind(cov_prev_mat[cols_v, , drop = FALSE],
-                             raw = as.numeric(raw_prev[cols_v]))
-          mask <- !is.na(y_v_all) & complete.cases(Xprev_all)
-          if (any(mask)) {
-            # always (re)train this step using all rows seen so far for this var
-            # keep a per-var growing buffer if you want; or just train on Xprev_all[mask,]
-            # Here: simple “use everything we have so far” buffer
-            rec <- if (exists(v, train_buf, inherits = FALSE)) get(v, train_buf)
-            else list(X = NULL, y = NULL)
-            rec$X <- rbind(rec$X, Xprev_all[mask, , drop = FALSE])
-            rec$y <- c(rec$y, y_v_all[mask])
-            assign(v, rec, train_buf)
-            py$train_full_model(name = as.character(v),X = as.matrix(rec$X),y = as.numeric(rec$y))
-            w_now <- py$get_model_weights(as.character(v))
-            if (!is.null(w_now)) {
-              # tree weight is 1 - w
-              w_named <- c(KNN = w_now, TREE = 1 - w_now)
-              
-              if (is.null(DEBIAS_WEIGHTS[[obs.t]])) DEBIAS_WEIGHTS[[obs.t]] <- list()
-              DEBIAS_WEIGHTS[[obs.t]][[as.character(v)]] <- w_named
-              
-              DEBIAS_WEIGHTS_DF <- rbind(DEBIAS_WEIGHTS_DF,
-                                          .append_weights_row(obs.t, as.character(v), w_named))
-            }
-          }
-          
-          # predict residuals at t (only where features are complete)
-          if (py$has_model(v)) {
-            Xt_v <- cbind(cov_t_mat[cols_v, , drop = FALSE],
-                          raw = as.numeric(raw_mean_t[cols_v]))
-            ok <- complete.cases(Xt_v)  # <-- vectorized
-            if (any(ok)) {
-              pred_resid[cols_v[ok]] <- py$predict_residual(v, Xt_v[ok, , drop = FALSE])
-            }
-          }
-        }
-        # --- Diagnostics: compare pre/post debias vs observations at time t ---
-        pre_mean  <- raw_mean_t
-        
-        # post-debias ensemble mean we’re about to apply
-        post_mean <- raw_mean_t + pred_resid
-        
-        # observations at the current time t (mapped to columns)
-        obs_t_vec <- debias_obs_vec_for_time(t, site_index, col_vars, obs.mean, name_map)
-        
-        # tidy comparison table
-        comp_df <- data.frame(
-          site = site_index,
-          var  = col_vars,
-          pre  = as.numeric(pre_mean),
-          post = as.numeric(post_mean),
-          obs  = as.numeric(obs_t_vec),
-          stringsAsFactors = FALSE
+      if (t > 1 && isTRUE(debias_mode)) {
+        out <- sda_apply_debias_step(
+          t = t,
+          obs.t = obs.t,
+          X = X,
+          raw_prev = raw_prev,
+          raw_mean_t = raw_mean_t,
+          site_index = site_index,
+          col_vars = col_vars,
+          obs.times = obs.times,
+          obs.mean = obs.mean,
+          covariates_df = covariates_df,
+          py = py,
+          train_buf = train_buf,
+          name_map = name_map
         )
         
-        # order for readability
-        comp_df <- comp_df[order(comp_df$var, comp_df$site), ]
+        X <- out$X
+        if (!is.null(out$weights_entry)) DEBIAS_WEIGHTS[[obs.t]] <- out$weights_entry
+        if (nrow(out$weights_df_rows)) DEBIAS_WEIGHTS_DF <- rbind(DEBIAS_WEIGHTS_DF, out$weights_df_rows)
+        DIAG[[obs.t]] <- out$diag
+        if (nrow(out$rmse_rows)) RMSE_DF <- rbind(RMSE_DF, out$rmse_rows)
         
-        # print a quick peek
-        cat("\n--- Debias diagnostics for", obs.t, "---\n")
-        utils::head(comp_df, 20) |> print()
-        
-        # print full tables per variable (handy in browser())
-        for (vv in unique(comp_df$var)) {
-          cat("\n=== Variable:", vv, "===\n")
-          print(comp_df[comp_df$var == vv, c("site","pre","post","obs")], row.names = FALSE)
-        }
-        
-        # quick RMSE snapshot (pre vs post) by variable
-        rmse <- function(a,b) sqrt(mean((a-b)^2, na.rm = TRUE))
-        rmse_tbl <- do.call(rbind, lapply(split(comp_df, comp_df$var), function(d){
-          data.frame(
-            var       = d$var[1],
-            rmse_pre  = rmse(d$pre,  d$obs),
-            rmse_post = rmse(d$post, d$obs),
-            stringsAsFactors = FALSE
-          )
-        }))
-        cat("\n--- RMSE by variable (pre vs post) ---\n")
-        print(rmse_tbl)
-        
-        # stash for later inspection/export if you want
-        rmse_tbl$time <- obs.t
-        RMSE_DF <- rbind(RMSE_DF, rmse_tbl[, c("time","var","rmse_pre","rmse_post")])
-        
-        # keep full diagnostics (comparison table + rmse) for this time
-        DIAG[[obs.t]] <- list(comp = comp_df, rmse = rmse_tbl)
-        
-        offsets   <- sweep(X, 2, raw_mean_t, FUN = "-")
-        corrected <- raw_mean_t + pred_resid
-        X         <- sweep(offsets, 2, corrected, FUN = "+")
         FORECAST[[obs.t]] <- X
       }
       raw_prev <- raw_mean_t
@@ -715,7 +668,7 @@ sda.enkf.multisite <- function(settings,
             MCMC.args <- control$MCMC.args
           }
           #running analysis function.
-          enkf.params[[obs.t]] <- PEcAnAssimSequential:::analysis_sda_block(settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, pre_enkf_params)
+          enkf.params[[obs.t]] <- analysis_sda_block(settings, block.list.all, X, obs.mean, obs.cov, t, nt, MCMC.args, pre_enkf_params)
           enkf.params[[obs.t]] <- c(enkf.params[[obs.t]], RestartList = list(restart.list %>% stats::setNames(site.ids)))
           block.list.all <- enkf.params[[obs.t]]$block.list.all
           #Forecast

@@ -15,6 +15,8 @@ sda.enkf.multisite(
   control = list(trace = TRUE, TimeseriesPlot = FALSE, debug = FALSE, pause = FALSE,
     Profiling = FALSE, OutlierDetection = FALSE, parallel_qsub = TRUE, send_email = NULL,
     keepNC = TRUE, forceRun = TRUE, run_parallel = TRUE, MCMC.args = NULL),
+  cov_dir = NULL,
+  debias_mode = FALSE,
   ...
 )
 }
@@ -46,6 +48,10 @@ sda.enkf.multisite(
 `forceRun` decide if we want to proceed the Bayesian MCMC sampling without observations;
 `run_parallel` decide if we want to run the SDA under parallel mode for the `future_map` function;
 `MCMC.args` include lists for controling the MCMC sampling process (iteration, nchains, burnin, and nthin.).}
+
+\item{cov_dir}{Directory containing yearly covariate stacks named like "covariates_YYYY.tiff".}
+
+\item{debias_mode}{Logical; if TRUE, run the residual debias step each cycle (t > 1).}
 
 \item{...}{Additional arguments, currently ignored}
 }

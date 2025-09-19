@@ -1,3 +1,30 @@
+#' Load debias Python module (internal)
+#'
+#' Locate and import the Python residual-model module used by the SDA debias step.
+#' The search order prefers installed package paths and then falls back to a
+#' developer tree when running from source.
+#'
+#' **Search logic (first match wins):**
+#' 1. Installed package dirs: `system.file("python", pkg)`, `system.file("python_models", pkg)`
+#' 2. Dev fallbacks (from namespace path or `inst/`):
+#'    - `<pkg>/python`, `<pkg>/python_models`
+#'    - `inst/python`, `inst/python_models`
+#'
+#' **Module names recognized:**
+#' - Package directory: `pecan_debias/__init__.py`  → imports `"pecan_debias"`
+#' - Single file: `debias.py`                       → imports `"debias"`
+#'
+#' The imported module is cached across calls. Pass `reload = TRUE` to force
+#' re-import (e.g., after editing the Python code in development).
+#'
+#' @param reload Logical; if `TRUE`, force re-import even if a cached module exists.
+#'
+#' @return A reticulate Python module object. Errors if no suitable path is found
+#'   or if the import returns a null Python pointer.
+#'
+#' @keywords internal
+#' @importFrom reticulate import_from_path py_is_null_xptr
+#' @noRd
 .get_debias_mod <- local({
   mod <- NULL
   function(reload = FALSE) {
