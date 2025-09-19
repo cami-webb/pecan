@@ -9,10 +9,11 @@ section for the next release.
 
 ### Added
 
-* Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
-* Add CH4 and N2O to standard_vars in PEcAn.utils
-* New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
-* Added `AmeriFlux_met_ensemble()` function with ERA5 fallback for AmeriFlux meteorological data processing and ensemble generation
+- Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
+- Add CH4 and N2O to standard_vars in PEcAn.utils
+- New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
+- Added `AmeriFlux_met_ensemble()` function with ERA5 fallback for AmeriFlux meteorological data processing and ensemble generation
+- Added `all_site_nc_merge_by_year()` and `single_site_nc_merge()` functions to merge netCDF files across ensembles and sites from pecan model netCDF outputs.
 - Included all relevant carbon pools (`ROOT_BIOMASS`, `AG_BIOMASS`, `SOIL_STOCK`, `LIT_BIOMASS`) in BADM-based IC extraction; excluded non-pool variables like `SOIL_CHEM`.
 - Added explicit support for `LIT_BIOMASS` to fully utilize **BADM** biomass capabilities.
 - Added `test-IC_BADM_Utilities.R` to validate BADM initial condition extraction and processing
@@ -32,6 +33,7 @@ section for the next release.
 
 - Fixed a bugs and BADM now process both single-site and multi-site settings, detecting the input structure and processing each site independently to generate the correct number of ensemble members per site.
 - Fixed "external pointer is not valid" error and addressed key bugs in `soilgrids_soilC_extract()` function (#3506)
+- Fixed a bug within the `model2netcdf.SIPNET` function where we assumed the constant calculations of `pecan_start_doy` across years (the calculations should vary depending on the last date from the last loop and the start date of the current loop), which will lead to incorrect calculations of the start `sub_dates` and `sub_dates_cf` if we are jumping between years (e.g., from 2012-12-31 to 2013-01-01). The `sipnet2datetime` function is no longer used anywhere and therefore has been removed.
 
 ### Changed
 

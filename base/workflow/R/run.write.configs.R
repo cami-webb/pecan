@@ -7,8 +7,9 @@
 #'
 #'
 #' @param settings a PEcAn settings list
-#' @param write should the runs be written to the database?
+#' @param ensemble.size number of ensemble runs
 #' @param input_design input indices for samples 
+#' @param write should the runs be written to the database?
 #' @param posterior.files Filenames for posteriors for drawing samples for ensemble and sensitivity
 #'    analysis (e.g. post.distns.Rdata, or prior.distns.Rdata)
 #' @param overwrite logical: Replace output files that already exist?
@@ -24,12 +25,12 @@
 #'
 #' @author David LeBauer, Shawn Serbin, Ryan Kelly, Mike Dietze
 
-run.write.configs <- function(settings, input_design, write = TRUE,  
+run.write.configs <- function(settings, ensemble.size, input_design, write = TRUE,  
                               posterior.files = rep(NA, length(settings$pfts)), 
                               overwrite = TRUE) {
   
-
-
+  
+  
   ## Skip database connection if settings$database is NULL or write is False
   if (!isTRUE(write) && is.null(settings$database)) {
     PEcAn.logger::logger.info("Not writing this run to database, so database connection skipped")
@@ -106,13 +107,13 @@ run.write.configs <- function(settings, input_design, write = TRUE,
     trait_sample_indices <- input_design[["param"]]
     ensemble.samples <- list()
     for (pft in names(trait.samples)) {
-        pft_traits <- trait.samples[[pft]]
-        ensemble.samples[[pft]] <- as.data.frame(
-          lapply(
-            names(pft_traits),
-            function(trait) pft_traits[[trait]][trait_sample_indices]
-          )
+      pft_traits <- trait.samples[[pft]]
+      ensemble.samples[[pft]] <- as.data.frame(
+        lapply(
+          names(pft_traits),
+          function(trait) pft_traits[[trait]][trait_sample_indices]
         )
+      )
       names(ensemble.samples[[pft]]) <- names(pft_traits)
     }
     sa.samples <- samples$sa.samples
@@ -179,6 +180,7 @@ run.write.configs <- function(settings, input_design, write = TRUE,
   ### Write ENSEMBLE
   if ("ensemble" %in% names(settings)) {
     ens.runs <- PEcAn.uncertainty::write.ensemble.configs(defaults = settings$pfts,
+                                                          ensemble.size = ensemble.size,
                                                           ensemble.samples = ensemble.samples, 
                                                           settings = settings,
                                                           model = model, 
@@ -209,5 +211,3 @@ run.write.configs <- function(settings, input_design, write = TRUE,
   invisible(settings)
   return(settings)
 }
-
-  
