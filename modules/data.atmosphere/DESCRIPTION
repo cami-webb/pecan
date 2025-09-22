@@ -19,6 +19,9 @@ Description: The Predictive Ecosystem Carbon Analyzer (PEcAn) is a scientific
     package converts climate driver data into a standard format for models
     integrated into PEcAn. As a standalone package, it provides an interface to
     access diverse climate data sets.
+URL: https://pecanproject.github.io
+BugReports: https://github.com/PecanProject/pecan/issues
+Depends: R (>= 4.1.0)
 Imports:
     abind (>= 1.4.5),
     amerifluxr,
@@ -61,6 +64,7 @@ Imports:
     zoo
 Suggests:
     doParallel,
+    ecmwfr (>= 2.0.0),
     doSNOW,
     furrr,
     future,

@@ -1,10 +1,14 @@
 # Unreleased
 
 * Add function `clip_and_save_raster_file()` for subsetting rasters to match a polygon of interest (#3537).
-
+* New utility script `IC_SOILGRID_Utilities.R` for processing SoilGrids data to generate soil carbon initial condition (IC) files. This includes (#3508):
+  - **`soilgrids_ic_process`**: A function to extract, process, and generate ensemble members from SoilGrids250m data.
+  - **`preprocess_soilgrids_data`**: A helper function to handle missing values and ensure data integrity during preprocessing. 
+  - **`generate_soilgrids_ensemble`**: A function to create ensemble members for a site based on processed soil carbon data. 
 
 # PEcAn.data.land 1.8.2
 - Removed unused parameter `machine` from put_veg_module()
+- Fixed "external pointer is not valid" error and addressed key bugs in `soilgrids_soilC_extract()` function (#3506)
 
 
 # PEcAn.data.land 1.8.1
@@ -22,6 +26,7 @@
 * Included all relevant carbon pools (`ROOT_BIOMASS`, `AG_BIOMASS`, `SOIL_STOCK`, `LIT_BIOMASS`) in BADM-based IC extraction; excluded non-pool variables like `SOIL_CHEM`.
 * Added explicit support for `LIT_BIOMASS` to fully utilize **BADM** biomass capabilities.
 * Added `test-IC_BADM_Utilities.R` to validate BADM initial condition extraction and processing
+* `extract_soil_gssurgo` now supports spatial sampling using a grid of user-defined size and spacing. And supports ensemble simulation of soil organic carbon (SOC) stocks, using area-weighted aggregation
 
 ## Fixed
 

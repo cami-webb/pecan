@@ -682,11 +682,12 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
         soilWFrac <- ncdf4::ncvar_get(IC.nc, "SoilMoistFrac")
         if (!is.na(soilWFrac) && is.numeric(soilWFrac)) {
           param[param[, 1] == "soilWFracInit", 2] <- sum(soilWFrac) / 100
+          ## litterWFracInit fraction
+          litterWFrac <- soilWFrac
         }
       }
-      ## litterWFracInit fraction
-      litterWFrac <- soilWFrac
-
+      
+           
       ## snowInit cm water equivalent (cm = g / cm2 because 1 g water = 1 cm3 water)
       if (ic_has_ncvars[["SWE"]]) {
         snow <- ncdf4::ncvar_get(IC.nc, "SWE")

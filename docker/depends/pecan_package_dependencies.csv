@@ -42,6 +42,7 @@
 "doParallel","*","modules/data.atmosphere","Suggests",FALSE
 "doParallel","*","modules/data.remote","Imports",FALSE
 "doSNOW","*","base/remote","Suggests",FALSE
+"doSNOW","*","base/utils","Suggests",FALSE
 "doSNOW","*","modules/assim.sequential","Suggests",FALSE
 "doSNOW","*","modules/data.atmosphere","Suggests",FALSE
 "doSNOW","*","modules/data.land","Imports",FALSE
@@ -64,9 +65,11 @@
 "dplyr","*","modules/uncertainty","Imports",FALSE
 "dplyr",">= 0.8.1","modules/data.atmosphere","Imports",FALSE
 "dplyr",">= 1.1.2","base/db","Imports",FALSE
+"ecmwfr",">= 2.0.0","modules/data.atmosphere","Suggests",FALSE
 "ellipse","*","modules/assim.batch","Imports",FALSE
 "exactextractr","*","modules/assim.sequential","Suggests",FALSE
 "foreach","*","base/remote","Imports",FALSE
+"foreach","*","base/utils","Imports",FALSE
 "foreach","*","modules/assim.sequential","Imports",FALSE
 "foreach","*","modules/data.atmosphere","Imports",FALSE
 "foreach","*","modules/data.land","Imports",FALSE
@@ -186,6 +189,7 @@
 "MASS","*","base/utils","Suggests",FALSE
 "MASS","*","modules/assim.batch","Imports",FALSE
 "MASS","*","modules/data.atmosphere","Imports",FALSE
+"MASS","*","modules/data.land","Suggests",FALSE
 "MASS","*","modules/meta.analysis","Imports",FALSE
 "MASS","*","modules/priors","Imports",FALSE
 "MASS","*","modules/rtm","Imports",FALSE
@@ -553,6 +557,7 @@
 "RPostgreSQL","*","base/db","Suggests",FALSE
 "RPostgreSQL","*","models/biocro","Suggests",FALSE
 "RSQLite","*","base/db","Suggests",FALSE
+"sensitivity","*","modules/uncertainty","Imports",FALSE
 "sessioninfo","*","base/all","Suggests",FALSE
 "sf","*","modules/assim.sequential","Suggests",FALSE
 "sf","*","modules/data.atmosphere","Imports",FALSE
