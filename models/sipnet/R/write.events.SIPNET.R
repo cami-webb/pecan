@@ -66,8 +66,7 @@ write.events.SIPNET <- function(events_json, outdir) {
         for (idx in ord) {
             e <- evs[[idx]]
             d <- as.Date(e$date)
-            year <- as.integer(format(d, "%Y"))
-            day <- as.integer(strftime(d, "%j"))
+            day <- as.integer(format(d, "%j"))
             type <- e$event_type
             if (type == "tillage") {
                 f <- if (is.null(e$tillage_eff_0to1)) 0 else e$tillage_eff_0to1
