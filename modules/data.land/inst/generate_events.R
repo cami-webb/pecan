@@ -29,7 +29,7 @@ if (PRODUCTION) {
 set.seed(123)
 
 ca_field_attributes <- vroom::vroom(
-  input_csv,
+field_attr_csv,
   show_col_types = FALSE
 )
 
