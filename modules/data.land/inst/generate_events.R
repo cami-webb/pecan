@@ -14,7 +14,7 @@
 
 # --- Config ---
 data_dir <- "/projectnb2/dietzelab/ccmmf/data"
-input_csv <- file.path(data_dir, "ca_field_attributes.csv")
+field_attr_csv <- file.path(data_dir, "ca_field_attributes.csv")
 sample_output_json <- file.path(data_dir, "events/mvp_events.json")
 output_json <- file.path(data_dir, "events/events.json")
 
