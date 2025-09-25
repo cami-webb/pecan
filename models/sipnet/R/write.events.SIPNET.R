@@ -42,6 +42,7 @@
 #'
 #' @export
 write.events.SIPNET <- function(events_json, outdir) {
+    # TODO add overwrite argument
     x <- jsonlite::fromJSON(events_json, simplifyVector = FALSE)
     site_objs <- if (!is.null(x$site_id)) list(x) else x
     files_written <- vector()
