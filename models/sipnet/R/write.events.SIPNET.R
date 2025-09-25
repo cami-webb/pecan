@@ -62,7 +62,7 @@ write.events.SIPNET <- function(events_json, outdir) {
         # Order by date and build lines
         dates <- as.Date(vapply(evs, function(e) e$date, character(1)))
         ord <- order(dates)
-        lines <- vector()
+        lines <- vector(length = length(evs))
         for (idx in ord) {
             e <- evs[[idx]]
             d <- as.Date(e$date)
