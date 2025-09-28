@@ -1,17 +1,31 @@
 #' Debias preprocessing utilities (internal)
 #'
-#' Helper functions for the SDA debias step used by `sda.enkf.multisite()`:
+#' A small, **pure** helper module that prepares inputs for the residual
+#' debiasing step used by `sda.enkf.multisite()`. These functions **do not**
+#' read from or mutate `settings`; they operate only on the objects passed in.
 #'
-#' 1. Name mapping between observation variable names and state variable names.
-#' 2. Site filtering (toggle-able):
-#'    - drop sites with missing covariates in the current year;
-#'    - drop sites that became *inconsistent* in observations over time
-#'      (e.g., AGB present in 2012 but missing in 2013).
-#' 3. Covariate extraction for the current year and alignment to X’s column layout.
-#' 4. Observation vector builder aligned to X’s columns.
-#' 5. Diagnostics (pre/post comparison and RMSE by variable).
+#' The module provides:
+#' 1. A stable name map between observation variable names and state names.
+#' 2. Site filtering helpers (toggle-able):
+#'    - drop sites with **incomplete** covariates for the current year;
+#'    - drop sites that become **inconsistent** in their observed variables over time
+#'      (e.g., a site reported AGB in 2012 but is missing AGB in 2013).
+#' 3. Covariate extraction for a specific date/year, aligned to the **column order**
+#'    of the state matrix `X` (one row per column of `X`).
+#' 4. Observation-vector builder aligned to `X`’s columns for a given time index.
+#' 5. Diagnostics utilities (per-column pre/post/obs comparison and per-variable RMSE).
+#' 6. A one-step debias application that:
+#'    - learns residuals at t from data up to t–1,
+#'    - mean-shifts the ensemble at t,
+#'    - returns metrics and learner weights for logging.
 #'
-#' These helpers are pure (stateless) and do not use `settings`.
+#' @section Conventions:
+#' - **Columns of `X`** correspond to site–variable pairs in the vectors `site_index`
+#'   and `col_vars`. All alignment is performed using these two vectors.
+#' - **Time indexing `t`** follows the SDA driver (`t` is the current step, `t-1` is
+#'   the most-recent completed step with observations to train on).
+#' - **Covariates** are provided in a *long* data frame with columns `site`, `year`,
+#'   and one column per covariate layer.
 #'
 #' @keywords internal
 #' @name debias_helpers
@@ -22,9 +36,13 @@ NULL
 # (1) Name mapping
 # ------------------------------------------------------------------------------
 
+#' Map observation names -> state names
+#'
+#' This mapping is applied whenever observations are merged into the state layout.
+#' If your upstream naming changes, **edit here** to keep the rest of the code stable.
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Map OBS names -> STATE names (edit if your naming changes).
 debias_name_map <- c(
   AGB   = "AbvGrndWood",
   LAI   = "LAI",
@@ -36,14 +54,25 @@ debias_name_map <- c(
 # (2) Site filtering utilities
 # ------------------------------------------------------------------------------
 
+#' Sites with complete covariates in a given year
+#'
+#' Returns the subset of `candidate_sites` whose covariate row at `year` has **no NA**
+#' in any covariate feature column.
+#'
+#' @param covariates_df A long data frame with columns `site`, `year`, and one column
+#'   per covariate feature (e.g., climate, soils, topography layers).
+#' @param year Integer year to check (extracted via `lubridate::year()` elsewhere).
+#' @param candidate_sites Character vector of site ids to intersect with.
+#'
+#' @return Character vector of sites that have no missing covariates in `year`.
+#'
+#' @examples
+#' \dontrun{
+#' ok <- debias_sites_with_complete_covariates_year(cov_df, 2012, sites)
+#' }
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Determine sites that have complete (non-NA) covariates in a given year.
-#'
-#' @param covariates_df long table with columns: site, year, <covariate layers...>
-#' @param year integer year to check
-#' @param candidate_sites character vector of site ids to consider
-#' @return character vector of sites that have no NA in covariate columns for that year
 debias_sites_with_complete_covariates_year <- function(covariates_df, year, candidate_sites) {
   df_year <- covariates_df[
     covariates_df$year == as.integer(year) & covariates_df$site %in% candidate_sites,
@@ -58,12 +87,25 @@ debias_sites_with_complete_covariates_year <- function(covariates_df, year, cand
   df_year$site[ok_mask]
 }
 
+#' Sites that become inconsistent in observed variables over time
+#'
+#' A site is flagged **inconsistent at `t_idx`** if it is missing *any* variable at time
+#' `t_idx` that it had reported in **any earlier time** (1..`t_idx-1`). This prevents
+#' training/evaluation on sites that drop variables mid-series.
+#'
+#' @param obs.mean A list indexed by time (`[[t]]`), each entry a named list by `site`
+#'   containing named numeric vectors of observed variables for that site/time.
+#'   Names are observation names and will be remapped via `name_map`.
+#' @param t_idx Integer time index to assess (1-based, consistent with SDA loop).
+#' @param name_map Optional named character vector mapping observation names to state names.
+#'
+#' @return Character vector of **site ids** that are inconsistent at `t_idx`.
+#'
+#' @details
+#' This function only inspects **presence/absence** of variables, not their values.
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Identify sites that became inconsistent in observed variables across time.
-#'
-#' A site is inconsistent at t_idx if any variable that was ever observed for that
-#' site in earlier times (1..t_idx-1) is missing at time t_idx.
 debias_sites_inconsistent_obs <- function(obs.mean, t_idx, name_map = debias_name_map) {
   if (t_idx <= 1L) return(character(0))
   
@@ -97,11 +139,33 @@ debias_sites_inconsistent_obs <- function(obs.mean, t_idx, name_map = debias_nam
 # (3) Covariate accessors aligned to time and X’s layout
 # ------------------------------------------------------------------------------
 
+#' Covariates for a date, with optional site filtering
+#'
+#' Filters sites for the year of `obs_date` according to:
+#' - `drop_incomplete_covariates`: remove sites with any NA in covariate features.
+#' - `enforce_consistent_obs`: remove sites that became inconsistent up to `t_idx`.
+#'
+#' Returns a data frame for that **year × eligible sites**, sorted by `site`, with
+#' attributes listing which sites were dropped (useful for logging).
+#'
+#' @param covariates_df Long data frame with columns `site`, `year`, and feature columns.
+#' @param obs_date Date–time corresponding to the **previous or current** SDA step.
+#'   Only the **year** is used.
+#' @param site_index Character or numeric vector giving the **site id per column of X**.
+#' @param obs.mean Observation structure (see `debias_sites_inconsistent_obs()`).
+#' @param t_idx Integer time index used to evaluate consistency up to t or t–1.
+#' @param drop_incomplete_covariates Logical. If `TRUE`, drop sites with any missing
+#'   covariate this year; if `FALSE`, keep all sites present in `covariates_df` for that year.
+#' @param enforce_consistent_obs Logical. If `TRUE`, drop sites that became inconsistent
+#'   in observations up to `t_idx`. Requires `obs.mean` and `t_idx`.
+#'
+#' @return A data frame with columns `site`, `year`, and covariate features for **eligible sites**.
+#'   Attributes:
+#'   - `dropped_missing_covariates`: sites removed for missing covariates,
+#'   - `dropped_inconsistent_obs`: sites removed for observation inconsistency (if enforced).
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Fetch covariates for the current year and filter sites:
-#'   - optionally drop sites with missing covariates this year;
-#'   - optionally drop sites inconsistent in observations up to `t_idx`.
 debias_get_covariates_for_date <- function(covariates_df,
                                            obs_date,
                                            site_index,
@@ -115,7 +179,7 @@ debias_get_covariates_for_date <- function(covariates_df,
   yr <- lubridate::year(obs_date)
   sites_used <- unique(as.character(site_index))
   
-  # 1) filter by complete covariates this year (optional)
+  # (1) Filter by complete covariates (optional)
   if (isTRUE(drop_incomplete_covariates)) {
     complete_sites <- debias_sites_with_complete_covariates_year(covariates_df, yr, sites_used)
   } else {
@@ -125,7 +189,7 @@ debias_get_covariates_for_date <- function(covariates_df,
     )
   }
   
-  # 2) optionally filter out sites with inconsistent obs across time
+  # (2) Optionally enforce observation consistency up to t_idx
   if (isTRUE(enforce_consistent_obs)) {
     if (is.null(obs.mean) || is.null(t_idx)) {
       stop("obs.mean and t_idx must be provided when enforce_consistent_obs = TRUE.")
@@ -146,7 +210,7 @@ debias_get_covariates_for_date <- function(covariates_df,
   ]
   df_year <- df_year[order(df_year$site), , drop = FALSE]
   
-  # annotate what we dropped (useful for logging)
+  # Annotate drops for diagnostics/logging
   attr(df_year, "dropped_missing_covariates") <- setdiff(sites_used, complete_sites)
   if (isTRUE(enforce_consistent_obs)) {
     attr(df_year, "dropped_inconsistent_obs") <- intersect(sites_used, debias_sites_inconsistent_obs(obs.mean, t_idx))
@@ -155,10 +219,24 @@ debias_get_covariates_for_date <- function(covariates_df,
   df_year
 }
 
+#' Expand per-site covariates to **row-per-column** alignment
+#'
+#' Converts the per-site covariate data into a matrix aligned with the **columns of `X`**.
+#' For any column whose site was filtered out, the function inserts a row of `NA`
+#' features to preserve shape and ordering.
+#'
+#' @param covariates_df See `debias_get_covariates_for_date()`.
+#' @param obs_date Date for which to fetch covariates (year is used).
+#' @param site_index Site id per column of `X`.
+#' @param obs.mean Observation structure used if enforcing consistency.
+#' @param t_idx Time index associated with `obs_date`.
+#' @param drop_incomplete_covariates, enforce_consistent_obs See above.
+#'
+#' @return A numeric matrix with **nrow = length(site_index)** and one column per
+#'   covariate feature. Rows align 1:1 with the columns of `X`.
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Expand per-site covariates into a row-per-column matrix aligned with X’s layout.
-#' For columns whose site was filtered out, emit a row of NA features (shape-preserving).
 debias_cov_by_columns <- function(covariates_df,
                                   obs_date,
                                   site_index,
@@ -177,12 +255,14 @@ debias_cov_by_columns <- function(covariates_df,
   )
   
   if (nrow(df_year) == 0) {
+    # Preserve outer shape; no features to return.
     return(matrix(numeric(0), nrow = length(site_index), ncol = 0))
   }
   
   feat_cols <- setdiff(names(df_year), c("site", "year"))
   idx <- match(as.character(site_index), df_year$site)
   
+  # Filler row of NA to keep alignment when a site is missing
   na_row <- as.list(rep(NA_real_, length(feat_cols)))
   names(na_row) <- feat_cols
   filler <- tibble::as_tibble_row(na_row)
@@ -200,9 +280,22 @@ debias_cov_by_columns <- function(covariates_df,
 # (4) Observation vector aligned to X’s columns
 # ------------------------------------------------------------------------------
 
+#' Observation vector for time `t_idx`, aligned to `X` columns
+#'
+#' Builds a vector with one entry per **column of `X`**, using the `(site, var)` layout
+#' defined by `site_index` and `col_vars`. Observation names in `obs.mean` are
+#' remapped through `name_map`.
+#'
+#' @param t_idx Time index (1-based) to pull observations from `obs.mean`.
+#' @param site_index Site id per column of `X`.
+#' @param col_vars Variable name (state-space name) per column of `X`.
+#' @param obs.mean Observation structure (list by time → list by site → named numeric).
+#' @param name_map Optional map from observation names → state names.
+#'
+#' @return Numeric vector of length `length(col_vars)` with `NA` where not observed.
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Build an observation vector aligned to X's columns for time `t_idx`.
 debias_obs_vec_for_time <- function(t_idx, site_index, col_vars, obs.mean, name_map = debias_name_map) {
   om  <- obs.mean[[t_idx]]
   out <- rep(NA_real_, length(col_vars))
@@ -211,6 +304,7 @@ debias_obs_vec_for_time <- function(t_idx, site_index, col_vars, obs.mean, name_
     vals <- om[[as.character(s)]]
     if (is.null(vals)) next
     
+    # Normalize names into state-space naming
     if (!is.null(name_map)) {
       keep <- names(vals) %in% names(name_map)
       if (any(keep)) names(vals)[keep] <- unname(name_map[names(vals)[keep]])
@@ -227,12 +321,22 @@ debias_obs_vec_for_time <- function(t_idx, site_index, col_vars, obs.mean, name_
 }
 
 # ------------------------------------------------------------------------------
-# (5) Diagnostics
+# (5) Diagnostics helpers
 # ------------------------------------------------------------------------------
 
+#' Column-wise comparison table (pre/post/obs)
+#'
+#' @param site_index Site id per column of `X`.
+#' @param col_vars Variable name per column of `X`.
+#' @param pre_mean Vector of pre-debias column means at time `t`.
+#' @param post_mean Vector of post-debias column means at time `t`.
+#' @param obs_vec Observation vector for time `t` (aligned).
+#'
+#' @return Data frame with columns: `site`, `var`, `pre`, `post`, `obs`
+#'   sorted by (`var`, `site`).
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Assemble a comparison table per column (site/var) with pre/post/obs values.
 debias_build_comp_df <- function(site_index, col_vars, pre_mean, post_mean, obs_vec) {
   df <- data.frame(
     site = site_index,
@@ -245,9 +349,17 @@ debias_build_comp_df <- function(site_index, col_vars, pre_mean, post_mean, obs_
   df[order(df$var, df$site), ]
 }
 
+#' RMSE by variable (pre/post vs obs)
+#'
+#' Computes RMSE for each state variable, separately for the pre- and post-debias
+#' column means against observations. NAs are ignored per variable.
+#'
+#' @param comp_df Output of `debias_build_comp_df()`.
+#'
+#' @return Data frame with columns: `var`, `rmse_pre`, `rmse_post`.
+#'
 #' @rdname debias_helpers
 #' @keywords internal
-#' Compute RMSE by state variable comparing pre/post vs. obs.
 debias_rmse_by_var <- function(comp_df) {
   rmse <- function(a, b) sqrt(mean((a - b)^2, na.rm = TRUE))
   do.call(
@@ -267,13 +379,61 @@ debias_rmse_by_var <- function(comp_df) {
 # (6) Per-step debias application (uses site filtering + covariates)
 # ------------------------------------------------------------------------------
 
-#' Apply residual debiasing for a single SDA time step (internal)
+#' Apply residual debiasing for a single SDA time step
 #'
-#' Trains/updates per-variable residual models using data from t-1 and predicts
-#' residuals at t, then mean-shifts the ensemble accordingly. Also returns
-#' diagnostics and learner weights for logging.
+#' At time `t`, this function:
+#' 1. Builds a training set from **t–1**: residuals `y = obs_prev - raw_prev` and features
+#'    `[covariates_prev, raw_prev]` for each variable.
+#' 2. Trains/updates the Python-side learner (`py$train_full_model`).
+#' 3. Predicts residuals at **t** using `[covariates_t, raw_mean_t]`.
+#' 4. Mean-shifts the ensemble `X` by adding predicted residuals to `raw_mean_t`.
+#' 5. Computes per-variable metrics (RMSE, MAE, bias, R²) pre vs post.
+#'
+#' @param t Integer current time index (t > 1 required to train from t–1).
+#' @param obs.t Character or time label for logging (e.g., ISO date string for `t`).
+#' @param X Numeric matrix of the **current** ensemble at time `t` (members × columns).
+#' @param raw_prev Numeric vector of the **raw** column mean at `t-1`.
+#' @param raw_mean_t Numeric vector of the **raw** column mean at `t`.
+#' @param site_index Vector of site ids per column of `X`.
+#' @param col_vars Vector of variable names per column of `X` (state-space names).
+#' @param obs.times Datetime vector indexed by `t` (length ≥ `t`) for covariate year lookup.
+#' @param obs.mean Observation structure (time → site → named numeric vector).
+#' @param covariates_df Long data frame with columns `site`, `year`, and feature columns.
+#' @param py Python bridge object exposing:
+#'   - `train_full_model(name, X, y)`,
+#'   - `predict_residual(name, X)`,
+#'   - `get_model_weights(name)`,
+#'   - `has_model(name)` (logical).
+#' @param train_buf R environment used to accumulate training rows per variable across steps.
+#' @param name_map Optional map from observation names → state names.
+#' @param drop_incomplete_covariates Logical; if `TRUE`, drop sites with missing covariates (per year).
+#' @param enforce_consistent_obs Logical; if `TRUE`, drop sites inconsistent up to relevant `t_idx`.
+#' @param require_obs_at_t_for_predict Logical; if `TRUE`, only predict residuals for columns with
+#'   **observations present at t** (useful for constrained comparisons).
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{X}{The **mean-shifted** ensemble matrix at time `t` (same dims as input `X`).}
+#'   \item{weights_entry}{Optional named list of learner weights by variable (if provided by `py`).}
+#'   \item{weights_df_rows}{A tidy data frame of weights emitted this step (time, var, learner, weight).}
+#'   \item{diag}{A list with:
+#'     \itemize{
+#'       \item `comp`: per-column comparison table (`pre`, `post`, `obs`) for diagnostics.
+#'       \item `rmse`: per-variable metrics (RMSE/MAE/bias/R²) **pre vs post**.
+#'     }
+#'   }
+#'   \item{rmse_rows}{A tidy slice of metrics with the `time` column attached for easy logging.}
+#' }
+#'
+#' @notes
+#' - If covariates are missing (no feature columns) for either `t-1` or `t`, the function
+#'   returns `X` unchanged and emits NA metrics (shape-preserving behavior).
+#' - Predicted residuals that are non-finite are coerced to 0 to avoid contaminating `X`.
+#' - The **mean-shift** keeps the ensemble spread intact: we subtract the raw mean and
+#'   add the corrected mean (`raw_mean_t + predicted_residual`).
+#'
+#' @rdname debias_helpers
 #' @keywords internal
-#' @noRd
 sda_apply_debias_step <- function(
     t, obs.t, X, raw_prev, raw_mean_t,
     site_index, col_vars,
@@ -284,7 +444,7 @@ sda_apply_debias_step <- function(
     enforce_consistent_obs = TRUE,
     require_obs_at_t_for_predict = FALSE
 ) {
-  # Guard
+  # Early return when we cannot train from t-1 or covariates are absent
   if (t <= 1 || is.null(covariates_df)) {
     return(list(
       X = X,
@@ -310,7 +470,7 @@ sda_apply_debias_step <- function(
     ))
   }
   
-  # Build obs + covariates
+  # Build obs/covariates for training (t-1) and prediction (t)
   obs_prev_vec <- debias_obs_vec_for_time(t - 1, site_index, col_vars, obs.mean, name_map)
   
   cov_prev_mat <- debias_cov_by_columns(
@@ -326,6 +486,7 @@ sda_apply_debias_step <- function(
     enforce_consistent_obs     = enforce_consistent_obs
   )
   
+  # If no feature columns, skip debias but keep outputs well-formed
   if (ncol(cov_prev_mat) == 0 || ncol(cov_t_mat) == 0) {
     return(list(
       X = X,
@@ -369,28 +530,32 @@ sda_apply_debias_step <- function(
     )
   }
   
-  # Optionally require obs at t to predict
+  # Optionally restrict predictions to positions with obs at t (diagnostic mode)
   obs_t_avail <- if (require_obs_at_t_for_predict) {
     !is.na(debias_obs_vec_for_time(t, site_index, col_vars, obs.mean, name_map))
   } else rep(TRUE, length(col_vars))
   
+  # Train per variable on t-1 residuals; predict at t
   for (v in vars) {
     cols_v    <- which(col_vars == v)
-    y_v_all   <- obs_prev_vec[cols_v] - as.numeric(raw_prev[cols_v])
+    y_v_all   <- obs_prev_vec[cols_v] - as.numeric(raw_prev[cols_v])  # residuals at t-1
     Xprev_all <- cbind(cov_prev_mat[cols_v, , drop = FALSE],
                        raw = as.numeric(raw_prev[cols_v]))
     mask <- !is.na(y_v_all) & stats::complete.cases(Xprev_all)
     
     if (any(mask)) {
+      # Accumulate per-variable training buffer
       rec <- if (exists(v, train_buf, inherits = FALSE)) get(v, train_buf) else list(X = NULL, y = NULL)
       rec$X <- rbind(rec$X, Xprev_all[mask, , drop = FALSE])
       rec$y <- c(rec$y,  y_v_all[mask])
       assign(v, rec, train_buf)
       
+      # Train/refresh full model on all accumulated rows
       py$train_full_model(name = as.character(v),
                           X = as.matrix(rec$X),
                           y = as.numeric(rec$y))
       
+      # Optional: collect mixing weight for diagnostics (e.g., KNN vs TREE)
       w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
       if (!inherits(w_now, "try-error") && !is.null(w_now) && is.finite(w_now)) {
         w_now <- min(max(as.numeric(w_now), 0), 1)
@@ -400,6 +565,7 @@ sda_apply_debias_step <- function(
       }
     }
     
+    # Predict at t for available positions
     if (py$has_model(as.character(v))) {
       Xt_v <- cbind(cov_t_mat[cols_v, , drop = FALSE],
                     raw = as.numeric(raw_mean_t[cols_v]))
@@ -411,11 +577,13 @@ sda_apply_debias_step <- function(
     }
   }
   
+  # Defensive: replace any non-finite predicted residual with 0
   pred_resid[!is.finite(pred_resid)] <- 0
   
+  # Compute corrected mean and diagnostics
   pre_mean  <- raw_mean_t
   post_mean <- raw_mean_t + pred_resid
-  obs_t_vec <- debias_obs_vec_for_time(t, site_index, col_vars, obs.mean, name_map)  # <— keep this
+  obs_t_vec <- debias_obs_vec_for_time(t, site_index, col_vars, obs.mean, name_map)
   
   comp_df  <- debias_build_comp_df(site_index, col_vars, pre_mean, post_mean, obs_t_vec)
   
@@ -448,7 +616,7 @@ sda_apply_debias_step <- function(
   metrics_by_var$time <- obs.t
   rmse_rows <- metrics_by_var[, c("time","var","rmse_pre","rmse_post","mae_pre","mae_post","bias_pre","bias_post","r2_pre","r2_post")]
   
-  # Mean-shift ensemble
+  # Mean-shift ensemble: preserve spread, adjust mean
   offsets   <- sweep(X, 2, raw_mean_t, FUN = "-")
   corrected <- post_mean
   X_new     <- sweep(offsets, 2, corrected, FUN = "+")
@@ -461,4 +629,3 @@ sda_apply_debias_step <- function(
     rmse_rows       = rmse_rows
   )
 }
-
