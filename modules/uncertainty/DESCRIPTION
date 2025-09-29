@@ -26,6 +26,8 @@ Description: The Predictive Ecosystem Carbon Analyzer
     PECAn is to streamline the interaction between data and
     models, and to improve the efficacy of scientific
     investigation.
+URL: https://pecanproject.github.io
+BugReports: https://github.com/PecanProject/pecan/issues
 Imports:
     dplyr,
     ggplot2,
@@ -39,7 +41,8 @@ Imports:
     plyr (>= 1.8.4),
     purrr,
     randtoolbox,
-    rlang
+    rlang,
+    sensitivity
 Suggests:
     testthat (>= 1.0.2),
     mockery

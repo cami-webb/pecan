@@ -12,6 +12,8 @@ LazyLoad: yes
 LazyData: FALSE
 Require: hdf5
 Description: Contains functions to read PEcAn settings files.
+URL: https://pecanproject.github.io
+BugReports: https://github.com/PecanProject/pecan/issues
 Depends:
     methods
 Imports:
