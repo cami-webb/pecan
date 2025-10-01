@@ -15,10 +15,9 @@
 #' replaced with the siteid of each site, and any other variables need to be
 #' passed as named arguments in `...`.
 #'
-#' Note that for consistency, every site in `settings` must contain an
-#' element named `inputs$<input_type>` before you call this.
-#' If `inputs$<input_type>$path` does not exist it will be created;
-#' if it does exist it will be overwritten.
+#' If `inputs$<input_type>` does not exist, it will be created with a `path`
+#' element that matches the requested pattern. If it does exist, any existing
+#' `path` element will be overwritten.
 #'
 #' @param settings a PEcAn MultiSettings object
 #' @param n_reps number of replicates to insert for each path.
@@ -56,11 +55,6 @@ setEnsemblePaths <- function(
   if (!is.MultiSettings(settings)) {
     PEcAn.logger::logger.error(
       "Setting ensemble paths is only implemented for MultiSettings objects"
-    )
-  }
-  if (is.null(settings$run$inputs[[input_type]])) {
-    PEcAn.logger::logger.error(
-      "input type", sQuote(input_type), "not found in settings"
     )
   }
 
