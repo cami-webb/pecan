@@ -30,6 +30,7 @@ Imports:
     PEcAn.uncertainty,
     PEcAn.workflow,
     purrr,
+    reticulate,
     rlang,
     stringr
 Suggests:

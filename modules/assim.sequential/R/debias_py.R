@@ -23,7 +23,6 @@
 #'   or if the import returns a null Python pointer.
 #'
 #' @keywords internal
-#' @importFrom reticulate import_from_path py_is_null_xptr
 #' @noRd
 .get_debias_mod <- local({
   mod <- NULL

@@ -409,6 +409,9 @@ debias_rmse_by_var <- function(comp_df) {
 #' @param drop_incomplete_covariates Logical; if `TRUE`, drop sites with missing covariates (per year).
 #' @param enforce_consistent_obs Logical; if `TRUE`, drop sites inconsistent up to relevant `t_idx`.
 #' @param require_obs_at_t_for_predict Logical; if `TRUE`, only predict residuals for columns with
+#' @param state.interval Matrix/data.frame of per-variable bounds; either rownames = variable with columns `min`,`max`,
+#'   or a data frame with a `variable` column plus `min`/`max`. Used to clip post-debias values.
+#' @param clip_lower_bound Numeric; minimum floor applied to lower bounds (default 0.01).
 #'   **observations present at t** (useful for constrained comparisons).
 #'
 #' @return A list with:
@@ -442,7 +445,9 @@ sda_apply_debias_step <- function(
     name_map = debias_name_map,
     drop_incomplete_covariates = TRUE,
     enforce_consistent_obs = TRUE,
-    require_obs_at_t_for_predict = FALSE
+    require_obs_at_t_for_predict = FALSE,
+    state.interval = state.interval,              # <-- pass it through
+    clip_lower_bound = 0.01
 ) {
   # Early return when we cannot train from t-1 or covariates are absent
   if (t <= 1 || is.null(covariates_df)) {
@@ -620,7 +625,25 @@ sda_apply_debias_step <- function(
   offsets   <- sweep(X, 2, raw_mean_t, FUN = "-")
   corrected <- post_mean
   X_new     <- sweep(offsets, 2, corrected, FUN = "+")
+  .get_interval <- function(v) {
+    if (!is.null(rownames(state.interval)) && v %in% rownames(state.interval)) {
+      as.numeric(state.interval[v, , drop = TRUE])
+    } else if ("variable" %in% colnames(state.interval)) {
+      hit <- which(state.interval[["variable"]] == v)
+      if (length(hit) == 1L) {
+        as.numeric(state.interval[hit, setdiff(colnames(state.interval), "variable"), drop = TRUE])
+      } else c(NA_real_, NA_real_)
+    } else c(NA_real_, NA_real_)
+  }
   
+  for (j in seq_len(ncol(X_new))) {
+    v  <- as.character(col_vars[j])
+    iv <- .get_interval(v)       # c(min, max)
+    lb <- iv[1]; ub <- iv[2]
+    lb <- if (is.finite(lb)) max(lb, clip_lower_bound) else clip_lower_bound
+    ub <- if (is.finite(ub)) ub else Inf
+    X_new[, j] <- pmin(pmax(X_new[, j], lb), ub)
+  }
   list(
     X = X_new,
     weights_entry   = if (length(weights_entry)) weights_entry else NULL,

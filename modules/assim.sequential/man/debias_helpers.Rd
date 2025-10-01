@@ -74,7 +74,9 @@ sda_apply_debias_step(
   name_map = debias_name_map,
   drop_incomplete_covariates = TRUE,
   enforce_consistent_obs = TRUE,
-  require_obs_at_t_for_predict = FALSE
+  require_obs_at_t_for_predict = FALSE,
+  state.interval = state.interval,
+  clip_lower_bound = 0.01
 )
 }
 \arguments{
@@ -128,7 +130,12 @@ sda_apply_debias_step(
 
 \item{train_buf}{R environment used to accumulate training rows per variable across steps.}
 
-\item{require_obs_at_t_for_predict}{Logical; if `TRUE`, only predict residuals for columns with
+\item{require_obs_at_t_for_predict}{Logical; if `TRUE`, only predict residuals for columns with}
+
+\item{state.interval}{Matrix/data.frame of per-variable bounds; either rownames = variable with columns `min`,`max`,
+or a data frame with a `variable` column plus `min`/`max`. Used to clip post-debias values.}
+
+\item{clip_lower_bound}{Numeric; minimum floor applied to lower bounds (default 0.01).
 **observations present at t** (useful for constrained comparisons).}
 
 \item{drop_incomplete_covariates}{Logical; if `TRUE`, drop sites with missing covariates (per year).}

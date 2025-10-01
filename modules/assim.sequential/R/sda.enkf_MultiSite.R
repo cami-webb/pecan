@@ -652,7 +652,9 @@ sda.enkf.multisite <- function(settings,
           name_map = name_map,
           drop_incomplete_covariates = debias_drop_incomplete_covariates,   # <- fixed
           enforce_consistent_obs     = debias_enforce_consistent_obs,       # <- fixed
-          require_obs_at_t_for_predict = debias_require_obs_at_t_for_predict # <- fixed
+          require_obs_at_t_for_predict = debias_require_obs_at_t_for_predict, # <- fixed
+          state.interval = state.interval,              # <-- pass it through
+          clip_lower_bound = 0.01
         )
         X <- out$X
         if (!is.null(out$weights_entry)) DEBIAS_WEIGHTS[[obs.t]] <- out$weights_entry
