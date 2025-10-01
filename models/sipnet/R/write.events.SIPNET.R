@@ -94,8 +94,19 @@ write.events.SIPNET <- function(events_json, outdir) {
                 method_code <- if (is.null(e$method) || e$method == "soil") 1 else 0
                 lines <- c(lines, sprintf("%d  %d  irrig  %s %s", year, day, amt_cm, method_code))
             } else if (type == "harvest") {
-                frac <- if (is.null(e$frac_above_removed_0to1)) 0 else e$frac_above_removed_0to1
-                lines <- c(lines, sprintf("%d  %d harv   %s", year, day, frac))
+                abv_rem <- e$frac_above_removed_0to1 %||% 0
+                blw_rem <- e$frac_below_removed_0to1 %||% 0
+                abv_lit <- e$frac_above_to_litter_0to1 %||% (1.0 - abv_rem)
+                blw_lit <- e$frac_below_to_litter_0to1 %||% (1.0 - blw_rem)
+                lines <- c(
+                    lines,
+                    sprintf(
+                        "%d  %d harv   %s %s %s %s",
+                        year, day,
+                        abv_rem, blw_rem,
+                        abv_lit, blw_lit
+                    )
+                )
             }
         }
         dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
