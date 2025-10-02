@@ -234,7 +234,7 @@ runModule.run.sensitivity.analysis(settings)
 
 This section loads the results from the uncertainty analyses and generates plots directly in the notebook. This provides an immediate view of the ensemble time series, sensitivity plots, and variance decomposition.
 
-```{r visualize-uncertainty-results, results='hold'}
+```{r visualize-uncertainty-results}
 # Load the ensemble time series data and generate the plot
 ensemble_ts_file <- file.path(settings$outdir, "ensemble.ts.Rdata")
 if (file.exists(ensemble_ts_file)) {
