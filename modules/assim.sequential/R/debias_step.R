@@ -54,6 +54,25 @@ debias_name_map <- c(
 # (2) Site filtering utilities
 # ------------------------------------------------------------------------------
 
+#' Build tidy rows for learner weights (internal)
+#'
+#' Returns a data.frame with columns: time, var, learner, weight.
+#' If `w_named` has no names, they are auto-labeled as learner_1..k.
+#'
+#' @keywords internal
+debias_weights_rows <- function(time_label, var, w_named) {
+  if (is.null(names(w_named)) || any(!nzchar(names(w_named)))) {
+    names(w_named) <- paste0("learner_", seq_along(w_named))
+  }
+  data.frame(
+    time    = rep(as.character(time_label), length(w_named)),
+    var     = rep(as.character(var),        length(w_named)),
+    learner = names(w_named),
+    weight  = as.numeric(w_named),
+    stringsAsFactors = FALSE
+  )
+}
+
 #' Sites with complete covariates in a given year
 #'
 #' Returns the subset of `candidate_sites` whose covariate row at `year` has **no NA**
@@ -523,17 +542,11 @@ sda_apply_debias_step <- function(
   weights_df_rows <- utils::head(
     data.frame(time=character(), var=character(), learner=character(), weight=numeric(), stringsAsFactors = FALSE), 0
   )
+  feature_rows <- utils::head(
+    data.frame(time=character(), var=character(), feature=character(), importance=numeric(),
+               stringsAsFactors = FALSE), 0
+  )
   
-  add_weight_rows <- function(time_label, var, w_named) {
-    if (is.null(names(w_named))) names(w_named) <- paste0("learner_", seq_along(w_named))
-    data.frame(
-      time    = rep(time_label, length(w_named)),
-      var     = rep(var,        length(w_named)),
-      learner = names(w_named),
-      weight  = as.numeric(w_named),
-      stringsAsFactors = FALSE
-    )
-  }
   
   # Optionally restrict predictions to positions with obs at t (diagnostic mode)
   obs_t_avail <- if (require_obs_at_t_for_predict) {
@@ -558,15 +571,33 @@ sda_apply_debias_step <- function(
       # Train/refresh full model on all accumulated rows
       py$train_full_model(name = as.character(v),
                           X = as.matrix(rec$X),
-                          y = as.numeric(rec$y))
+                          y = as.numeric(rec$y),
+                          feature_names = colnames(rec$X))
       
       # Optional: collect mixing weight for diagnostics (e.g., KNN vs TREE)
       w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
+      fi <- try(py$get_feature_importance(as.character(v)), silent = TRUE)
+      if (!inherits(fi, "try-error") && !is.null(fi)) {
+        fn <- as.character(fi$names)
+        fv <- as.numeric(fi$importances)
+        if (length(fn) == length(fv) && length(fn) > 0) {
+          feature_rows <- rbind(
+            feature_rows,
+            data.frame(
+              time = rep(obs.t, length(fn)),
+              var  = rep(as.character(v), length(fn)),
+              feature = fn,
+              importance = fv,
+              stringsAsFactors = FALSE
+            )
+          )
+        }
+      }
       if (!inherits(w_now, "try-error") && !is.null(w_now) && is.finite(w_now)) {
         w_now <- min(max(as.numeric(w_now), 0), 1)
         w_named <- c(KNN = w_now, TREE = 1 - w_now)
         weights_entry[[as.character(v)]] <- w_named
-        weights_df_rows <- rbind(weights_df_rows, add_weight_rows(obs.t, as.character(v), w_named))
+        weights_df_rows <- rbind(weights_df_rows, debias_weights_rows(obs.t, as.character(v), w_named))
       }
     }
     
@@ -649,6 +680,7 @@ sda_apply_debias_step <- function(
     weights_entry   = if (length(weights_entry)) weights_entry else NULL,
     weights_df_rows = weights_df_rows,
     diag            = list(comp = comp_df, rmse = diag_metrics),
-    rmse_rows       = rmse_rows
+    rmse_rows       = rmse_rows,
+    feature_rows    = feature_rows    
   )
 }
