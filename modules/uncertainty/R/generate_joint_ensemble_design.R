@@ -4,19 +4,20 @@
 #' are shared across sites to ensure consistent parameter sampling.
 #'
 #' @param settings A PEcAn settings object containing ensemble configuration
-#' @param sobol for activating sobol
 #' @param ensemble_size Integer specifying the number of ensemble members
+#' @param ensemble_samples list of ensemble parameters across PFTs. The default is NULL.
+#' @param sobol for activating sobol
 #' @return  A list containing ensemble samples and indices
 #'
 #' @export
 
 generate_joint_ensemble_design <- function(settings,
                                            ensemble_size,
+                                           ensemble_samples = NULL,
                                            sobol = FALSE) {
   if (sobol) {
     ensemble_size <- as.numeric(ensemble_size) * 2
   }
-
   ens.sample.method <- settings$ensemble$samplingspace$parameters$method
   design_list <- list()
   sampled_inputs <- list()
@@ -51,29 +52,34 @@ generate_joint_ensemble_design <- function(settings,
     sampled_inputs[[input_tag]] <- input_result$ids
     design_list[[input_tag]] <- input_result$ids
   }
-
-  # Sample parameters
-  PEcAn.uncertainty::get.parameter.samples(
-    settings,
-    ensemble.size = ensemble_size,
-    posterior.files,
-    ens.sample.method
-  )
-
+  
+  # Sample parameters if we don't have it.
+  if (is.null(ensemble_samples)) {
+    PEcAn.uncertainty::get.parameter.samples(
+      settings,
+      ensemble.size = ensemble_size,
+      posterior.files,
+      ens.sample.method
+    )
+    samples.file <- file.path(settings$outdir, "samples.Rdata")
+  }
+  
   # Load samples from file
-  samples.file <- file.path(settings$outdir, "samples.Rdata")
   samples <- new.env()
-  if (file.exists(samples.file)) {
-    load(samples.file, envir = samples)
-    if (!is.null(samples$ensemble.samples)) {
-      # Just a placeholder: extract representative trait index per ensemble member
-      # You may want to flatten or select indices per trait
-      design_list[["param"]] <- seq_len(ensemble_size)
+  # if we don't have the parameters from the outside. 
+  if (is.null(ensemble_samples)) {
+    if (ile.exists(samples.file)) {
+      load(samples.file, envir = samples)
     } else {
-      PEcAn.logger::logger.warn("ensemble.samples not found in samples.Rdata")
+      PEcAn.logger::logger.error(samples.file, "not found, this file is required")
     }
+  }
+  if (!is.null(samples$ensemble.samples) | !is.null(ensemble_samples)) {
+    # Just a placeholder: extract representative trait index per ensemble member
+    # You may want to flatten or select indices per trait
+    design_list[["param"]] <- seq_len(ensemble_size)
   } else {
-    PEcAn.logger::logger.error(samples.file, "not found, this file is required")
+    PEcAn.logger::logger.warn("ensemble.samples not found in samples.Rdata")
   }
   design_matrix <- data.frame(design_list)
 
@@ -84,8 +90,6 @@ generate_joint_ensemble_design <- function(settings,
     sobol_obj <- sensitivity::soboljansen(model = NULL, X1 = X1, X2 = X2)
     return(sobol_obj)
   }
-
-
 
   return(list(X = design_matrix))
 }
