@@ -230,7 +230,7 @@ sda.enkf_local <- function(settings,
     sda.outputs <- FORECAST <- enkf.params <- ANALYSIS <- ens_weights <- list()
     obs.t <- as.character(lubridate::date(obs.times[t]))
     obs.year <- lubridate::year(obs.t)
-    PEcAn.logger::logger.info(paste("Processing Year:", obs.year))
+    PEcAn.logger::logger.info(paste("Processing date:", obs.t))
     ###-------------------------------------------------------------------------###
     ###  Taking care of Forecast. Splitting /  Writting / running / reading back###
     ###-------------------------------------------------------------------------###-----  
@@ -290,28 +290,39 @@ sda.enkf_local <- function(settings,
     # release memory.
     gc()
     # submit jobs for writing configs.
+    # writing configs for each settings
     PEcAn.logger::logger.info("Writting configs!")
-    out.configs <- furrr::future_pmap(list(conf.settings %>% `class<-`(c("list")), restart.list, inputs), function(settings, restart.arg, inputs) {
-      # Loading the model package - this is required bc of the furrr
-      library(paste0("PEcAn.",settings$model$type), character.only = TRUE)
-      # if we don't specify the input_design.
-      if (!exists("input_design")) {
-        input_design <- NULL
-      }
-      # wrtting configs for each settings - this does not make a difference with the old code
-      PEcAn.uncertainty::write.ensemble.configs(
-        input_design = input_design,
-        ensemble.size = nens,
-        defaults = settings$pfts,
-        ensemble.samples = ensemble.samples,
-        settings = settings,
-        model = settings$model$type,
-        write.to.db = settings$database$bety$write,
-        restart = restart.arg,
-        samples=inputs,
-        rename = F
-      )
-    }) %>% stats::setNames(site.ids)
+    # here we use the foreach instead of furrr
+    # because for some reason, the furrr has problem returning the sample paths.
+    cl <- parallel::makeCluster(parallel::detectCores())
+    doSNOW::registerDoSNOW(cl)
+    out.configs <- foreach::foreach(temp.settings = as.list(conf.settings), 
+                                    restart.arg = restart.list,
+                                    .packages = c("Kendall", 
+                                                  "purrr", 
+                                                  "PEcAn.uncertainty", 
+                                                  paste0("PEcAn.", model), 
+                                                  "PEcAnAssimSequential")) %dopar% {
+                                                    temp <- PEcAn.uncertainty::write.ensemble.configs(
+                                                      input_design = input_design,
+                                                      ensemble.size = nens,
+                                                      defaults = temp.settings$pfts,
+                                                      ensemble.samples = ensemble.samples,
+                                                      settings = temp.settings,
+                                                      model = temp.settings$model$type,
+                                                      write.to.db = temp.settings$database$bety$write,
+                                                      restart = restart.arg,
+                                                      # samples=inputs,
+                                                      rename = TRUE
+                                                    )
+                                                    return(temp)
+                                                  } %>% stats::setNames(site.ids)
+    parallel::stopCluster(cl)
+    foreach::registerDoSEQ()
+    # update the file paths of different inputs when t = 1.
+    if (t == 1) {
+      inputs <- out.configs %>% purrr::map(~.x$samples)
+    }
     # collect run info.
     # get ensemble ids for each site.
     ensemble.ids <- site.ids %>% furrr::future_map(function(i){
