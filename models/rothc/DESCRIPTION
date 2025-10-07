@@ -7,8 +7,7 @@ Authors@R: c(
     person("Rothamsted Research", role = c("cph"))
             )
 Description: This module provides functions to link the Rothamstead soil carbon model "RothC" to PEcAn.
-  A copy of the Python implementation of RothC 1.0.0, made available by Rothamstead Research under the Apache License 2.0,
-  is included in the package. TODO: get copyright notice and license requirements met.
+  Uses RothC 1.0.0, made available by Rothamstead Research under the Apache License 2.0. TODO: Determine whether we are including a copy of the RothC sources in this package or connecting to externally installed versions, get copyright notice and license requirements met.
 Depends: R (>= 4.1)
 Imports:
     dplyr,
