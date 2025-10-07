@@ -561,38 +561,42 @@ sda_apply_debias_step <- function(
                        raw = as.numeric(raw_prev[cols_v]))
     mask <- !is.na(y_v_all) & stats::complete.cases(Xprev_all)
     
+    fi_logged <- FALSE  # <- NEW: track whether we captured FI for this var at this step
+    
     if (any(mask)) {
       # Accumulate per-variable training buffer
       rec <- if (exists(v, train_buf, inherits = FALSE)) get(v, train_buf) else list(X = NULL, y = NULL)
       rec$X <- rbind(rec$X, Xprev_all[mask, , drop = FALSE])
       rec$y <- c(rec$y,  y_v_all[mask])
       assign(v, rec, train_buf)
+      fi_ret <- py$train_full_model(
+        name = as.character(v),
+        X = as.matrix(rec$X),
+        y = as.numeric(rec$y),
+        feature_names = colnames(rec$X)
+      )
       
-      # Train/refresh full model on all accumulated rows
-      py$train_full_model(name = as.character(v),
-                          X = as.matrix(rec$X),
-                          y = as.numeric(rec$y),
-                          feature_names = colnames(rec$X))
-      
-      # Optional: collect mixing weight for diagnostics (e.g., KNN vs TREE)
-      w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
-      fi <- try(py$get_feature_importance(as.character(v)), silent = TRUE)
-      if (!inherits(fi, "try-error") && !is.null(fi)) {
-        fn <- as.character(fi$names)
-        fv <- as.numeric(fi$importances)
+      # Works whether convert=TRUE or FALSE:
+      if (!is.null(fi_ret)) {
+        fi_ret <- tryCatch(reticulate::py_to_r(fi_ret), error = function(e) fi_ret)
+        fn <- as.character(unlist(fi_ret[["names"]], use.names = FALSE))
+        fv <- as.numeric(unlist(fi_ret[["importances"]], use.names = FALSE))
         if (length(fn) == length(fv) && length(fn) > 0) {
           feature_rows <- rbind(
             feature_rows,
             data.frame(
-              time = rep(obs.t, length(fn)),
-              var  = rep(as.character(v), length(fn)),
-              feature = fn,
+              time       = rep(obs.t, length(fn)),
+              var        = rep(as.character(v), length(fn)),
+              feature    = fn,
               importance = fv,
               stringsAsFactors = FALSE
             )
           )
         }
       }
+      
+      # Optional: collect mixing weight for diagnostics (e.g., KNN vs TREE)
+      w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
       if (!inherits(w_now, "try-error") && !is.null(w_now) && is.finite(w_now)) {
         w_now <- min(max(as.numeric(w_now), 0), 1)
         w_named <- c(KNN = w_now, TREE = 1 - w_now)
@@ -600,6 +604,7 @@ sda_apply_debias_step <- function(
         weights_df_rows <- rbind(weights_df_rows, debias_weights_rows(obs.t, as.character(v), w_named))
       }
     }
+    
     
     # Predict at t for available positions
     if (py$has_model(as.character(v))) {

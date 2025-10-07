@@ -77,6 +77,11 @@ def train_full_model(name, X, y, feature_names=None):
         "feat_names": list(map(str, feature_names)),
         "feat_importances": np.asarray(feat_importances, dtype=float).tolist()
     }
+    
+    return {
+        "names": list(map(str, feature_names)),
+        "importances": np.asarray(feat_importances, dtype=float).tolist()
+    }
 
 def has_model(name):
     return str(name) in _models
