@@ -12,91 +12,52 @@ format:
 
 # 1. Introduction {#introduction}
 
-Welcome to this PEcAn workflow notebook! This notebook will guide you through running an ecosystem model using PEcAn's programmatic interface.
+This notebook demonstrates how to use PEcAn for automated uncertainty analyses. 
+It provides a concise walk-through of the PEcAn's uncertainty analysis workflow, including ensemble and sensitivity analyses, using the SIPNET model as an example. 
+You will configure a PEcAn workflow, execute the model, and quantify and visualize uncertainty and parameter sensitivity.
 
-## 1.1 What Is PEcAn?
+**Key concepts:**
+- **Ensemble Analysis**: Run many realizations of a model with parameters sampled from their distributions.
+- **Sensitivity Analysis**: Systematically varies parameters to measure how much each parameter affects model outputs.
+- **Variance Decomposition**: Attributes model output variance to individual parameters by combining parameter uncertainty and sensitivity.
 
-PEcAn (Predictive Ecosystem Analyzer) is a scientific workflow system designed to make ecosystem modeling more transparent, repeatable, and accessible. It helps researchers:
+**Objective & scenario:**
 
-- Run ecosystem models with standardized inputs and outputs
-- Perform uncertainty analysis on model parameters
-- Compare model predictions with observations
-- Share and reproduce scientific workflows
+We simulate plant and ecosystem carbon balance (Net Primary Productivity and Net Ecosystem Exchange) at the AmeriFlux Niwot Ridge Forest site ([US‑NR1](https://ameriflux.lbl.gov/sites/siteinfo/US-NR1)) during the year 2004. We use SIPNET parameterized as a temperate conifer PFT and driven by AmeriFlux meteorology following the analysis in [Moore et al. (2007)](https://doi.org/10.1016/j.agrformet.2008.04.013). This notebook also provides a compact template that can be extended to more years, locations, and PFTs.
 
-## 1.2 What This Notebook Does
+This demo shows how to run an uncertainty analysis workflow in PEcAn using an R-based Quarto notebook. It covers loading settings, configuring models, running simulations, and performing ensemble and sensitivity analyses to assess uncertainty and parameter importance. This programmatic approach complements the web-based PEcAn interface.
 
-This notebook demonstrates how to:
+**What this notebook does:**
 
-1. Set up and configure a PEcAn workflow
-2. Run an ecosystem model simulation
-3. Perform ensemble-based analysis to quantify uncertainty in model outputs
-4. Conduct sensitivity analysis to identify which parameters most influence model results
-5. Analyze and visualize the results
+1. Configure a PEcAn workflow by loading and validating a `pecan.xml` settings file.
+2. Run a set of ecosystem model simulations by writing model configuration files and then running SIPNET.
+3. Quantify uncertainty using ensemble analysis, sensitivity analyses, and variance decomposition.
+4. Visualize results to identify important parameters and how they influence model variance.
+5. Change configuration settings and re-run the workflow.
 
-### The Scenario Being Modeled:
+## 1.2 Prerequisites
 
-We are modeling carbon and productivity dynamics at the Niwot Ridge Forest AmeriFlux site ([US-NR1](https://ameriflux.lbl.gov/sites/siteinfo/US-NR1), a high-elevation temperate coniferous forest in Colorado. The model configuration uses the SIPNET process-based ecosystem model, parameterized with a temperate coniferous plant functional type (PFT).
-
-The simulation is run for the full year 2004 (January 1 – December 31) using AmeriFlux LBL meteorological drivers from the Niwot Ridge site. The ensemble setup specifies one model run focusing on net primary productivity (NPP) as the target output variable.
-
-This scenario is designed to be a minimal, reproducible example to demonstrate how to run SIPNET within the PEcAn workflow. In later steps, this same framework can be extended to include more ensemble members, additional PFTs, longer time periods, or alternative meteorological inputs.
-
-This run is based on a study by [Moore et. al. (2007)](https://doi.org/10.1016/j.agrformet.2008.04.013) that uses SIPNET to understand the relationship between water and carbon balance at this site. 
-
-
-## 1.3 Ensemble and Sensitivity Analysis in PEcAn
-
-PEcAn can use information about parameter uncertainty to perform automated analyses:
-
-- **Ensemble Analysis**: Repeats the model run many times, each with parameters sampled from their uncertainty distributions, to generate a probability distribution of model projections. This allows you to quantify confidence intervals on model outputs.
-- **Sensitivity Analysis**: Systematically varies model parameters to assess how changes in each parameter affect model outputs. This identifies which parameters the model is most sensitive to.
-- **Uncertainty Analysis**: Combines sensitivity and parameter uncertainty to determine the contribution of each parameter to the overall uncertainty in model outputs, helping to target parameters for future constraint.
-
-These analyses are essential for understanding model behavior, quantifying uncertainty, and prioritizing data collection or parameter refinement.
-
-## 1.4 Prerequisites
-
-Before running this notebook, make sure you have:
-
-- All the PEcAn packages installed. You can install all PEcAn packages and their dependencies by running the following command in the root of your PEcAn repository:
+Install PEcAn packages and dependencies:
 
 ```
 # Enable repository from pecanproject
 options(repos = c(
   pecanproject = 'https://pecanproject.r-universe.dev',
   CRAN = 'https://cloud.r-project.org'))
-# Download and install PEcAn.all in R
 install.packages('PEcAn.all')
 ```
 
-Before running this notebook, make sure you have:
+A valid `pecan.xml` configuration file. Start with the example at `pecan/documentation/tutorials/Demo_02_Uncertainty_Analysis/pecan.xml`.
 
-- A valid `pecan.xml` configuration file or use the example provided: `pecan/documentation/tutorials/Demo_02_Uncertainty_Analysis/pecan.xml`
+## 1.3 How to Use This Notebook
 
-## 1.5 How to Use This Notebook
-
-1. Each section is clearly marked with a heading
-2. Code chunks are provided with explanations
-3. You can run the code chunks sequentially
-4. Once you have successfully run the demo, you can modify parameters to configure new runs and analyses
-
-**Objective:**
-
-This demo illustrates how to run an uncertainty analysis workflow in PEcAn using an R-based Quarto notebook. The uncertainty workflow includes ensemble analysis and sensitivity analysis to comprehensively assess model uncertainty and parameter importance. It will cover loading settings, writing model configuration files, running model simulations, performing ensemble-based uncertainty quantification, and conducting sensitivity analysis to identify which parameters most influence model results. This approach provides a programmatic alternative to the web-based PEcAn interface for executing ecosystem models with advanced uncertainty analysis capabilities.
-
-# 2. PEcAn Version
-
-This section displays the version information for all PEcAn packages.
-
-```{r version-info}
-PEcAn.all::pecan_version()
-```
+Run the chunks in order. Start with the provided settings; once the demo works, modify PFTs, dates, or ensemble size and re‑run the workflow to see how outputs change.
 
 # 3. Install SIPNET v1.3.0
 
 If you haven't already installed the SIPNET binary, you can do so by running the following code. This will download the SIPNET binary to `demo_outdir/sipnet` and make it executable.
 
-> Note: The `demo_outdir` directory will be created in the root of your PEcAn installation (i.e., at `documentation/tutorials/Demo_2_Uncertainty_Analysis/demo_outdir/`). This directory will contain the SIPNET binary as well as the output generated by PEcAn in this demo.
+> Note: The `demo_outdir` directory will be created in the root of your PEcAn installation (i.e., at `documentation/tutorials/Demo_02_Uncertainty_Analysis/demo_outdir/`). This directory will contain the SIPNET binary as well as the output generated by PEcAn in this demo.
 
 ```{r download-sipnet}
 # Download and install SIPNET v1.3.0
@@ -118,14 +79,11 @@ First, we need to load the PEcAn R packages. These packages provide all the func
 library("PEcAn.all")
 ```
 
-# 5. Load PEcAn Settings Files
+# 5. Load PEcAn Settings File
 
-PEcAn uses an XML-based settings file (pecan.xml) to configure model runs. This file defines key information about the run including: PFT(s), site location, time period of the run, the location of input files and where outputs will be saved. Other settings outside the scope of this demo include the types of analyses that will be performed, how to connect to a database, and how to run it on a high performance computing cluster  (we are using the default single model run on a single computer). 
+Use the XML settings file (`pecan.xml`) exactly as in Demo 1 (Section 5). See Demo 1 for a more detailed walkthrough of fields and schema; below we focus on settings relevant to this notebook.
 
-You can read more about the settings file in the ["PEcAn XML" chapter](https://pecanproject.github.io/pecan-documentation/develop/pecanXML.html#pecanXML) of the documentation.
-
-There is an example `pecan.xml` that has been configured for this demonstration. You can find it at `pecan/documentation/tutorials/Demo_2_Uncertainty_Analysis/pecan.xml`.
-
+Example settings for this demo live at `pecan/documentation/tutorials/Demo_02_Uncertainty_Analysis/pecan.xml` and you can read more about the settings in the PEcAn settings documentation: [PEcAn Settings Documentation](https://pecanproject.github.io/pecan-documentation/develop/pecanXML.html#pecanXML).
 
 This is how PEcAn loads the settings file:
 
@@ -135,10 +93,7 @@ settings_path <- here::here("documentation/tutorials/Demo_02_Uncertainty_Analysi
 
 # 6. Prepare and Validate Settings
 
-After specifying the path to your `pecan.xml` file, the next step involves reading and preparing these settings. PEcAn provides utilities to process and validate your configurations before any execution begins. 
-
-- `PEcAn.settings::read.settings(settings_path)`: Parses the `pecan.xml` file, converting its contents into an R list object that PEcAn can work with.
-- `PEcAn.settings::prepare.settings(settings)`: Further prepares and validates the settings, checking for missing required fields and ensuring consistency.
+Read and prepare settings (see Demo 1 Section 6 for details on what these functions do):
 
 ```{r read-prepare-settings}
 # Read the settings from the pecan.xml file
@@ -174,7 +129,8 @@ settings$info <- list(
 )
 ```
 
-Editing the more interesting settings to change the PFT (`settings$pfts`) or extend the run (`settings$run$end.date`) is beyond the scope of this demo. You _could_ change the pft or the end date, but you would need a new file containing parameters for that PFT (`settings$pfts$pft$posterior.files`), or a climate file (`settings$run$met$path$path1`) that extends to the desired simulation period.
+
+Editing the more interesting settings to change the PFT (`settings$pfts`) or extend the run (`settings$run$end.date`) is an optional exercise for the user. For example, you could change the pft or the end date, but this requires additional parameter files and meteorological inputs. This includes files containing parameters for that PFT (`settings$pfts$pft$posterior.files`), or a climate file (`settings$run$met$path$path1`) that extends to the desired simulation period.
 
 # 8. Create Output Directory
 
@@ -185,7 +141,6 @@ Before running the workflow, we need to ensure that the output directory specifi
 ```{r create-outdir}
 dir.create(settings$outdir, recursive = TRUE, showWarnings = FALSE)
 ```
-
 
 # 9. Write Model Configuration Files
 
@@ -230,6 +185,46 @@ runModule.run.sensitivity.analysis(settings)
 ```
 
 
+**A note on the normal quantiles that are used in sensitivity analysis**
+
+Sensitivity runs often use standardized deviations (sigma values) such as −2, −1, 1, 2, which correspond to quantiles of a standard normal distribution. Expressing perturbations as quantiles makes them applicable to any parameter distribution.
+
+In R, the relevant quantiles are:
+
+```{r}
+pnorm(c(-2, -1, 0, 1, 2))
+# 2.3%, 15.9%, 50.0%, 84.1%, 97.7%
+```
+By working in quantiles relative to each parameter’s distribution, the sensitivity and variance decomposition reflect sensitivity across the range of parameter values. Many sensitivity analyses use a fixed perturbation size such as the mean +/- 10%. This approach does not capture the uncertainty across the parameter distribution and can not be used for variance decomposition.
+
+**Output directory structure:**
+
+These are the key folders and files that will be created under `settings$outdir` (e.g., `demo_outdir`). The file contents are described in the next section.
+
+```
+demo_outdir/
+├── run/                   # Configuration & execution metadata
+│   ├── runs.txt           # List of run IDs (one per model realization)
+│   ├── <runid>/           # Model-specific config copies (sometimes)
+│   └── config.*           # Generated model configs (e.g., SIPNET)
+├── out/                   # Raw model outputs by run ID
+│   └── <runid>/           # E.g., daily or sub-daily SIPNET output files
+├── sensitivity.analysis/  # Sensitivity raw outputs &amp; figures
+│   ├── sensitivity.output.*.Rdata
+│   └── sensitivity.analysis.*.pdf
+├── ensemble.analysis/     # Ensemble summaries &amp; figures
+│   ├── ensemble.Rdata
+│   ├── ensemble.analysis.*.pdf
+│   └── ensemble.ts.*.pdf
+├── variance.decomposition/  # Created when variance decomposition runs
+│   └── variance.decomposition.*.pdf
+├── pft/                   # Parameter (prior/posterior) files per PFT
+│   └── temperate.coniferous/
+└── sipnet                 # SIPNET binary (downloaded earlier)
+```
+
+
+
 # 12. Understanding PEcAn Uncertainty Analysis Outputs
 
 After running ensemble and sensitivity analyses, PEcAn generates several important outputs that help you understand model uncertainty and parameter sensitivity.
@@ -261,25 +256,27 @@ The uncertainty analysis produces:
 ## 12.4 Interpreting the Results
 
 **Variance Decomposition Analysis:**
-- Parameters are sorted by their contribution to model output variability
-- Identify top-tier parameters for future constraint
-- Distinguish between parameters that are:
-  - Highly sensitive but low uncertainty
-  - Highly uncertain but low sensitivity  
-  - Both sensitive and uncertain (priority targets)
 
-**Parameter Prioritization:**
-- Focus on parameters that are both sensitive and uncertain
-- Consider measurement costs and feasibility
-- Balance parameter uncertainty vs. model sensitivity
-
+- Parameters are sorted by their contribution to model output uncertainty.
+- Identify parameters that are:
+  - Highly sensitive but low uncertainty.
+  - Highly uncertain but low sensitivity.
+  - Both sensitive and uncertain.
+- Identify parameters that are both sensitive and uncertain for future constraint with data or expert knowledge.
+- Potential gotchas:
+  - Flat sensitivity curves: check that parameter values were correctly generated and read by the model.
+  - Parameters with high uncertainty: consider revising priors.
+  - Multi-modal or otherwise unexpected parameter distributions: check that parameter was specified correctly.
+  
 # 13. Visualize Uncertainty Analysis Results
 
 This section loads the results from the uncertainty analyses and generates plots directly in the notebook. This provides an immediate view of the ensemble time series, sensitivity plots, and variance decomposition.
 
 ## 13.1 Ensemble Analysis Visualization
 
-This block visualizes the results of the ensemble analysis. It shows the overall distribution of the model output and how the output and its uncertainty change over time.
+Here we visualize the results of the ensemble analysis. It shows the overall distribution of the model output and how the output and its uncertainty change over time.
+
+This section reproduces the plots saved in the `ensemble.analysis/` folder in order to show the user how to access and visualize the results programmatically so that they can further investigate output and customize plots.
 
 ```{r visualize-ensemble-results}
 # --- 1. Define Helper Variables ---
@@ -544,7 +541,14 @@ If you want to remove all files and directories created by this workflow and sta
 
 # 21. Session Information
 
-Print R session information for reproducibility.
+
+### PEcAn package versions.
+
+```{r version-info}
+PEcAn.all::pecan_version()
+```
+
+### R session information:
 
 ```{r session-info}
 sessionInfo()
