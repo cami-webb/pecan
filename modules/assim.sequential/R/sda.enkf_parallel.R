@@ -456,6 +456,9 @@ sda.enkf_local <- function(settings,
                                                     end.date = obs.times[length(obs.times)], 
                                                     time.step = paste(1, settings$state.data.assimilation$forecast.time.step), 
                                                     cores = parallel::detectCores() - 1)
+    # remove rundir and outdir.
+    unlink(rundir)
+    unlink(outdir)
   }
   gc()
 }

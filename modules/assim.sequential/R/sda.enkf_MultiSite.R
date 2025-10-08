@@ -56,12 +56,6 @@ sda.enkf.multisite <- function(settings,
                                             merge_nc = TRUE,
                                             execution = "local"),
                                ...) {
-  # make sure we only specify one method for the model execution.
-  if (control$parallel_qsub & control$local.execution) {
-    PEcAn.logger::logger.info("Please make sure you have only one of the following control options turning on.")
-    PEcAn.logger::logger.info("parallel_qsub or local.execution.")
-    return(0)
-  }
   #add if/else for when restart points to folder instead if T/F set restart as T
   if(is.list(restart)){
     old.dir <- restart$filepath
@@ -734,5 +728,8 @@ sda.enkf.multisite <- function(settings,
                                                     end.date = obs.times[length(obs.times)], 
                                                     time.step = paste(1, settings$state.data.assimilation$forecast.time.step), 
                                                     cores = parallel::detectCores() - 1)
+    # remove rundir and outdir.
+    unlink(rundir)
+    unlink(outdir)
   }
 } # sda.enkf
