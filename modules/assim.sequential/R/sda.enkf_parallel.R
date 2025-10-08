@@ -449,7 +449,7 @@ sda.enkf_local <- function(settings,
     if (file.exists(nc.folder)) unlink(nc.folder)
     dir.create(nc.folder)
     temp <- PEcAn.utils::nc_merge_all_sites_by_year(model.outdir = outdir, 
-                                                    nc.outdir = folder, 
+                                                    nc.outdir = nc.folder, 
                                                     ens.num = nens, 
                                                     site.ids = as.numeric(site.ids), 
                                                     start.date = obs.times[1], 
