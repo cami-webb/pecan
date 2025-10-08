@@ -10,6 +10,7 @@
 ##' @param restart In case this is a continuation of an old simulation. restart needs to be a list with name tags of runid, inputs, new.params (parameters), new.state (initial condition), ensemble.id (ensemble id), start.time and stop.time.See Details.
 ##' @param spinup currently unused, included for compatibility with other models
 ##' @export
+##' @importFrom rlang %||%
 ##' @author Michael Dietze
 write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs = NULL, IC = NULL,
                                 restart = NULL, spinup = NULL) {
@@ -130,6 +131,17 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
   writeLines(jobsh, con = file.path(settings$rundir, run.id, "job.sh"))
   Sys.chmod(file.path(settings$rundir, run.id, "job.sh"))
   
+
+  ### Copy event file
+  event_file <- inputs$events$path %||% settings$run$inputs$events$path
+  if (!is.null(event_file)) {
+    if (!file.exists(event_file)) {
+      PEcAn.logger::logger.warn("Event file not found at", event_file)
+    }
+    file.copy(event_file, file.path(rundir, "events.in"))
+  }
+
+
   ### WRITE *.param-spatial
   template.paramSpatial <- system.file("template.param-spatial", package = "PEcAn.SIPNET")
   file.copy(template.paramSpatial, file.path(settings$rundir, run.id, "sipnet.param-spatial"))
