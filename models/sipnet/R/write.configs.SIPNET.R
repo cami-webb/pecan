@@ -190,7 +190,7 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     pft.traits <- pft.traits[pft.traits != "NA" & !is.na(pft.traits)]
     pft.traits <- as.numeric(pft.traits)
     
-    # Leaf carbon concentration    
+    # Leaf carbon concentration
     leafC <- NA
     if ("leafC" %in% pft.trait.names) {
       leafC <- pft.traits[which(pft.trait.names == "leafC")]
