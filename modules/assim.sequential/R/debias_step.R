@@ -220,7 +220,7 @@ debias_get_covariates_for_date <- function(covariates_df,
   }
   
   if (length(eligible_sites) == 0) {
-    return(tibble::tibble(site = character(0), year = integer(0)))
+    return(dplyr::tibble(site = character(0), year = integer(0)))
   }
   
   df_year <- covariates_df[
