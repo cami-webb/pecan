@@ -284,7 +284,7 @@ debias_cov_by_columns <- function(covariates_df,
   # Filler row of NA to keep alignment when a site is missing
   na_row <- as.list(rep(NA_real_, length(feat_cols)))
   names(na_row) <- feat_cols
-  filler <- tibble::as_tibble_row(na_row)
+  filler <- dplyr::as_tibble(na_row)
   
   rows <- lapply(seq_along(idx), function(i) {
     j <- idx[i]
