@@ -1,5 +1,4 @@
 # at the very top of that file
-#' @importFrom tibble tibble as_tibble as_tibble_row
 NULL
 #' Debias preprocessing utilities (internal)
 #'
