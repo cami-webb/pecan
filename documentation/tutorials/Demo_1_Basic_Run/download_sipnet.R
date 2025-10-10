@@ -42,12 +42,12 @@ Sys.chmod(dest_path, mode = "0755")
 tryCatch(
   {
     # This block runs if system2 succeeds with exit code 0 (status attribute is NULL).
-    # This is unexpected for `sipnet -h`, so we warn but assume it's OK.
+    # Exit code 0 means successful execution.
     system2(dest_path, "-h", stderr = TRUE, stdout = TRUE)
-    PEcAn.logger::logger.warn("SIPNET ran with exit code 0, but expected 1. Assuming installation is OK.")
+    PEcAn.logger::logger.info("SIPNET has been installed!")
   },
   warning = function(w) {
-    # This block runs if system2 returns a non-zero exit code, which is expected.
+    # This block runs if system2 returns a non-zero exit code.
     # We check the warning message for the expected status of 1.
     if (grepl("had status 1", w$message, fixed = TRUE)) {
       PEcAn.logger::logger.info("SIPNET has been installed!")
