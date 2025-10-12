@@ -5,8 +5,6 @@
 \alias{debias_name_map}
 \alias{debias_sites_with_complete_covariates_year}
 \alias{debias_sites_inconsistent_obs}
-\alias{debias_get_covariates_for_date}
-\alias{debias_cov_by_columns}
 \alias{debias_obs_vec_for_time}
 \alias{debias_build_comp_df}
 \alias{debias_rmse_by_var}
@@ -25,26 +23,6 @@ debias_sites_with_complete_covariates_year(
 
 debias_sites_inconsistent_obs(obs.mean, t_idx, name_map = debias_name_map)
 
-debias_get_covariates_for_date(
-  covariates_df,
-  obs_date,
-  site_index,
-  obs.mean,
-  t_idx,
-  drop_incomplete_covariates = TRUE,
-  enforce_consistent_obs = TRUE
-)
-
-debias_cov_by_columns(
-  covariates_df,
-  obs_date,
-  site_index,
-  obs.mean,
-  t_idx,
-  drop_incomplete_covariates = TRUE,
-  enforce_consistent_obs = TRUE
-)
-
 debias_obs_vec_for_time(
   t_idx,
   site_index,
@@ -58,7 +36,8 @@ debias_build_comp_df(site_index, col_vars, pre_mean, post_mean, obs_vec)
 debias_rmse_by_var(comp_df)
 }
 \arguments{
-\item{covariates_df}{See `debias_get_covariates_for_date()`.}
+\item{covariates_df}{A long data frame with columns `site`, `year`, and one column
+per covariate feature (e.g., climate, soils, topography layers).}
 
 \item{year}{Integer year to check (extracted via `lubridate::year()` elsewhere).}
 
@@ -70,15 +49,7 @@ debias_rmse_by_var(comp_df)
 
 \item{name_map}{Optional map from observation names → state names.}
 
-\item{obs_date}{Date for which to fetch covariates (year is used).}
-
 \item{site_index}{Site id per column of `X`.}
-
-\item{drop_incomplete_covariates}{Logical. If `TRUE`, drop sites with any missing
-covariate this year; if `FALSE`, keep all sites present in `covariates_df` for that year.}
-
-\item{enforce_consistent_obs}{Logical. If `TRUE`, drop sites that became inconsistent
-in observations up to `t_idx`. Requires `obs.mean` and `t_idx`.}
 
 \item{col_vars}{Variable name per column of `X`.}
 
@@ -89,21 +60,11 @@ in observations up to `t_idx`. Requires `obs.mean` and `t_idx`.}
 \item{obs_vec}{Observation vector for time `t` (aligned).}
 
 \item{comp_df}{Output of `debias_build_comp_df()`.}
-
-\item{drop_incomplete_covariates, }{enforce_consistent_obs See above.}
 }
 \value{
 Character vector of sites that have no missing covariates in `year`.
 
 Character vector of **site ids** that are inconsistent at `t_idx`.
-
-A data frame with columns `site`, `year`, and covariate features for **eligible sites**.
-  Attributes:
-  - `dropped_missing_covariates`: sites removed for missing covariates,
-  - `dropped_inconsistent_obs`: sites removed for observation inconsistency (if enforced).
-
-A numeric matrix with **nrow = length(site_index)** and one column per
-  covariate feature. Rows align 1:1 with the columns of `X`.
 
 Numeric vector of length `length(col_vars)` with `NA` where not observed.
 
@@ -123,14 +84,6 @@ A site is flagged **inconsistent at `t_idx`** if it is missing *any* variable at
 `t_idx` that it had reported in **any earlier time** (1..`t_idx-1`). This prevents
 training/evaluation on sites that drop variables mid-series.
 
-Filters sites for the year of `obs_date` according to:
-- `drop_incomplete_covariates`: remove sites with any NA in covariate features.
-- `enforce_consistent_obs`: remove sites that became inconsistent up to `t_idx`.
-
-Converts the per-site covariate data into a matrix aligned with the **columns of `X`**.
-For any column whose site was filtered out, the function inserts a row of `NA`
-features to preserve shape and ordering.
-
 Builds a vector with one entry per **column of `X`**, using the `(site, var)` layout
 defined by `site_index` and `col_vars`. Observation names in `obs.mean` are
 remapped through `name_map`.
@@ -140,9 +93,6 @@ column means against observations. NAs are ignored per variable.
 }
 \details{
 This function only inspects **presence/absence** of variables, not their values.
-
-Returns a data frame for that **year × eligible sites**, sorted by `site`, with
-attributes listing which sites were dropped (useful for logging).
 }
 \examples{
 \dontrun{

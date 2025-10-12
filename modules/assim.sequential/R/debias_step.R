@@ -1,5 +1,3 @@
-# at the very top of that file
-NULL
 #' Debias preprocessing utilities (internal)
 #'
 #' A small, **pure** helper module that prepares inputs for the residual
@@ -185,7 +183,9 @@ debias_sites_inconsistent_obs <- function(obs.mean, t_idx, name_map = debias_nam
 #'   - `dropped_missing_covariates`: sites removed for missing covariates,
 #'   - `dropped_inconsistent_obs`: sites removed for observation inconsistency (if enforced).
 #'
-#' @rdname debias_helpers
+#' @title Covariates for a date, with optional site filtering
+#' @name debias_get_covariates_for_date
+#' @rdname debias_get_covariates_for_date
 #' @keywords internal
 debias_get_covariates_for_date <- function(covariates_df,
                                            obs_date,
@@ -256,7 +256,9 @@ debias_get_covariates_for_date <- function(covariates_df,
 #' @return A numeric matrix with **nrow = length(site_index)** and one column per
 #'   covariate feature. Rows align 1:1 with the columns of `X`.
 #'
-#' @rdname debias_helpers
+#' @title Expand per-site covariates to row-per-column alignment
+#' @name debias_cov_by_columns
+#' @rdname debias_cov_by_columns
 #' @keywords internal
 debias_cov_by_columns <- function(covariates_df,
                                   obs_date,
