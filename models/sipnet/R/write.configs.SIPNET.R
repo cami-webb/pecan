@@ -221,7 +221,7 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
       param[id, 2] <- PEcAn.utils::ud_convert(Amax_area * SLA_g, "umol", "nmol") # [nmol/g/s]
     } else {
       amax_mass <- param[id, 2] # [nmol/g/s]
-      Amax <- PEcAn.utils::ud_convert(amax_mass / SLA_g, "nmol", "umol") # [umol/m2/s]
+      Amax_area <- PEcAn.utils::ud_convert(amax_mass / SLA_g, "nmol", "umol") # [umol/m2/s]
     }
     
     # Daily fraction of maximum photosynthesis
