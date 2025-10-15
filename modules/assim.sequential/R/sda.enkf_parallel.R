@@ -38,19 +38,20 @@ sda.enkf_local <- function(settings,
                                         forceRun = TRUE,
                                         MCMC.args = NULL,
                                         merge_nc = TRUE)) {
-  # initialize parallel.
-  if (future::supportsMulticore()) {
-    future::plan(future::multicore)
-  } else {
-    future::plan(future::multisession)
-  }
   # grab cores from settings.
   cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
   # if we didn't assign number of CPUs in the settings.
-  if (is.null(cores)) {
-    cores <- parallel::detectCores() - 1
-    # if we only have one CPU.
-    if (cores < 1) cores <- 1
+  if (length(cores) == 0 | is.null(cores)) {
+    cores <- parallel::detectCores()
+  }
+  cores <- cores - 1
+  # if we only have one CPU.
+  if (cores < 1) cores <- 1
+  # initialize parallel.
+  if (future::supportsMulticore()) {
+    future::plan(future::multicore, workers = cores)
+  } else {
+    future::plan(future::multisession, workers = cores)
   }
   # Tweak outdir if it's specified from outside.
   if (!is.null(outdir)) {
@@ -272,7 +273,7 @@ sda.enkf_local <- function(settings,
     PEcAn.logger::logger.info("Writting configs!")
     # here we use the foreach instead of furrr
     # because for some reason, the furrr has problem returning the sample paths.
-    cl <- parallel::makeCluster(parallel::detectCores())
+    cl <- parallel::makeCluster(cores)
     doSNOW::registerDoSNOW(cl)
     temp.settings <- NULL
     restart.arg <- NULL
@@ -385,11 +386,26 @@ sda.enkf_local <- function(settings,
       #Analysis
       Pa <- enkf.params[[obs.t]]$Pa
       mu.a <- enkf.params[[obs.t]]$mu.a
+    } else {
+      mu.f <- colMeans(X) #mean Forecast - This is used as an initial condition
+      mu.a <- mu.f
+      if(is.null(Q)){
+        q.bar <- diag(ncol(X))
+        PEcAn.logger::logger.warn('Process variance not estimated. Analysis has been given uninformative process variance')
+      }
+      Pf <- stats::cov(X)
+      Pa <- Pf
+      enkf.params[[obs.t]] <- list(mu.f = mu.f, Pf = Pf, mu.a = mu.a, Pa = Pa)
     }
     ###-------------------------------------------------------------------###
     ### adjust/update state matrix                                   ###
     ###-------------------------------------------------------------------###---- 
-    analysis <- enkf.params[[obs.t]]$analysis
+    # if we don't have the analysis from the analysis function.
+    if (is.null(enkf.params[[obs.t]]$analysis)) {
+      analysis <- as.data.frame(mvtnorm::rmvnorm(as.numeric(nrow(X)), mu.a, Pa, method = "svd"))
+    } else {
+      analysis <- enkf.params[[obs.t]]$analysis
+    }
     enkf.params[[obs.t]]$analysis <- NULL
     ##### Mapping analysis vectors to be in bounds of state variables
     for(i in 1:ncol(analysis)){
@@ -455,10 +471,10 @@ sda.enkf_local <- function(settings,
                                                     start.date = obs.times[1], 
                                                     end.date = obs.times[length(obs.times)], 
                                                     time.step = paste(1, settings$state.data.assimilation$forecast.time.step), 
-                                                    cores = parallel::detectCores() - 1)
+                                                    cores = cores)
     # remove rundir and outdir.
-    unlink(rundir)
-    unlink(outdir)
+    unlink(rundir, recursive = T)
+    unlink(outdir, recursive = T)
   }
   gc()
 }
