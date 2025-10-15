@@ -38,14 +38,14 @@ batch.settings = structure(list(
 settings$state.data.assimilation$batch.settings <- batch.settings
 
 # alter the ensemble size.
-settings$ensemble$size <- 10
+settings$ensemble$size <- 20
 
 # update settings with the actual PFTs.
 settings <- PEcAn.settings::prepare.settings(settings)
 
 # load observations.
-load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_8k_site/observation/Rdata/obs_mean.Rdata")
-load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_8k_site/observation/Rdata/obs_cov.Rdata")
+load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_8k_site/observation/Rdata/obs_agb_ic_mean.Rdata")
+load("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_8k_site/observation/Rdata/obs_agb_ic_cov.Rdata")
 
 # replace zero observations and variances with small numbers.
 for (i in 1:length(obs.mean)) {
@@ -83,4 +83,10 @@ PEcAnAssimSequential::qsub_sda(settings = settings,
                                               send_email = NULL,
                                               keepNC = FALSE,
                                               forceRun = TRUE,
-                                              MCMC.args = NULL))
+                                              MCMC.args = NULL),
+                               block.index = NULL,
+                               cov_dir = "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/covariates_lc_ts/covariates_nolatlon/", 
+                               debias_start_year = 2013,
+                               debias_drop_incomplete_covariates = TRUE,
+                               debias_enforce_consistent_obs = TRUE,
+                               debias_require_obs_at_t_for_predict = FALSE)
