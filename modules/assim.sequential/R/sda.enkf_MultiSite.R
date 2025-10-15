@@ -729,7 +729,7 @@ sda.enkf.multisite <- function(settings,
                                                     time.step = paste(1, settings$state.data.assimilation$forecast.time.step), 
                                                     cores = parallel::detectCores() - 1)
     # remove rundir and outdir.
-    unlink(rundir)
-    unlink(outdir)
+    unlink(rundir, recursive = T)
+    unlink(outdir, recursive = T)
   }
 } # sda.enkf
