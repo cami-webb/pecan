@@ -134,6 +134,7 @@
 "jsonlite","*","models/sipnet","Imports",FALSE
 "jsonlite","*","models/stics","Imports",FALSE
 "jsonlite","*","modules/data.atmosphere","Imports",FALSE
+"jsonlite","*","modules/data.land","Suggests",FALSE
 "jsonlite","*","modules/data.remote","Suggests",FALSE
 "jsonvalidate","*","models/sipnet","Suggests",FALSE
 "jsonvalidate","*","modules/data.land","Suggests",FALSE

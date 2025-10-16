@@ -63,6 +63,7 @@ Imports:
 Suggests:
     dataone,
     datapack,
+    jsonlite,
     jsonvalidate,
     getPass,
     glue,
