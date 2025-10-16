@@ -243,6 +243,8 @@ sda.enkf_local <- function(settings,
   
   # Should we run debiasing this cycle?
   # Debiasing requires: debias_mode == TRUE, t > 1, and (if provided) obs.year >= debias_start_year
+  # Enabling debias feature.
+  debias_enabled <- !is.null(debias_start_year)
   .should_debias <- function(t, enabled, obs_year, start_year) {
     isTRUE(enabled) && t > 1 && !is.null(start_year) && (as.integer(obs_year) >= as.integer(start_year))
   }
