@@ -217,7 +217,7 @@ get.ensemble.samples <- function( ensemble.size, pft.samples, env.samples,
 ##' @return list, containing $runs = data frame of runids, $ensemble.id = the ensemble ID for these runs and $samples with ids and samples used for each tag.  Also writes sensitivity analysis configuration files as a side effect
 ##' @details The restart functionality is developed using model specific functions by calling write_restart.modelname function. First, you need to make sure that this function is already exist for your desired model.See here \url{https://pecanproject.github.io/pecan-documentation/latest/pecan-models.html}
 ##' new state is a dataframe with a different column for each state variable. The number of the rows in this dataframe needs to be the same as the ensemble size.
-##' State variables that you can use for setting up the intial conditions differs for different models. You may check the documentation of the write_restart.modelname your model.
+##' State variables that you can use for setting up the initial conditions differs for different models. You may check the documentation of the write_restart.modelname your model.
 ##' The units for the state variables need to be in the PEcAn standard units which can be found in \link{standard_vars}.
 ##' new.params also has similar structure to ensemble.samples which is sent as an argument.
 ##'
@@ -225,29 +225,26 @@ get.ensemble.samples <- function( ensemble.size, pft.samples, env.samples,
 ##' @importFrom rlang .data
 ##' @export
 ##' @author David LeBauer, Carl Davidson, Hamze Dokoohaki
-write.ensemble.configs <- function(input_design , ensemble.size, defaults, ensemble.samples, settings, model, 
+write.ensemble.configs <- function(input_design, ensemble.size, defaults, ensemble.samples, settings, model,
                                    clean = FALSE, write.to.db = TRUE, restart = NULL, samples = NULL, rename = FALSE) {
-  
-  
-  # Check if there are NO inputs
- 
-for (input_tag in names(settings$run$inputs)) {
-  input <- settings$run$inputs[[input_tag]]
-  input_paths <- input$path
-  
+
   # Check for required paths
-  if (is.null(input_paths) || length(input_paths) == 0) {
-     PEcAn.logger::logger.error("Input", sQuote(input_tag), "has no paths specified")
+  for (input_tag in names(settings$run$inputs)) {
+    input <- settings$run$inputs[[input_tag]]
+    input_paths <- input$path
+    if (is.null(input_paths) || length(input_paths) == 0) {
+      PEcAn.logger::logger.error("Input", sQuote(input_tag), "has no paths specified")
+    }
+    # Check for unsampled multi-path inputs
+    if (length(input_paths) > 1 &&
+          !(input_tag %in% names(settings$ensemble$samplingspace))) {
+      PEcAn.logger::logger.error(
+        "Input", sQuote(input_tag), "has", length(input_paths),
+        "paths but no sampling method.",
+        "Add <samplingspace> for this input in pecan.xml"
+      )
+    }
   }
-  
-  # Check for unsampled multi-path inputs
-  if (length(input_paths) > 1 && 
-     !(input_tag %in% names(settings$ensemble$samplingspace))) {
-    PEcAn.logger::logger.error(
-      "Input", sQuote(input_tag), "has", length(input_paths), "paths but no sampling method.",
-      "Add <samplingspace> for this input in pecan.xml")
-  }
-}
 
   
   
