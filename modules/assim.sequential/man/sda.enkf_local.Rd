@@ -14,11 +14,7 @@ sda.enkf_local(
   outdir = NULL,
   control = list(TimeseriesPlot = FALSE, OutlierDetection = FALSE, send_email = NULL,
     keepNC = TRUE, forceRun = TRUE, MCMC.args = NULL, merge_nc = TRUE),
-  cov_dir = NULL,
-  debias_start_year = NULL,
-  debias_drop_incomplete_covariates = TRUE,
-  debias_enforce_consistent_obs = TRUE,
-  debias_require_obs_at_t_for_predict = FALSE
+  debias = list(cov.dir = NULL, start.year = NULL)
 )
 }
 \arguments{
@@ -46,15 +42,9 @@ sda.enkf_local(
 `merge_nc` determine if we want to merge all netCDF files across sites and ensembles.
 If it's set as `TRUE`, we will then combine all netCDF files into the `merged_nc` folder within the `outdir`.}
 
-\item{cov_dir}{Directory containing yearly covariate stacks named like "covariates_YYYY.tiff".}
-
-\item{debias_start_year}{Integer year (e.g., 2015). If `NULL`, debiasing is OFF.}
-
-\item{debias_drop_incomplete_covariates}{Logical; drop sites with any NA covariates.}
-
-\item{debias_enforce_consistent_obs}{Logical; drop sites that lost any previously.}
-
-\item{debias_require_obs_at_t_for_predict}{Logical; only make residual predictions.}
+\item{debias}{List: R list containing the covariance directory and the start year.
+covariance directory should include GeoTIFF files named by year.
+start year is numeric input which decide when to start the debiasing feature.}
 }
 \value{
 NONE
