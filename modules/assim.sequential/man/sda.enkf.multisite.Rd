@@ -15,11 +15,7 @@ sda.enkf.multisite(
   control = list(TimeseriesPlot = FALSE, OutlierDetection = FALSE, send_email = NULL,
     keepNC = TRUE, forceRun = TRUE, run_parallel = TRUE, MCMC.args = NULL, merge_nc =
     TRUE, execution = "local"),
-  cov_dir = NULL,
-  debias_start_year = NULL,
-  debias_drop_incomplete_covariates = TRUE,
-  debias_enforce_consistent_obs = TRUE,
-  debias_require_obs_at_t_for_predict = FALSE,
+  debias = list(cov.dir = NULL, start.year = NULL),
   ...
 )
 }
@@ -41,7 +37,6 @@ sda.enkf.multisite(
 \item{control}{List of flags controlling the behavior of the SDA. 
 `TimeseriesPlot` for post analysis examination; 
 `OutlierDetection` decide if we want to execute the outlier detection each time after the model forecasting;
-`parallel_qsub` decide if we want to execute the `qsub` job submission under parallel mode;
 `send_email` contains lists for sending email to report the SDA progress;
 `keepNC` decide if we want to keep the NetCDF files inside the out directory;
 `forceRun` decide if we want to proceed the Bayesian MCMC sampling without observations;
@@ -54,15 +49,9 @@ including `local` ,where we execute the model locally;
 `qsub`, where we use the traditional `start_model_runs` function for submission;
 `qsub_parallel`, where we first combine jobs and submit them into the SCC.}
 
-\item{cov_dir}{Directory containing yearly covariate stacks named like "covariates_YYYY.tiff".}
-
-\item{debias_start_year}{Integer year (e.g., 2015). If `NULL`, debiasing is OFF.}
-
-\item{debias_drop_incomplete_covariates}{Logical; drop sites with any NA covariates.}
-
-\item{debias_enforce_consistent_obs}{Logical; drop sites that lost any previously.}
-
-\item{debias_require_obs_at_t_for_predict}{Logical; only make residual predictions.}
+\item{debias}{List: R list containing the covariance directory and the start year.
+covariance directory should include GeoTIFF files named by year.
+start year is numeric input which decide when to start the debiasing feature.}
 
 \item{...}{Additional arguments, currently ignored}
 }
