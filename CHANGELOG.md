@@ -38,6 +38,7 @@ section for the next release.
 
 ### Changed
 
+- Ensemble and sensitivity analyses run with now assign an ensemble ID if one is not specified in the XML, even when running with no DB (#TBD).
 - `download.ERA5_cds` now uses the R package ecmwfr (replacing python dependency of cdsapi via reticulate), enabling direct NetCDF downloads; and made flexible for both reanalysis and ensemble data product.
 - `extract_soil_gssurgo` now supports spatial sampling using a grid of user-defined size and spacing. And supports ensemble simulation of soil organic carbon (SOC) stocks, using area-weighted aggregation
 - The ERA5 NC extraction function can now handle multi-site instead of one
