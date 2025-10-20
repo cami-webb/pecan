@@ -12,7 +12,8 @@
 #' @param events_json character. Path to the JSON file to validate.
 #' @param verbose logical. When `TRUE`, include detailed AJV messages on error.
 #'
-#' @return Logical TRUE if valid (or validator unavailable), FALSE if invalid.
+#' @return Logical TRUE if valid, FALSE if invalid.
+#' NA if validator unavailable.
 #'
 #' @author David LeBauer
 #'
