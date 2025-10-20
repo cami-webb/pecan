@@ -547,7 +547,6 @@ qsub_sda <- function(settings,
                      outdir, 
                      control, 
                      block.index = NULL,
-                     cov_dir = NULL, 
                      debias = list(cov.dir = NULL, start.year = NULL)) {
   # read from settings.
   L <- length(settings)
