@@ -29,7 +29,7 @@ validate_events_json <- function(events_json, verbose = TRUE) {
 
   if (!requireNamespace("jsonvalidate", quietly = TRUE)) {
     PEcAn.logger::logger.warn("Skipping events schema validation: package 'jsonvalidate' not installed.")
-    return(TRUE)
+    return(NA)
   }
 
   schema <- system.file("events_schema_v0.1.0.json", package = "PEcAn.data.land", mustWork = TRUE)
