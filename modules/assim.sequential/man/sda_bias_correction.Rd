@@ -12,6 +12,7 @@ sda_bias_correction(
   obs.mean,
   state.interval,
   cov.dir,
+  pre.states,
   py.init = NULL
 )
 }
@@ -32,6 +33,8 @@ which contains observation means for each state variables of each site for each 
 \item{state.interval}{matrix: containing the upper and lower boundaries for each state variable.}
 
 \item{cov.dir}{character: physical path to the directory contains the time series covariate maps.}
+
+\item{pre.states}{list: containing previous covariates for each location.}
 
 \item{py.init}{R function: R function to initialize the python functions. Default is NULL.
 the default random forest will be used if `py.init` is NULL.}
