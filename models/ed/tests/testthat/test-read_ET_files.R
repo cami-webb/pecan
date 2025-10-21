@@ -1,4 +1,3 @@
-source("../../R/model2netcdf.ED2.R")
 testdir <- tempfile()
 dir.create(testdir)
 withr::defer(unlink(testdir, recursive = TRUE))
