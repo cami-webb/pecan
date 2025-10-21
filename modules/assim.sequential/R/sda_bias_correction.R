@@ -52,7 +52,7 @@ sda_bias_correction <- function (site.locs,
   # extract covariates for the current time point.
   cov.file <- list.files(cov.dir, full.names = T)[which(grepl(y, list.files(cov.dir)))] # current covaraites.
   cov.current <- terra::extract(x = terra::rast(cov.file), y = pts)[,-1] # remove the first ID column.
-  complete.inds <- which(complete.cases(cov.current))
+  complete.inds <- which(stats::complete.cases(cov.current))
   cov.current <- cov.current[complete.inds,]
   # factorize land cover band.
   if ("LC" %in% colnames(cov.current)) {
@@ -81,7 +81,7 @@ sda_bias_correction <- function (site.locs,
     ml.df <- cbind(cov.pre, colMeans(pre.X)[inds], res.pre)
     colnames(ml.df)[length(ml.df)-1] <- "raw_dat" # rename the column name.
     ml.df <- rbind(pre.states[[v]], ml.df) # grab previous covariates.
-    ml.df <- ml.df[which(complete.cases(ml.df)),]
+    ml.df <- ml.df[which(stats::complete.cases(ml.df)),]
     pre.states[[v]] <- ml.df # store the historical covariates for future use.
     # prepare predicting covariates.
     cov.df <- cbind(cov.current, colMeans(X)[inds[complete.inds]])
