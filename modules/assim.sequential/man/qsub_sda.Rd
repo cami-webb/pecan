@@ -14,11 +14,7 @@ qsub_sda(
   outdir,
   control,
   block.index = NULL,
-  cov_dir = NULL,
-  debias_start_year = NULL,
-  debias_drop_incomplete_covariates = TRUE,
-  debias_enforce_consistent_obs = TRUE,
-  debias_require_obs_at_t_for_predict = FALSE
+  debias = list(cov.dir = NULL, start.year = NULL)
 )
 }
 \arguments{
@@ -48,15 +44,9 @@ The default is NULL, where we will be using outdir from the settings object.}
 \item{block.index}{list of site ids for each block, default is NULL. This is used when the localization turns on.
 Please keep using the default value because the localization feature is still in development.}
 
-\item{cov_dir}{Directory containing yearly covariate stacks named like "covariates_YYYY.tiff".}
-
-\item{debias_start_year}{Integer year (e.g., 2015). If `NULL`, debiasing is OFF.}
-
-\item{debias_drop_incomplete_covariates}{Logical; drop sites with any NA covariates.}
-
-\item{debias_enforce_consistent_obs}{Logical; drop sites that lost any previously.}
-
-\item{debias_require_obs_at_t_for_predict}{Logical; only make residual predictions.}
+\item{debias}{List: R list containing the covariance directory and the start year.
+covariance directory should include GeoTIFF files named by year.
+start year is numeric input which decide when to start the debiasing feature.}
 }
 \value{
 NONE
