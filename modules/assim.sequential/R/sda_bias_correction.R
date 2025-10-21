@@ -15,22 +15,32 @@
 #' @param cov.dir character: physical path to the directory contains the time series covariate maps.
 #' @param py.init R function: R function to initialize the python functions. Default is NULL.
 #' the default random forest will be used if `py.init` is NULL.
+#' @param pre.states list: containing previous covariates for each location.
 #'
 #' @return list: the current X after the bias-correction; the ML model for each variable; predicted residuals.
 #' 
 #' @author Dongchen Zhang
 #' @importFrom dplyr %>%
 
-sda_bias_correction <- function (site.locs, t, pre.X, X, obs.mean, state.interval, cov.dir, py.init = NULL) {
+sda_bias_correction <- function (site.locs, 
+                                 t, pre.X, X, 
+                                 obs.mean, 
+                                 state.interval, 
+                                 cov.dir, 
+                                 pre.states,
+                                 py.init = NULL) {
   # if we have prescribed python script to use.
   if (!is.null(py.init)) {
     # load python functions.
     py <- py.init()
   }
+  # grab variable names.
+  var.names <- rownames(state.interval)
   # create terra spatial points.
   pts <- terra::vect(cbind(site.locs$Lon, site.locs$Lat), crs = "epsg:4326")
   # grab the current year.
   y <- lubridate::year(names(obs.mean))[t]
+  # if we don't have previous extracted information.
   # grab the covariate file path.
   cov.file.pre <- list.files(cov.dir, full.names = T)[which(grepl(y-1, list.files(cov.dir)))] # previous covaraites.
   # extract covariates for the previous time point.
@@ -50,7 +60,6 @@ sda_bias_correction <- function (site.locs, t, pre.X, X, obs.mean, state.interva
   }
   cov.names <- colnames(cov.current) # grab band names for the covariate map.
   # loop over variables.
-  var.names <- rownames(state.interval)
   # initialize model list for each variable.
   models <- res.vars <- vector("list", length = length(var.names)) %>% purrr::set_names(var.names)
   for (v in var.names) {
@@ -70,8 +79,10 @@ sda_bias_correction <- function (site.locs, t, pre.X, X, obs.mean, state.interva
     res.pre <- colMeans(pre.X[,inds]) - obs.v
     # prepare training data set.
     ml.df <- cbind(cov.pre, colMeans(pre.X)[inds], res.pre)
-    colnames(ml.df)[length(ml.df)-1] <- "raw_dat"
+    colnames(ml.df)[length(ml.df)-1] <- "raw_dat" # rename the column name.
+    ml.df <- rbind(pre.states[[v]], ml.df) # grab previous covariates.
     ml.df <- ml.df[which(complete.cases(ml.df)),]
+    pre.states[[v]] <- ml.df # store the historical covariates for future use.
     # prepare predicting covariates.
     cov.df <- cbind(cov.current, colMeans(X)[inds[complete.inds]])
     colnames(cov.df)[length(cov.df)] <- "raw_dat"
@@ -128,5 +139,5 @@ sda_bias_correction <- function (site.locs, t, pre.X, X, obs.mean, state.interva
     X[X[,i] < int.save[1],i] <- int.save[1]
     X[X[,i] > int.save[2],i] <- int.save[2]
   }
-  return(list(X = X, models = models, res = res.vars))
+  return(list(X = X, models = models, res = res.vars, pre.states = pre.states))
 }
