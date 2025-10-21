@@ -43,7 +43,7 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
     # ******************** Declare netCDF variables ********************#
     start.day <- 1
     if (y == lubridate::year(start_date)){
-      start.day <- length(as.Date(paste0(y, "-01-01")):as.Date(start_date)) 
+      start.day <- yday(start_date)
     } 
     tvals <- (start.day:sub.PEPRMT.output.dims[1])-1
     bounds <- array(data=NA, dim=c(length(tvals),2))
@@ -61,25 +61,15 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
                                       vals = 1:2, units="")
     
     ## Output names
-    # ra (autotrophic respiration, gC/m2/day);
-    # af (flux of carbon entering foliage, gC/m2/day);
-    # aw (flux of carbon entering woody material, gC/m2/day);
-    # ar (flux of carbon entering roots, gC/m2/day);
-    # lf (flux of carbon leaving foliage as litter, gC/m2/day);
-    # lw (flux of carbon leaving woody material as debris, gC/m2/day); 
-    # lr (flux of carbon leaving roots as debris, gC/m2/day);
-    # cf (foliar biomass, gC/m2);
-    # cw (woody biomass, gC/m2);
-    # cr (root biomass, gC/m2);
-    # rh1 (heterotrophic flux from litter, gC/m2/day);
-    # rh2 (heterotrophic flux from soil and woody debris, gC/m2/day); 
-    # d (decompostion flux from litter to soil pool, gC/m2/day);
-    # cl (litter biomass, gC/m2);
-    # cs (soil organic matter, gC/m2);
-    # gpp (gross primary productivity, gC/m2/day);
-    # nep (net ecosystem productivity, gC/m2/day);
+    # SOM_total
+    # SOM_labile
+    # GPP_mod (units)
+    # Plant_flux_net (units)
+    # Hydro_flux (units)
+    # CH4_mod (units)
     
-    # names(sub.PEPRMT.output) <- c("ra", "af", "aw", "ar", "lf", "lw", "lr", "cf", "cw", "cr", "rh1", "rh2", "d", "cl", "cs", "gpp", "nep")
+    # names(sub.PEPRMT.output) <- c("SOM_total", "SOM_labile", "GPP_mod", 
+    #"Plant_flux_net", "Hydro_flux", "CH4_mod")
     
     ## Setup outputs for netCDF file in appropriate units
     output <- list()
@@ -99,12 +89,6 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
     output[[11]] <- (sub.PEPRMT.output[, 19] * 0.001)  # Root Carbon, kgC/m2
     output[[12]] <- (sub.PEPRMT.output[, 27] * 0.001)  # Litter Carbon, kgC/m2
     output[[13]] <- (sub.PEPRMT.output[, 29] * 0.001)  # Soil Carbon, kgC/m2
-    
-    ## standard composites
-    output[[14]] <- output[[1]] + output[[2]]  # Total Respiration
-    output[[15]] <- output[[9]] + output[[10]] + output[[11]]  ## TotLivBiom
-    output[[16]] <- output[[12]] + output[[13]]  ## TotSoilCarb
-    output[[17]] <- sub.PEPRMT.output[, 15] * PEPRMT.configs[grep("SLA", PEPRMT.configs) + 1][[1]]  
     
     ## time_bounds
     output[[18]] <- c(rbind(bounds[,1], bounds[,2]))

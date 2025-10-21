@@ -47,7 +47,6 @@
 # 6. trans2: unitless
 
 library(tidyverse)
-library(magrittr)
 
 PEPRMT_CH4_FINAL <- function(theta,
                              data,
