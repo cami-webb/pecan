@@ -4,7 +4,7 @@
 \alias{logger.message}
 \title{Prints a message at a certain log level.}
 \usage{
-logger.message(level, msg, ..., wrap = TRUE)
+logger.message(level, msg, ..., wrap = FALSE)
 }
 \arguments{
 \item{level}{the level of the message (DEBUG, INFO, WARN, ERROR)}
@@ -14,7 +14,7 @@ logger.message(level, msg, ..., wrap = TRUE)
 \item{...}{any additional text that should be printed.}
 
 \item{wrap}{Whether or not to wrap long messages (default =
-\code{TRUE}). If \code{FALSE}, preserve format of original string. Useful
+\code{FALSE}). If \code{FALSE}, preserve format of original string. Useful
 for specifically formatted error messages.}
 }
 \description{

@@ -114,7 +114,7 @@ test_that("`logger.message` able to redirect logging information to file set by 
   on.exit(logger.setOutputFile(NA), add = TRUE)
   f <- withr::with_tempfile("tf", {
     logger.setOutputFile(tf)
-    logger.message("WARN", "message", wrap = FALSE)
+    logger.message("WARN", "message")
     readLines(tf)
   })
   expect_true(grepl(".*WARN   \\[.*\\] : message", f))

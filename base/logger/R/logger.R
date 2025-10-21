@@ -123,14 +123,14 @@ logger.severe <- function(msg, ..., wrap = TRUE) {
 ##' @param msg the message that should be printed.
 ##' @param ... any additional text that should be printed.
 ##' @param wrap Whether or not to wrap long messages (default =
-##'   `TRUE`). If `FALSE`, preserve format of original string. Useful
+##'   `FALSE`). If `FALSE`, preserve format of original string. Useful
 ##'   for specifically formatted error messages.
 ##' @author Rob Kooper
 ##' @examples
 ##' \dontrun{
 ##' logger.message('DEBUG', 'variable', 5)
 ##' }
-logger.message <- function(level, msg, ..., wrap = TRUE) {
+logger.message <- function(level, msg, ..., wrap = FALSE) {
   if (logger.getLevelNumber(level) >= .utils.logger$level) {
     calls <- utils::limitedLabels(sys.calls())
     calls <- calls[!grepl("^(#[0-9]+: )?(PEcAn\\.logger::)?logger", calls)]
