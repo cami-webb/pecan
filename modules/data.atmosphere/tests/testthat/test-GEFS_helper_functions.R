@@ -13,7 +13,7 @@ test_that("noaa_grid_download end times", {
       lat_list = 0,
       lon_list = 0,
       forecast_time = start_time,
-      forecast_date = "2025-10-22",
+      forecast_date = Sys.Date(),
       model_name_raw = "geftest_raw",
       output_directory = out,
       end_hr = end_hr
