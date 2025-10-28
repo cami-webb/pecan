@@ -511,6 +511,8 @@ sda.enkf_local <- function(settings,
     unlink(rundir, recursive = T)
     unlink(outdir, recursive = T)
   }
+  # remove met files.
+  unlink(file.path(settings$outdir, "Extracted_met"), recursive = T)
   gc()
 }
 
@@ -538,6 +540,7 @@ sda.enkf_local <- function(settings,
 #' @param debias List: R list containing the covariance directory and the start year.
 #' covariance directory should include GeoTIFF files named by year.
 #' start year is numeric input which decide when to start the debiasing feature.
+#' @param prefix character: the desired folder name to store the outputs.
 #' 
 #' @author Dongchen Zhang
 #' @return NONE
@@ -551,7 +554,8 @@ qsub_sda <- function(settings,
                      outdir, 
                      control, 
                      block.index = NULL,
-                     debias = list(cov.dir = NULL, start.year = NULL)) {
+                     debias = list(cov.dir = NULL, start.year = NULL),
+                     prefix = "batch") {
   # read from settings.
   L <- length(settings)
   # grab info from settings.
@@ -572,7 +576,7 @@ qsub_sda <- function(settings,
     outdir <- settings$outdir
   }
   # create folder for storing job outputs.
-  batch.folder <- file.path(outdir, "batch")
+  batch.folder <- file.path(outdir, prefix)
   # delete the whole folder if it's not empty.
   if (file.exists(batch.folder)){
     PEcAn.logger::logger.info("Deleting batch folder!")

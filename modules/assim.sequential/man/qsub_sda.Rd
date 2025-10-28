@@ -14,7 +14,8 @@ qsub_sda(
   outdir,
   control,
   block.index = NULL,
-  debias = list(cov.dir = NULL, start.year = NULL)
+  debias = list(cov.dir = NULL, start.year = NULL),
+  prefix = "batch"
 )
 }
 \arguments{
@@ -47,6 +48,8 @@ Please keep using the default value because the localization feature is still in
 \item{debias}{List: R list containing the covariance directory and the start year.
 covariance directory should include GeoTIFF files named by year.
 start year is numeric input which decide when to start the debiasing feature.}
+
+\item{prefix}{character: the desired folder name to store the outputs.}
 }
 \value{
 NONE
