@@ -5,6 +5,7 @@
   - **`soilgrids_ic_process`**: A function to extract, process, and generate ensemble members from SoilGrids250m data.
   - **`preprocess_soilgrids_data`**: A helper function to handle missing values and ensure data integrity during preprocessing. 
   - **`generate_soilgrids_ensemble`**: A function to create ensemble members for a site based on processed soil carbon data. 
+- Add events schema and validate_events() function to validate events.json files against the schema (#3623, #3521).
 
 # PEcAn.data.land 1.8.2
 - Removed unused parameter `machine` from put_veg_module()
