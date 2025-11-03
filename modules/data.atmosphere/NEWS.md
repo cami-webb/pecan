@@ -4,7 +4,13 @@
 * Dependency `ggplot2` is now suggested rather than required. It is used in two vignettes and for optional diagnostic plots from `debias_met_regression`.
 * `download.ERA5_cds` now uses the R package ecmwfr (replacing python dependency of cdsapi via reticulate), enabling direct NetCDF downloads; and made flexible for both reanalysis and ensemble data product.
 * New function `sat_vapor_pressure()` added for computing saturation vapor pressure from temperature using various methods.
+* Added `AmeriFlux_met_ensemble()` function with ERA5 fallback for AmeriFlux meteorological data processing and ensemble generation
 * `extract.nc.ERA5()` and `met2CF.ERA5` now supports both ensemble and reanalysis data processing .
+* added support for soil temperature, relative humidity, soil moisture, and PPFD downscaling to `met_temporal_downscale.Gaussian_ensemble`
+* `download.NOAA_GEFS` is updated to work again with GEFS v12.3,
+	the current release as of this writing in July 2024 (#3349).
+* Removed `sitename` and `username` from the formal arguments of `download.NOAA_GEFS`.
+	Before they were silently ignored, now they're treated as part of `...` (which is also ignored!).
 
 # PEcAn.data.atmosphere 1.9.0
 
