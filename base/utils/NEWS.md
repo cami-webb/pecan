@@ -1,3 +1,10 @@
+# PEcAn.utils 1.8.2
+
+## Added
+
+* New function `nc_write_varfiles()` creates text summaries of the variables in all netCDF files in an output directory, writing either one file named `nc_vars.txt` if `output_mode = "combined"` or a separate `[filename].nc.var` alongside each netCDF if `output_mode = "paired"`.
+
+
 # PEcAn.utils 1.8.1
 
 ## License change
