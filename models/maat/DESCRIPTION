@@ -30,4 +30,4 @@ LazyLoad: yes
 LazyData: FALSE
 Encoding: UTF-8
 RoxygenNote: 7.3.2
-X-schema.org-keywords: MAAT, ensemble-simulation, model-framework
+X-schema.org-keywords: MAAT, ecosystem-modeling
