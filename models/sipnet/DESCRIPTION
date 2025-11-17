@@ -14,6 +14,7 @@ URL: https://pecanproject.github.io
 BugReports: https://github.com/PecanProject/pecan/issues
 Imports:
     dplyr,
+    jsonlite,
     lubridate (>= 1.6.0),
     ncdf4 (>= 1.15),
     PEcAn.data.atmosphere,
@@ -33,3 +34,4 @@ License: BSD_3_clause + file LICENSE
 Copyright: Authors
 Encoding: UTF-8
 RoxygenNote: 7.3.2
+X-schema.org-keywords: SIPNET, ecosystem-modeling
