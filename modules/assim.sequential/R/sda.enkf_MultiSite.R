@@ -671,15 +671,15 @@ sda.enkf.multisite <- function(settings,
     ### adjust/update state matrix                                   ###
     ###-------------------------------------------------------------------###---- 
     tictoc::tic(paste0("Adjustment for cycle = ", t))
-    if(adjustment == TRUE){
-      analysis <-adj.ens(Pf, X, mu.f, mu.a, Pa)
-    } else {
-      # if we don't have the analysis from the analysis function.
-      if (is.null(enkf.params[[obs.t]]$analysis)) {
-        analysis <- as.data.frame(mvtnorm::rmvnorm(as.numeric(nrow(X)), mu.a, Pa, method = "svd"))
+    # if we don't have the analysis from the analysis function.
+    if (is.null(enkf.params[[obs.t]]$analysis)) {
+      if(adjustment == TRUE){
+        analysis <-adj.ens(Pf, X, mu.f, mu.a, Pa)
       } else {
-        analysis <- enkf.params[[obs.t]]$analysis
+        analysis <- as.data.frame(mvtnorm::rmvnorm(as.numeric(nrow(X)), mu.a, Pa, method = "svd"))
       }
+    } else {
+      analysis <- enkf.params[[obs.t]]$analysis
     }
     colnames(analysis) <- colnames(X)
     ##### Mapping analysis vectors to be in bounds of state variables
