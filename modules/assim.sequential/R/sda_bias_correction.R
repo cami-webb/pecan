@@ -5,10 +5,9 @@
 #' 
 #' @param site.locs data.frame: data.frame that contains longitude and latitude in its first and second column.
 #' @param t numeric: the current number of time points (e.g., t=1 for the beginning time point).
-#' @param pre.X data.frame: data frame of model forecast at the previous time point 
+#' @param all.X list: lists of data frame of model forecast from the beginning to the current time points 
 #' that has n (ensemble size) rows and n.var (number of variables) times n.site (number of locations) columns.
 #' (e.g., 100 ensembles, 4 variables, and 8,000 locations will end up with data.frame of 100 rows and 32,000 columns)
-#' @param X data.frame: data frame of model forecast at the current time point.
 #' @param obs.mean List: lists of date times named by time points, which contains lists of sites named by site ids, 
 #' which contains observation means for each state variables of each site for each time point.
 #' @param state.interval matrix: containing the upper and lower boundaries for each state variable.
@@ -23,12 +22,16 @@
 #' @importFrom dplyr %>%
 
 sda_bias_correction <- function (site.locs, 
-                                 t, pre.X, X, 
+                                 t, all.X, 
                                  obs.mean, 
                                  state.interval, 
                                  cov.dir, 
                                  pre.states,
                                  py.init = NULL) {
+  # initialize X.
+  X <- all.X[[t]]
+  pre.X <- all.X[[t-1]]
+  pre.pre.X <- all.X[[t-2]]
   # if we have prescribed python script to use.
   if (!is.null(py.init)) {
     # load python functions.
@@ -49,16 +52,6 @@ sda_bias_correction <- function (site.locs,
   if ("LC" %in% colnames(cov.pre)) {
     cov.pre[,"LC"] <- factor(cov.pre[,"LC"])
   }
-  # extract covariates for the current time point.
-  cov.file <- list.files(cov.dir, full.names = T)[which(grepl(y, list.files(cov.dir)))] # current covaraites.
-  cov.current <- terra::extract(x = terra::rast(cov.file), y = pts)[,-1] # remove the first ID column.
-  complete.inds <- which(stats::complete.cases(cov.current))
-  cov.current <- cov.current[complete.inds,]
-  # factorize land cover band.
-  if ("LC" %in% colnames(cov.current)) {
-    cov.current[,"LC"] <- factor(cov.current[,"LC"])
-  }
-  cov.names <- colnames(cov.current) # grab band names for the covariate map.
   # loop over variables.
   # initialize model list for each variable.
   models <- res.vars <- vector("list", length = length(var.names)) %>% purrr::set_names(var.names)
@@ -77,15 +70,37 @@ sda_bias_correction <- function (site.locs,
     }) %>% unlist
     # calculate residuals for the previous time point.
     res.pre <- colMeans(pre.X[,inds]) - obs.v
+    # grab observations for the current variable.
+    obs.v.pre <- obs.mean[[t-2]] %>% purrr::map(function(obs){
+      if (is.null(obs[[v]])) {
+        return(NA)
+      } else {
+        return(obs[[v]])
+      }
+    }) %>% unlist
+    # calculate residuals for the previous time point.
+    res.pre.pre <- colMeans(pre.pre.X[,inds]) - obs.v.pre
     # prepare training data set.
-    ml.df <- cbind(cov.pre, colMeans(pre.X)[inds], res.pre)
+    ml.df <- cbind(cov.pre, res.pre.pre, colMeans(pre.X)[inds], res.pre)
     colnames(ml.df)[length(ml.df)-1] <- "raw_dat" # rename the column name.
+    colnames(ml.df)[length(ml.df)-2] <- "res_lag" # rename the column name.
     ml.df <- rbind(pre.states[[v]], ml.df) # grab previous covariates.
     ml.df <- ml.df[which(stats::complete.cases(ml.df)),]
     pre.states[[v]] <- ml.df # store the historical covariates for future use.
     # prepare predicting covariates.
-    cov.df <- cbind(cov.current, colMeans(X)[inds[complete.inds]])
+    # extract covariates for the current time point.
+    cov.file <- list.files(cov.dir, full.names = T)[which(grepl(y, list.files(cov.dir)))] # current covaraites.
+    cov.current <- terra::extract(x = terra::rast(cov.file), y = pts)[,-1] # remove the first ID column.
+    # factorize land cover band.
+    if ("LC" %in% colnames(cov.current)) {
+      cov.current[,"LC"] <- factor(cov.current[,"LC"])
+    }
+    cov.df <- cbind(cov.current, res.pre, colMeans(X)[inds])
+    complete.inds <- which(stats::complete.cases(cov.df))
+    cov.df <- cov.df[complete.inds,]
     colnames(cov.df)[length(cov.df)] <- "raw_dat"
+    colnames(cov.df)[length(cov.df)-1] <- "res_lag"
+    cov.names <- colnames(cov.df) # grab band names for the covariate map.
     if (nrow(ml.df) == 0) next # jump to the next loop if we have zero records.
     if (is.null(py.init)) {
       # random forest training.

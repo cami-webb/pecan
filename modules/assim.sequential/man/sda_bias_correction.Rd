@@ -7,8 +7,7 @@
 sda_bias_correction(
   site.locs,
   t,
-  pre.X,
-  X,
+  all.X,
   obs.mean,
   state.interval,
   cov.dir,
@@ -21,11 +20,9 @@ sda_bias_correction(
 
 \item{t}{numeric: the current number of time points (e.g., t=1 for the beginning time point).}
 
-\item{pre.X}{data.frame: data frame of model forecast at the previous time point 
+\item{all.X}{list: lists of data frame of model forecast from the beginning to the current time points 
 that has n (ensemble size) rows and n.var (number of variables) times n.site (number of locations) columns.
 (e.g., 100 ensembles, 4 variables, and 8,000 locations will end up with data.frame of 100 rows and 32,000 columns)}
-
-\item{X}{data.frame: data frame of model forecast at the current time point.}
 
 \item{obs.mean}{List: lists of date times named by time points, which contains lists of sites named by site ids, 
 which contains observation means for each state variables of each site for each time point.}

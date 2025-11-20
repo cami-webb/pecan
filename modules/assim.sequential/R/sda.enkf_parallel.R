@@ -221,7 +221,9 @@ sda.enkf_local <- function(settings,
   ###------------------------------------------------------------------------------------------------###
   # initialize the lists of covariates for the debias feature.
   pre.states <- vector("list", length = length(var.names)) %>% purrr::set_names(var.names)
-  for(t in 1:nt){
+  # initialize the lists of forecasts for all time points.
+  all.X <- vector("list", length = nt)
+  for (t in 1:nt) {
     # initialize dat for saving memory usage.
     sda.outputs <- FORECAST <- enkf.params <- ANALYSIS <- ens_weights <- list()
     obs.t <- as.character(lubridate::date(obs.times[t]))
@@ -369,13 +371,14 @@ sda.enkf_local <- function(settings,
       dplyr::bind_cols() %>%
       `colnames<-`(c(rep(var.names, length(X)))) %>%
       `attr<-`('Site',c(rep(site.ids, each=length(var.names))))
+    all.X[[t]] <- X
     # start debiasing.
     debias.out <- NULL
     if (!is.null(debias$start.year)) {
       if (obs.year >= debias$start.year) {
         PEcAn.logger::logger.info("Start debiasing!")
         debias.out <- sda_bias_correction(site.locs, 
-                                          t, pre.X, X, 
+                                          t, all.X, 
                                           obs.mean, 
                                           state.interval, 
                                           debias$cov.dir,
@@ -385,7 +388,7 @@ sda.enkf_local <- function(settings,
         pre.states <- debias.out$pre.states
       }
     }
-    FORECAST[[obs.t]] <- pre.X <- X
+    FORECAST[[obs.t]] <- all.X[[t]] <- X
     gc()
     ###-------------------------------------------------------------------###
     ###  preparing OBS                                                    ###
