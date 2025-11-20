@@ -177,7 +177,7 @@ We discussed the output directory in Demo 1 (Basic Run), but now we have three n
 demo_outdir/
 ├── run/                   # Configuration & execution metadata
 │   ├── runs.txt           # List of run IDs (one per model realization)
-│   ├── <runid>/           # Model-specific config copies (sometimes)
+│   ├── <runid>/           # Files for each individual model invocation, in the form the model saw them
 │   └── config.*           # Generated model configs (e.g., SIPNET)
 ├── out/                   # Raw model outputs by run ID
 │   └── <runid>/           # E.g., daily or sub-daily SIPNET output files
