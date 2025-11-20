@@ -100,7 +100,7 @@ The sampling method for generating parameter sets is set to **halton** in this d
 
 **Sensitivity analysis quantiles**
 
-PEcAn's sensitivity analysis includes a handy shortcut that converts a specified standard deviation into its normal quantile equivalent. In the example pecan.xml, these are set to **set -1,1** (the median value, 0, occurs by default) which are converted internally to the 15.9th and 84.1th quantiles of the parameter distribution. You can add more quantiles (e.g., -2, 2) to explore a wider range of parameter values, and -3:3 are often used in practice. 
+PEcAn's sensitivity analysis includes a handy shortcut that converts a specified standard deviation into its normal quantile equivalent. In the example pecan.xml, these are set to **-1, 1** (the median value, 0, occurs by default) which are converted internally to the 15.9th and 84.1th quantiles of the parameter distribution. You can add more quantiles to explore a wider range of parameter values: {-3, -2, -1, 1, 2, 3} is often used in practice. 
 
 By working in quantiles relative to each parameter’s distribution, the sensitivity and variance decomposition reflect sensitivity across the range of parameter values. Many sensitivity analyses use a fixed perturbation size such as the mean +/- 10%. This approach does not capture the uncertainty across the parameter distribution and can not be used for variance decomposition.
 
