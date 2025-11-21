@@ -201,28 +201,27 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     pft.trait.names <- pft.trait.names[pft.traits != "NA" & !is.na(pft.traits)]
     pft.traits <- pft.traits[pft.traits != "NA" & !is.na(pft.traits)]
     pft.traits <- as.numeric(pft.traits)
-    
+
     # Leaf carbon concentration
-    leafC <- NA
     if ("leafC" %in% pft.trait.names) {
-      leafC <- pft.traits[which(pft.trait.names == "leafC")]
+      leafC <- pft.traits[pft.trait.names == "leafC"] |>
+        PEcAn.utils::ud_convert("percent", "1") # percentage to fraction
       id <- which(param[, 1] == "cFracLeaf")
-      param[id, 2] <- PEcAn.utils::ud_convert(leafC, "percent", "1") # Convert from percentage to fraction
+      param[id, 2] <- leafC
     } else {
       leafC <- 0.48 # Fixed value if not available, because it is used in downstream calculations
     }
-    
+
     # Specific leaf area converted to SLW
-    # leafCSpWt [gC/m2 leaf], SLA [m2 leaf/kg C], leafC [percentage C]
-    SLA <- NA
+    # leafCSpWt [gC/m2 leaf], SLA [m2 leaf/kg leaf], leafC [g C / g leaf]
     id <- which(param[, 1] == "leafCSpWt")
     if ("SLA" %in% pft.trait.names) {
       SLA <- pft.traits[which(pft.trait.names == "SLA")]
       param[id, 2] <- PEcAn.utils::ud_convert(leafC / SLA, "kg/m2", "g/m2")
     } else {
-      SLA <- PEcAn.utils::ud_convert(leafC / param[id, 2], "kg", "g")
+      SLA <- PEcAn.utils::ud_convert(leafC / param[id, 2], "m2/g", "m2/kg")
     }
-    
+
     # Maximum photosynthesis
     # SIPNET: aMax [nmol CO2 / g   leaf / sec]
     # PEcAn:  Amax [umol CO2 / m^2 leaf / sec]
