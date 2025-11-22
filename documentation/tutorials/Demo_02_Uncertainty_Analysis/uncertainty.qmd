@@ -167,7 +167,7 @@ runModule.run.sensitivity.analysis(settings)
 
 # PEcAn Outputs {#sec-outputs}
 
-## Output organization
+## Output Directory Structure
 
 These are the key folders and files that will be created under the directory defined by `settings$outdir` (e.g., `demo_outdir` in the example). The file contents are described in the next section.
 
