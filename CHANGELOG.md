@@ -33,6 +33,7 @@ For more information about this file see also [Keep a Changelog](http://keepacha
  - Directory structure for PEcAn Quarto notebooks under `pecan/documentation/tutorials/Demo_1_Basic_Run`
  - Support for inspecting and plotting NetCDF output variables within the notebook workflow.
 - added support for soil temperature, relative humidity, soil moisture, and PPFD downscaling to `met_temporal_downscale.Gaussian_ensemble`
+- The PEcAn uncertainty analysis tutorial ("Demo 2") has been updated and reimplemented as a Quarto notebook at `documentation/tutorials/Demo_02_Uncertainty_Analysis/uncertainty.qmd`. (#3570)
 
 ### Fixed
 
