@@ -1,4 +1,4 @@
-.PHONY: all bkdcheck build clean serve
+.PHONY: all bkdcheck build clean
 
 all: bkdcheck build
 
@@ -32,9 +32,6 @@ CLEAN_DIRS = _book extfiles
 
 clean:
 	rm -rf $(CLEAN_DIRS)
-
-serve: build
-	Rscript -e 'servr::httd("_book", browser = TRUE)'
 
 pdf: bkdcheck
 	Rscript -e 'options(bookdown.render.file_scope=FALSE); bookdown::render_book("index.Rmd", "bookdown::pdf_book")'
