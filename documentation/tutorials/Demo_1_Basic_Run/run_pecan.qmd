@@ -18,18 +18,18 @@ Welcome to this PEcAn workflow notebook! This notebook will guide you through ru
 
 PEcAn (Predictive Ecosystem Analyzer) is a scientific workflow system designed to make ecosystem modeling more transparent, repeatable, and accessible. It helps researchers:
 
-- Run ecosystem models with standardized inputs and outputs
-- Perform uncertainty analysis on model parameters
-- Compare model predictions with observations
-- Share and reproduce scientific workflows
+-   Run ecosystem models with standardized inputs and outputs
+-   Perform uncertainty analysis on model parameters
+-   Compare model predictions with observations
+-   Share and reproduce scientific workflows
 
 ## 1.2 What This Notebook Does
 
 This notebook demonstrates how to:
 
-1. Set up and configure a PEcAn workflow
-2. Run an ecosystem model simulation
-3. Analyze and visualize the results
+1.  Set up and configure a PEcAn workflow
+2.  Run an ecosystem model simulation
+3.  Analyze and visualize the results
 
 ### The Scenario Being Modeled:
 
@@ -39,17 +39,15 @@ The simulation is run for the full year 2004 (January 1 – December 31) using A
 
 This scenario is designed to be a minimal, reproducible example to demonstrate how to run SIPNET within the PEcAn workflow. In later steps, this same framework can be extended to include more ensemble members, additional PFTs, longer time periods, or alternative meteorological inputs.
 
-This run is based on a study by [Moore et. al. (2007)](https://doi.org/10.1016/j.agrformet.2008.04.013) that uses SIPNET to understand the relationship between water and carbon balance at this site. 
-
-
+This run is based on a study by [Moore et. al. (2007)](https://doi.org/10.1016/j.agrformet.2008.04.013) that uses SIPNET to understand the relationship between water and carbon balance at this site.
 
 ## 1.3 Prerequisites
 
 Before running this notebook, make sure you have:
 
-- All the PEcAn packages installed. You can install all PEcAn packages and their dependencies by running the following command in the root of your PEcAn repository:
+-   All the PEcAn packages installed. You can install all PEcAn packages and their dependencies by running the following command in the root of your PEcAn repository:
 
-```
+```{r}
 
 # Enable repository from pecanproject
 options(repos = c(
@@ -57,17 +55,18 @@ options(repos = c(
   CRAN = 'https://cloud.r-project.org'))
 # Download and install PEcAn.all in R
 install.packages('PEcAn.all')
-
+install.packages("PEcAn.SIPNET")
+library(PEcAn.SIPNET)
 ```
 
-- A valid `pecan.xml` configuration file or use the example provided: `pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml`
+-   A valid `pecan.xml` configuration file or use the example provided: `pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml`
 
 ## 1.4 How to Use This Notebook
 
-1. Each section is clearly marked with a heading
-2. Code chunks are provided with explanations
-3. You can run the code chunks sequentially
-4. Once you have successfully run the demo, you can modify parameters to configure new runs and analyses
+1.  Each section is clearly marked with a heading
+2.  Code chunks are provided with explanations
+3.  You can run the code chunks sequentially
+4.  Once you have successfully run the demo, you can modify parameters to configure new runs and analyses
 
 **Objective:**
 
@@ -109,12 +108,11 @@ library("PEcAn.all")
 
 # 5. Load PEcAn Settings File
 
-PEcAn uses an XML-based settings file (pecan.xml) to configure model runs. This file defines key information about the run including: PFT(s), site location, time period of the run, the location of input files and where outputs will be saved. Other settings outside the scope of this demo include the types of analyses that will be performed, how to connect to a database, and how to run it on a high performance computing cluster  (we are using the default single model run on a single computer). 
+PEcAn uses an XML-based settings file (pecan.xml) to configure model runs. This file defines key information about the run including: PFT(s), site location, time period of the run, the location of input files and where outputs will be saved. Other settings outside the scope of this demo include the types of analyses that will be performed, how to connect to a database, and how to run it on a high performance computing cluster (we are using the default single model run on a single computer).
 
 You can read more about the settings file in the ["PEcAn XML" chapter](https://pecanproject.github.io/pecan-documentation/develop/pecanXML.html#pecanXML) of the documentation.
 
 There is an example `pecan.xml` that has been configured for this demonstration. You can find it at `pecan/documentation/tutorials/Demo_1_Basic_Run/pecan.xml`.
-
 
 This is how PEcAn loads the settings file:
 
@@ -124,10 +122,10 @@ settings_path <- here::here("documentation/tutorials/Demo_1_Basic_Run/pecan.xml"
 
 # 6. Prepare and Validate Settings
 
-After specifying the path to the `pecan.xml` file, the next step involves reading and preparing these settings. PEcAn provides utilities to process and validate the configurations before execution begins. 
+After specifying the path to the `pecan.xml` file, the next step involves reading and preparing these settings. PEcAn provides utilities to process and validate the configurations before execution begins.
 
-- `PEcAn.settings::read.settings(settings_path)`: Reads the `pecan.xml` file and converts it to an R list object.
-- `PEcAn.settings::prepare.settings(settings)`: Prepares and validates settings. It sets defaults for missing fields, changes file paths to absolute paths, and generally ensures consistency.
+-   `PEcAn.settings::read.settings(settings_path)`: Reads the `pecan.xml` file and converts it to an R list object.
+-   `PEcAn.settings::prepare.settings(settings)`: Prepares and validates settings. It sets defaults for missing fields, changes file paths to absolute paths, and generally ensures consistency.
 
 ```{r read-prepare-settings}
 # Read the settings from the pecan.xml file
@@ -141,29 +139,27 @@ settings <- PEcAn.settings::prepare.settings(settings)
 
 Once the settings have been read and prepared, it is useful to inspect the structure of the `settings` object. This object is an R list containing all parameters and configurations for the PEcAn workflow.
 
-*   `str(settings)` displays the internal structure of the `settings` object. This shows how the settings are represented in R and is useful for debugging and verifying settings.
+-   `str(settings)` displays the internal structure of the `settings` object. This shows how the settings are represented in R and is useful for debugging and verifying settings.
 
 ```{r explore-settings}
 str(settings)
 ```
 
-Your turn: explore the `settings` object further using the following commands:
-*   `names(settings)` to list the top-level keys in the settings object
-*   Once you know the names, you can look at each component in detail, for example:
-*   `settings$run` to access the run-specific settings, such as start and end dates, model type, and output directory
-*   `settings$pfts` to explore the Plant Functional Types settings
+Your turn: explore the `settings` object further using the following commands: \* `names(settings)` to list the top-level keys in the settings object \* Once you know the names, you can look at each component in detail, for example: \* `settings$run` to access the run-specific settings, such as start and end dates, model type, and output directory \* `settings$pfts` to explore the Plant Functional Types settings
 
 Now you can update each of these settings. Here is a simple example:
 
 ```{r add-info-to-settings}
+names(settings)
+settings$model
 settings$info <- list(
-  author = "Aritra Dey",
+  author = "Abby Lewis",
   date = Sys.Date(),
   description = "Demo run of PEcAn using SIPNET"
 )
 ```
 
-Editing the more interesting settings to change the PFT (`settings$pfts`) or extend the run (`settings$run$end.date`) is beyond the scope of this demo. You _could_ change the pft or the end date, but you would need a new file containing parameters for that PFT (`settings$pfts$pft$posterior.files`), or a climate file (`settings$run$met$path$path1`) that extends to the desired simulation period.
+Editing the more interesting settings to change the PFT (`settings$pfts`) or extend the run (`settings$run$end.date`) is beyond the scope of this demo. You *could* change the pft or the end date, but you would need a new file containing parameters for that PFT (`settings$pfts$pft$posterior.files`), or a climate file (`settings$run$met$path$path1`) that extends to the desired simulation period.
 
 # 8. Create Output Directory
 
@@ -179,8 +175,8 @@ dir.create(settings$outdir, recursive = TRUE, showWarnings = FALSE)
 
 This step generates the model-specific configuration files that will be used to run the ecosystem model. The process involves:
 
-1. Disabling database write operations because we are not using a database
-2. Generating SIPNET configuration files using the `runModule.run.write.configs()` function.
+1.  Disabling database write operations because we are not using a database
+2.  Generating SIPNET configuration files using the `runModule.run.write.configs()` function.
 
 ```{r write-configs}
 settings$database <- NULL # Disable database operations for this demo
@@ -191,7 +187,7 @@ settings <- PEcAn.workflow::runModule.run.write.configs(settings)
 
 This section executes the actual model simulations and retrieves the results. The process is managed by PEcAn's workflow system, which handles the execution of your chosen ecosystem model.
 
-*   `runModule_start_model_runs(settings)`: This function initiates the model runs based on your configuration. It manages the execution of your chosen ecosystem model, using the configuration files generated in the previous step.
+-   `runModule_start_model_runs(settings)`: This function initiates the model runs based on your configuration. It manages the execution of your chosen ecosystem model, using the configuration files generated in the previous step.
 
 ```{r run-model}
 PEcAn.workflow::runModule_start_model_runs(settings)
@@ -201,10 +197,10 @@ PEcAn.workflow::runModule_start_model_runs(settings)
 
 After the model simulation completes, we need to extract the results and prepare them for analysis. This involves:
 
-1. Reading the run ID
-2. Setting up output paths
-3. Defining time period
-4. Loading model output
+1.  Reading the run ID
+2.  Setting up output paths
+3.  Defining time period
+4.  Loading model output
 
 ```{r get-plot-vars}
 runid <- as.character(read.table(paste(settings$outdir, "/run/", "runs.txt", sep = ""))[1, 1]) # Note: if you are using an xml from a run with multiple ensembles this line will provide only the first run id
@@ -327,9 +323,9 @@ If you want to remove all files and directories created by this workflow and sta
 ```
 
 # 16. Session Info
+
 This section prints your R session information for reproducibility.
 
 ```{r session-info}
 sessionInfo()
 ```
-

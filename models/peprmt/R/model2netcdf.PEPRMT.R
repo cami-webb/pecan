@@ -11,12 +11,6 @@
 ##' @export
 ##' @author Abigail Lewis
 
-#For testing
-outdir <- "out"
-start_date <- "2019-01-01"
-sitelat <- 38.87692530035210
-sitelon <- -76.55584858577264
-
 model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) {
   runid <- basename(outdir)
   

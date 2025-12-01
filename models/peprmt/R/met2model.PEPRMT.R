@@ -176,7 +176,10 @@ met2model.PEPRMT <- function(in.path, in.prefix, outfolder, start_date, end_date
   if(sum(is.na(final$FPAR))!=0) warning("Warning: missing FPAR. PEPRMT won't run.")
   if(sum(is.na(final$PAR))!=0) warning("Warning: missing PAR. PEPRMT won't run.")
   if(sum(is.na(final$LUE))!=0) warning("Warning: missing LUE. PEPRMT won't run.")
-  if(sum(is.na(final$wetland_age_2))!=0) warning("Warning: missing wetland age. PEPRMT won't run.")
+  if(sum(is.na(final$wetland_age_2))!=0) {
+    warning("Warning: missing wetland age. Age assumed to be > 2yr.")
+    final$wetland_age_2 <- 1000
+  }
   if(sum(is.na(final$Sal))!=0) warning("Warning: missing salinity. PEPRMT won't run.")
   if(sum(is.na(final$NO3))!=0) warning("Warning: missing NO3. PEPRMT won't run.")
   if(sum(is.na(final$SOM_2))!=0) warning("Warning: missing SOM. PEPRMT won't run.")
