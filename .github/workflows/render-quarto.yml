@@ -2,9 +2,14 @@ name: Render Demo Notebooks
 
 on:
   push:
+    branches:
+      - main
+      - develop
+    tags:
+      - '*'
   pull_request:
+  merge_group:
   workflow_dispatch:
-  workflow_call:
 
 jobs:
   render-notebook:
