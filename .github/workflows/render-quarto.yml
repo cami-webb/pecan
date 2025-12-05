@@ -92,7 +92,7 @@ jobs:
           fi
           
           # Create target directory
-          TARGET_DIR="pecan-documentation/${VERSION}/"
+          TARGET_DIR="pecan-documentation/${VERSION}/rendered-demo-notebooks"
           mkdir -p $TARGET_DIR
           
           # Copy HTML files and support folders
