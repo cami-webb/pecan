@@ -30,7 +30,7 @@ cd pecan
 ## Developing in Docker
 
 The use of Docker in PEcAn is described in detail in the [PEcAn documentation](https://pecanproject.github.io/pecan-documentation/latest/docker-index.html). This is intended as a quick start.
-#test
+
 ### Installing Docker
 
 To install Docker and Docker Compose, see the docker documentation:
