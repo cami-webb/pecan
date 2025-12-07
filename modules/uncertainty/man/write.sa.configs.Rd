@@ -10,7 +10,8 @@ write.sa.configs(
   settings,
   model,
   clean = FALSE,
-  write.to.db = TRUE
+  write.to.db = TRUE,
+  input_design = NULL
 )
 }
 \arguments{
@@ -37,5 +38,5 @@ list, containing $runs = data frame of runids,
 Writes config files for use in sensitivity analysis.
 }
 \author{
-David LeBauer, Carl Davidson
+David LeBauer, Carl Davidson, Akash B V
 }
