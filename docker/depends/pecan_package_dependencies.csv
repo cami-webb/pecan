@@ -620,7 +620,6 @@
 "testthat",">= 1.0.2","models/maespa","Suggests",FALSE
 "testthat",">= 1.0.2","models/sipnet","Suggests",FALSE
 "testthat",">= 1.0.2","models/stics","Suggests",FALSE
-"testthat",">= 1.0.2","models/template","Suggests",FALSE
 "testthat",">= 1.0.2","modules/allometry","Suggests",FALSE
 "testthat",">= 1.0.2","modules/assim.batch","Suggests",FALSE
 "testthat",">= 1.0.2","modules/data.remote","Suggests",FALSE
@@ -632,6 +631,7 @@
 "testthat",">= 2.0.0","base/utils","Suggests",FALSE
 "testthat",">= 2.0.0","models/biocro","Suggests",FALSE
 "testthat",">= 2.0.0","modules/benchmark","Suggests",FALSE
+"testthat",">= 3.0","models/template","Suggests",FALSE
 "testthat",">= 3.0.0","models/sibcasa","Suggests",FALSE
 "testthat",">= 3.0.4","base/qaqc","Suggests",FALSE
 "testthat",">= 3.1.0","modules/data.land","Suggests",FALSE
