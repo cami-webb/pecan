@@ -24,7 +24,7 @@ load_ensemble <- function(workflow_dir, settings, variable){
         names(ens.run.ids)[names(ens.run.ids) == "run_id"] <- "id"
       }
     } else {
-      stop(manifest.file, " not found required by read.ensemble.output")
+      stop(manifest.file, "not found required by read.ensemble.output")
     }
 
     ensemble.output.raw <- list()
