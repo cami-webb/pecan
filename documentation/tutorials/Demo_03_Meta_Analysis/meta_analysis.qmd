@@ -145,20 +145,9 @@ We now run the meta-analysis. The `run.meta.analysis` function will:
 2.  Run the Bayesian meta-analysis (MCMC) to estimate posterior distributions.
 3.  Save the results (`trait.mcmc.Rdata` and `post.distns.Rdata`).
 
-We set `database = NULL` to indicate that we are running in a standalone mode and do not want to try to write results back to a database.
-
 ```{r run_meta_analysis}
 # Run meta-analysis
-run.meta.analysis(
-  pfts = settings$pfts,
-  iterations = settings$meta.analysis$iter,
-  random = settings$meta.analysis$random.effects$on,
-  threshold = settings$meta.analysis$threshold,
-  dbfiles = settings$run$inputs$met$path$path1,
-  database = NULL,
-  use_ghs = settings$meta.analysis$random.effects$use_ghs,
-  update = TRUE # update existing results if they exist
-)
+PEcAn.MA::runModule.run.meta.analysis(settings)
 ```
 
 # PEcAn Outputs {#sec-outputs}
