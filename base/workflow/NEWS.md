@@ -8,6 +8,8 @@
 - **New Default**: The sampling method default has changed from "uniform" to "random"
 - **Impact**: This ensures consistency across sites in ensemble runs but may produce different results compared to previous versions
 
+* Sensitivity analysis and ensemble runs now generate separate input design matrices with appropriate dimensions, fixing dimension mismatch errors in multisite workflows. (#3708)
+* Generated runs are now stored in a `runs_manifest.csv` file in the output directory instead of modifying `samples.Rdata` (#3708)
 
 # PEcAn.workflow 1.9.0
 
