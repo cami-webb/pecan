@@ -51,7 +51,6 @@ install.packages(c('PEcAn.MA', 'PEcAn.settings', 'PEcAn.utils', 'PEcAn.logger'))
 ```
        
 *   **A valid `pecan.xml` configuration file**: Start with the example at `pecan/documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml`.
-*   **SIPNET binary**: While not strictly used for the meta-analysis calculation itself, it is part of the broader workflow context.
 *   **Pre-generated Data**: This demo relies on `trait.data.Rdata` and `prior.distns.Rdata` files which are included in the `pft/temperate.coniferous` directory.
 
 # Load PEcAn Packages
