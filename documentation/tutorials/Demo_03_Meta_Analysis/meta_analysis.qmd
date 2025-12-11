@@ -103,9 +103,6 @@ settings_path <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pecan
 
 # Read the settings from the pecan.xml file
 settings <- PEcAn.settings::read.settings(settings_path)
-
-# Prepare and validate the settings
-settings <- PEcAn.settings::prepare.settings(settings)
 ```
 
 See Demo 1 Section 6 for details on what these functions do. Briefly, they read the XML file, convert it into an R list object that PEcAn can use, check that settings are valid, fill in defaults, and create the output directory.
