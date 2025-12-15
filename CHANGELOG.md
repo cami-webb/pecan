@@ -34,6 +34,10 @@ For more information about this file see also [Keep a Changelog](http://keepacha
  - Support for inspecting and plotting NetCDF output variables within the notebook workflow.
 - added support for soil temperature, relative humidity, soil moisture, and PPFD downscaling to `met_temporal_downscale.Gaussian_ensemble`
 - The PEcAn uncertainty analysis tutorial ("Demo 2") has been updated and reimplemented as a Quarto notebook at `documentation/tutorials/Demo_02_Uncertainty_Analysis/uncertainty.qmd`. (#3570)
+- Added the shared `input_design` matrix, generated via 
+ `runModule.run.write.configs()`/`generate_joint_ensemble_design()`, that keeps
+  parameter draws and sampled inputs aligned across `run.write.configs()`,
+  `write.ensemble.configs()`(#3535, #3634, #3677).
 
 ### Fixed
 
