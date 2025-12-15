@@ -34,8 +34,8 @@ runModule.run.write.configs <- function(settings,
 
     # Validate design matrix size for MultiSettings
     if (!is.null(settings$ensemble$size) && nrow(input_design) != settings$ensemble$size) {
-      stop("input_design has ", nrow(input_design), " rows but settings$ensemble$size is ",
-           settings$ensemble$size, ".Design matrix must have exactly one row per run.")
+      PEcAn.logger::logger.severe("Input_design has", nrow(input_design), "rows but settings$ensemble$size is",
+           settings$ensemble$size, ". Design matrix must have exactly one row per run.")
     }
 
     return(PEcAn.settings::papply(settings,
@@ -58,7 +58,7 @@ runModule.run.write.configs <- function(settings,
 
     # Validate design matrix size for Settings
     if (!is.null(settings$ensemble$size) && nrow(input_design) != settings$ensemble$size) {
-      stop("input_design has ", nrow(input_design), " rows but settings$ensemble$size is ",
+      PEcAn.logger::logger.severe("Input_design has", nrow(input_design), "rows but settings$ensemble$size is",
            settings$ensemble$size, ". Design matrix must have exactly one row per run.")
     }
 
