@@ -33,7 +33,7 @@ update_ensemble_writes <- function(
     machine, mimetype, formatname,
     allow.conflicting.dates, ensemble,
     ensemble_name, existing.input,
-    existing.dbfile, input) {
+    existing.dbfile, input, site.id) {
     # Setup newinput. This list will contain two variables: a vector of input IDs and a vector of DB IDs for each entry in result.
     # This list will be returned.
     newinput <- list(input.id = NULL, dbfile.id = NULL) # Blank vectors are null.
