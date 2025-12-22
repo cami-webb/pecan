@@ -3,7 +3,7 @@
 * Added `generate_OAT_SA_design()` for creating input design matrices for
 sensitivity analysis. This function ensures non-parameter inputs
 (met, IC, soil) are held constant, which is required for valid 
-variance decomposition in one-at-a-time (OAT) sensitivity analysis
+variance decomposition in one-at-a-time (OAT) sensitivity analysis (#3729)
 
 # PEcAn.uncertainty 1.8.2
 
