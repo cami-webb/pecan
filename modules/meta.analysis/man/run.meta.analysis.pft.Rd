@@ -22,6 +22,6 @@ run.meta.analysis.pft(
 default = 1.2 following Bolker 2008 Ecological Models and Data in R}
 }
 \description{
-Thin wrapper around \code{run_meta_analysis_pft} that also reads/writes files
+Thin wrapper around \code{meta_analysis_standalone} that also reads/writes files
 and registers results in the PEcAn database.
 }

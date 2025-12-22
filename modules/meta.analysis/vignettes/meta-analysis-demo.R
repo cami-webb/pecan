@@ -1,8 +1,8 @@
 #' ---
 #' title: "Basic meta-analysis example"
-#' output: rmarkdown::html_vignette()
-#' vignette:
-#'    %\VignetteIndexEntry{BAsic meta-analysis example}
+#' output: rmarkdown::html_vignette
+#' vignette: >
+#'    %\VignetteIndexEntry{Basic meta-analysis example}
 #'    %\VignetteEngine{knitr::rmarkdown}
 #'    %\VignetteEncoding{UTF-8}
 #' ---
@@ -53,18 +53,20 @@ priors[["row_name"]] <- NULL
 #' but only the following columns are expected:
 #'    - `name` (character) -- A string description of the trait
 #'    - `mean` (numeric) -- The mean value of the trait measurement (or the only value, if only one value is given)
-#'    - `greenhouse` (boolean) -- `TRUE` if from a greenhouse; `FALSE` if not (e.g., natural setting)
-#'    - `stat` (character) -- error statistic type
+#'    - `statname` (character) -- error statistic type (e.g., "SE" for standard error)
+#'    - `stat` (numeric) -- value of error statistic
 #'    - `n` (integer or NA) -- sample size
-#'    - `site_id` (integer) -- site ID (used for grouping)
-#'    - `specie_id` (integer) -- species ID (as above)
-#'    - `citation_id` (integer) -- citation ID (as above)
-#'    - `cultivar_id` (integer) -- cultivar ID (as above)
-#'    - `date` (datetime) -- date of trait observation (as above)
-#'    - `time` (datetime) -- time of trait observation (as above)
+#'    - `greenhouse` (boolean) -- `TRUE` if from a greenhouse; `FALSE` if not (e.g., natural setting)
 #'    - `control` (boolean) -- If `TRUE`, this is the "control" part of an
 #'        experiment (or there is no experiment). If `FALSE`, this is the
 #'        treatment.
+#'    - `site_id` (integer) -- site ID (used for grouping)
+#'    - `specie_id` (integer) -- species ID (as above)
+#'    - `citation_id` (integer) -- citation ID (as above)
+#'    - `treatment_id` (integer) -- treatment ID (as above)
+#'    - `cultivar_id` (integer / NA) -- cultivar ID (as above)
+#'    - `date` (datetime / NA) -- date of trait observation (as above)
+#'    - `time` (datetime / NA) -- time of trait observation (as above)
 #'
 #' To avoid having to load custom data,
 #' here is some simulated data that fits these criteria.
@@ -75,21 +77,21 @@ simulate_data <- function(n_rows, mean_lo, mean_hi, se_lo, se_hi) {
     mean = runif(n_rows, mean_lo, mean_hi),
     statname = "SE",
     stat = suppressWarnings(runif(n_rows, se_lo, se_hi)),
+    n = sample(1:100, size = n_rows, replace = TRUE),
     greenhouse = sample(
       c(TRUE, FALSE),
       size = n_rows,
       replace = TRUE,
       prob = c(0.1, 0.9)
     ),
-    n = sample(1:100, size = n_rows, replace = TRUE),
+    control = TRUE,
     site_id = sample(1:10, size = n_rows, replace = TRUE),
     specie_id = sample(1:4, size = n_rows, replace = TRUE),
     citation_id = sample(1:8, size = n_rows, replace = TRUE),
     treatment_id = sample(1:3, size = n_rows, replace = TRUE),
-    control = TRUE,
+    cultivar_id = NA,
     date = NA,
-    time = NA,
-    cultivar_id = NA
+    time = NA
   ))
 }
 
@@ -101,13 +103,7 @@ trait_data[["leaf_turnover_rate"]] <- simulate_data(n_rows, 0.1, 0.5, 0.01, 0.05
 
 #' Run the meta analysis, performing prior and posterior checks and summarizing the results.
 
-ma_result <- run_meta_analysis_pft(
-  trait_data,
-  priors,
-  iterations = 1000,
-  pft_name = "temperate.coniferous",
-  outdir = "_ma-test"
-)
+ma_result <- run_meta_analysis_pft(trait_data, priors, iterations = 1000)
 
 print(names(ma_result))
 

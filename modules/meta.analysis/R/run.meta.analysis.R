@@ -1,10 +1,16 @@
 #' Complete meta-analysis workflow for a single plant functional type (PFT)
 #'
-#' @param trait_data (list) Named list of trait data.
+#' @param trait_data (list) Named list of trait data. List item names must be
+#' trait names (consistent with `priors` argument). List values are
+#' `data.frame`s with the following required columns:
+#'  `name`, `mean` `statname`, `stat`, `greenhouse`, `n`,
+#'  `site_id`, `specie_id`, `citation_id`, `cultivar_id`,
+#'  `date`, `time`, `control`
 #' @param priors (list) Named list of priors
 #' @param gamma_tau (numeric; default = 0.01) Prior on gamma tau parameter
-#' @param pft_name (character) Name of PFT (passed to `pecan.ma.summary`)
-#' @param outdir (character) Path to directory where outputs will be stored.
+#' @param pft_name (character; default = NA) Name of PFT (for logging purposes).
+#' @param outdir (character; default = `tempdir() / "pecan-meta-analysis"`)
+#'    Path to directory where outputs will be stored.
 #' @inheritParams pecan.ma
 #' @inheritParams pecan.ma.summary
 #'
@@ -14,12 +20,12 @@
 #'    - `jagged.data`: "JAGS-ified" input data (after GHG screen, if applied)
 #'
 #' @export
-run_meta_analysis_pft <- function(
+meta_analysis_standalone <- function(
   trait_data,
   priors,
   iterations,
-  pft_name,
-  outdir,
+  outdir = file.path(tempdir(), "pecan-meta-analysis"),
+  pft_name = NA_character_,
   random = TRUE,
   threshold = 1.2,
   use_ghs = TRUE,
@@ -175,10 +181,10 @@ check_consistent <- function(point, prior,
 
 #' "Workflow" version of run.meta.analysis.pft
 #'
-#' Thin wrapper around `run_meta_analysis_pft` that also reads/writes files 
+#' Thin wrapper around `meta_analysis_standalone` that also reads/writes files 
 #' and registers results in the PEcAn database. 
 #'
-#' @inheritParams run_meta_analysis_pft
+#' @inheritParams meta_analysis_standalone
 run.meta.analysis.pft <- function(pft, iterations, random = TRUE, threshold = 1.2, dbfiles, dbcon, use_ghs = TRUE, update = FALSE) {
   # check to see if get.trait was executed
   if (!file.exists(file.path(pft$outdir, "trait.data.Rdata")) || 
@@ -229,7 +235,7 @@ run.meta.analysis.pft <- function(pft, iterations, random = TRUE, threshold = 1.
   pathname <- file.path(dbfiles, "posterior", pft$posteriorid)
   dir.create(pathname, showWarnings = FALSE, recursive = TRUE)
 
-  ma_result <- run_meta_analysis_pft(
+  ma_result <- meta_analysis_standalone(
     trait_data = trait_env[["trait.data"]],
     priors = prior_env[["prior.distns"]],
     iterations = iterations,
