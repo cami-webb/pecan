@@ -7,10 +7,13 @@
 #'  `site_id`, `specie_id`, `citation_id`, `cultivar_id`,
 #'  `date`, `time`, `control`
 #' @param priors (list) Named list of priors
-#' @param gamma_tau (numeric; default = 0.01) Prior on gamma tau parameter
-#' @param pft_name (character; default = NA) Name of PFT (for logging purposes).
+#' @param iterations (integer) Number of sampler iterations for MCMC analysis
 #' @param outdir (character; default = `tempdir() / "pecan-meta-analysis"`)
 #'    Path to directory where outputs will be stored.
+#' @param pft_name (character; default = NA) Name of PFT (for logging purposes).
+#' @param random (boolean; default = TRUE) Should random effects be used?
+#' @param use_ghs (boolean; default = TRUE) If TRUE, do not exclude greenhouse data
+#' @param gamma_tau (numeric; default = 0.01) Prior on gamma tau parameter
 #' @inheritParams pecan.ma
 #' @inheritParams pecan.ma.summary
 #'
@@ -184,6 +187,13 @@ check_consistent <- function(point, prior,
 #' Thin wrapper around `meta_analysis_standalone` that also reads/writes files 
 #' and registers results in the PEcAn database. 
 #'
+#' @param pft (list) PFT list object, as defined in settings. Must include the
+#'  following: `outdir`, `name`, `posteriorid`
+#' @param dbfiles (character) directory where previous results are found
+#' @param dbcon (DBI connection object) BETY database connection object
+#' @param update (boolean; default = TRUE) If `TRUE`, replace existing
+#'  posteriors with new ones
+#'
 #' @inheritParams meta_analysis_standalone
 run.meta.analysis.pft <- function(pft, iterations, random = TRUE, threshold = 1.2, dbfiles, dbcon, use_ghs = TRUE, update = FALSE) {
   # check to see if get.trait was executed
@@ -296,15 +306,15 @@ run.meta.analysis.pft <- function(pft, iterations, random = TRUE, threshold = 1.
 ##' - settings$database$bety
 ##' - settings$database$dbfiles
 ##' - settings$meta.analysis$update
+##'
 ##' @param pfts the list of pfts to get traits for
-##' @param iterations the number of iterations for the mcmc analysis
-##' @param random should random effects be used?
-##' @param use_ghs do not exclude greenhouse data if TRUE
-##' @param dbfiles location where previous results are found
 ##' @param database database connection parameters
 ##' @param update logical: Rerun the meta-analysis if result files already exist?
 ##' @param threshold Gelman-Rubin convergence diagnostic, passed on to
 ##'   \code{\link{pecan.ma.summary}}
+##' @inheritParams meta_analysis_standalone
+##' @inheritParams run.meta.analysis.pft
+##'
 ##' @return nothing, as side effect saves \code{trait.mcmc} created by
 ##' \code{\link{pecan.ma}} and post.distns created by
 ##' \code{\link{approx.posterior}(trait.mcmc, ...)}  to trait.mcmc.Rdata

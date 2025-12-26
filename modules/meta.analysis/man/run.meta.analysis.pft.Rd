@@ -16,10 +16,24 @@ run.meta.analysis.pft(
 )
 }
 \arguments{
-\item{random}{use random effects, \code{FALSE} by default}
+\item{pft}{(list) PFT list object, as defined in settings. Must include the
+following: \code{outdir}, \code{name}, \code{posteriorid}}
+
+\item{iterations}{(integer) Number of sampler iterations for MCMC analysis}
+
+\item{random}{(boolean; default = TRUE) Should random effects be used?}
 
 \item{threshold}{Gelman-Rubin convergence diagnostic (MGPRF)
 default = 1.2 following Bolker 2008 Ecological Models and Data in R}
+
+\item{dbfiles}{(character) directory where previous results are found}
+
+\item{dbcon}{(DBI connection object) BETY database connection object}
+
+\item{use_ghs}{(boolean; default = TRUE) If TRUE, do not exclude greenhouse data}
+
+\item{update}{(boolean; default = TRUE) If \code{TRUE}, replace existing
+posteriors with new ones}
 }
 \description{
 Thin wrapper around \code{meta_analysis_standalone} that also reads/writes files

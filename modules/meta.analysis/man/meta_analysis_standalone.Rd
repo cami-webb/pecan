@@ -26,15 +26,19 @@ trait names (consistent with \code{priors} argument). List values are
 
 \item{priors}{(list) Named list of priors}
 
+\item{iterations}{(integer) Number of sampler iterations for MCMC analysis}
+
 \item{outdir}{(character; default = \code{tempdir() / "pecan-meta-analysis"})
 Path to directory where outputs will be stored.}
 
 \item{pft_name}{(character; default = NA) Name of PFT (for logging purposes).}
 
-\item{random}{use random effects, \code{FALSE} by default}
+\item{random}{(boolean; default = TRUE) Should random effects be used?}
 
 \item{threshold}{Gelman-Rubin convergence diagnostic (MGPRF)
 default = 1.2 following Bolker 2008 Ecological Models and Data in R}
+
+\item{use_ghs}{(boolean; default = TRUE) If TRUE, do not exclude greenhouse data}
 
 \item{gamma_tau}{(numeric; default = 0.01) Prior on gamma tau parameter}
 }
