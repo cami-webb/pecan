@@ -60,7 +60,7 @@ This file is managed by Roxygen and will update automatically when you build the
 
 #### Building the package
 
-if you have a favorite tool for building R packages from local directories, you can use it as normal during development. If you do not yet have a favorite, add your package to the Makefile by adding its name to the line starting `MODELS := ` near the top of the file. Then you can update Roxygen output with `make document`, build and install the package with `make install`, and run package checks and tests with `make check` / `make check`. Since these run on every PEcAn package by default, you may want to limit these to the MODEL package with `make .check/models/MODEL`.
+if you have a favorite tool for building R packages from local directories, you can use it as normal during development. If you do not yet have a favorite, use PEcAn's Make system: Add your package to the Makefile by adding its name to the line starting `MODELS := ` near the top of the file. Then you can update Roxygen output with `make document`, build and install the package with `make install`, and run package checks and tests with `make check` / `make check`. Since these run on every PEcAn package by default, you may want to limit these to the MODEL package with `make .check/models/MODEL`.
 
 
 #### write.config.MODEL (required)
@@ -82,6 +82,15 @@ Note: PEcAn reads all variable names from the files themselves so it is possible
 `met2model.MODEL(in.path, in.prefix, outfolder, start_date, end_date)`
 
 Converts meteorology input files from the PEcAn standard (netCDF, CF metadata) to the format required by the model. This file is optional if you want to load all of your met files into the Inputs table as described in [How to insert new Input data](../developers_guide/How-to-insert-new-Input-data.html), which is often the easiest way to get up and running quickly. However, this function is required if you want to benefit from PEcAn's meteorology workflows and model run cloning. You'll want to take a close look at [Adding-an-Input-Converter] to see the exact variable names and units that PEcAn will be providing. Also note that PEcAn splits all meteorology up into ANNUAL files, with the year number explicitly included in the file name, and thus what PEcAn will actually be providing is **in.path**, the input path to the folder where multiple met files may stored, and **in.prefix**, the start of the filename that precedes the year (i.e. an individual file will be named `<in.prefix>.YEAR.nc`). It is valid for in.prefix to be blank. The additional REQUIRED arguments to met2model.MODEL are **outfolder**, the output folder where PEcAn wants you to write your meteorology, and **start_date** and **end_date**, the time range the user has asked the meteorology to be processed for.
+
+#### Other input converters (optional)
+
+Many models accept additional inputs beyond meteorology. Examples include initial site conditions, environmental controls such as soil physics  or hydrology factors or phenology, specifications of management or disturbance events, etc. We encourage model couplers to support these where appropriate, typically via (1) a custom function that handles conversion from PEcAn's input format to model-specific files, followed by (2) code in `write.config.MODEL` that integrates input values into run-specific setup. If write.config.MODEL knows how to work with the format PEcAn provides standard for that input, step (1) can be skipped.
+
+Because not all models accept these inputs and the implementation approach will differ substantially between models, the `pecan.MODEL` package template does not include function skeletons for conversion of non-met inputs. See the code of existing model coupler packages to find examples of how other models convert the PEcAn format for a given input stream into the inputs of interest to a specific model. For example PEcAn.SIPNET uses `write.events.SIPNET` to convert JSON records of agronomic management events into the ASCII format expected by the model, while phenology is read directly from CSV in `write.config.SIPNET` and therefore has no separate conversion function.
+
+See  also [Adding a new input converter](#InputConversions) for more about PEcAn's approach to input handling and what information is passed in each input type.
+
 
 #### Commit changes
 
