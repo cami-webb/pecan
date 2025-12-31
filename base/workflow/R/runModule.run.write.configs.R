@@ -2,10 +2,26 @@
 #'
 #' @param settings a PEcAn Settings or MultiSettings object
 #' @param overwrite logical: Replace config files if they already exist?
-#' @param input_design the input indices for samples (DEPRECATED - use NULL)
-#' @param ens_input_design Input design matrix for ensemble (internal use)
-#' @param sa_input_design Input design matrix for SA (internal use)
+#' @param input_design Optional. Input design specification. Can be:
+#'   \itemize{
+#'     \item A list with \code{ensemble} and/or \code{sensitivity} entries
+#'     \item A single data.frame (interpreted as ensemble design)
+#'     \item NULL to auto-generate designs based on settings
+#'   }
+#'
 #' @return A modified settings object, invisibly
+#'
+#' @details
+#' This function serves as the orchestration layer between PEcAn workflows and
+#' the config-writing machinery. It generates appropriate input designs
+#' (ensemble and/or SA) if not provided. For MultiSettings, it generates designs once
+#' from the first site then shares across all sites for consistent sampling. Finally,
+#' it delegates to \code{\link{run.write.configs}} for actual config generation.
+#' The input design determines how parameter samples and input files (met, soil,
+#' etc.) are coordinated across runs. Ensemble designs typically use random or
+#' quasi-random sampling, while SA designs hold non-parameter inputs constant
+#' (OAT methodology).
+#'
 #' @importFrom dplyr %>%
 #' @importFrom rlang %||%
 #' @export
@@ -13,117 +29,36 @@
 
 runModule.run.write.configs <- function(settings,
                                         overwrite = TRUE,
-                                        input_design = NULL,
-                                        ens_input_design = NULL,
-                                        sa_input_design = NULL) {
+                                        input_design = NULL) {
+
   if (PEcAn.settings::is.MultiSettings(settings)) {
     if (overwrite && file.exists(file.path(settings$rundir, "runs.txt"))) {
       PEcAn.logger::logger.warn("Existing runs.txt file will be removed.")
       unlink(file.path(settings$rundir, "runs.txt"))
     }
     
-    # handle ensemble design - check in priority order
-    if (!is.null(ens_input_design)) {
-      # already provided, use as-is
-    } else if (!is.null(input_design)) {
-      ens_input_design <- input_design
-    } else if ("ensemble" %in% names(settings)) {
-      # generate new design
-      ensemble_size <- settings$ensemble$size %||% 1
-      design_result <- PEcAn.uncertainty::generate_joint_ensemble_design(
-        settings = settings[1],
-        ensemble_size = ensemble_size
-      )
-      ens_input_design <- design_result$X
-    }
-    
-    # handle SA design - check if already provided before generating
-    if (!is.null(sa_input_design)) {
-      # already provided, use as-is
-    } else if ("sensitivity.analysis" %in% names(settings)) {
-      # Load samples to determine SA run requirements
-      samples.file <- file.path(settings$outdir, "samples.Rdata")
-      load(samples.file)
-      
-      # Calculate total SA runs: 1 (median) + sum(quantiles per trait per pft)
-      num_sa_runs <- 1  # Start with median run
-      
-      for (pft_name in names(sa.samples)) {
-        if (pft_name == "env") next
-        
-        n_traits <- ncol(sa.samples[[pft_name]])
-        quantile_names <- rownames(sa.samples[[pft_name]])
-        n_quantiles <- sum(quantile_names != "50")  # Exclude median quantile
-        
-        num_sa_runs <- num_sa_runs + (n_traits * n_quantiles)
-      }
-
-      # Generate SA-specific input design
-      design_result_sa <- PEcAn.uncertainty::generate_joint_ensemble_design(
-        settings = settings[1],
-        ensemble_size = num_sa_runs
-      )
-      sa_input_design <- design_result_sa$X
-    }
+    # prepare designs once for all sites (consistent sampling)
+    designs <- .prepare_input_designs(settings[1], input_design)
     
     return(PEcAn.settings::papply(settings,
                                   runModule.run.write.configs,
                                   overwrite = FALSE,
-                                  input_design = NULL,
-                                  ens_input_design = ens_input_design,
-                                  sa_input_design = sa_input_design))
+                                  input_design = designs))
+
   } else if (PEcAn.settings::is.Settings(settings)) {
-    # double check making sure we have method for parameter sampling
     if (is.null(settings$ensemble$samplingspace$parameters$method)) {
       settings$ensemble$samplingspace$parameters$method <- "uniform"
     }
     
-    # handle ensemble design - check in priority order
-    if (!is.null(ens_input_design)) {
-      # use provided design (from papply or direct call)
-    } else if (!is.null(input_design)) {
-      ens_input_design <- input_design
-    } else if ("ensemble" %in% names(settings)) {
-      # generate new design only if nothing provided
-      ensemble_size <- settings$ensemble$size %||% 1
-      design_result <- PEcAn.uncertainty::generate_joint_ensemble_design(
-        settings = settings,
-        ensemble_size = ensemble_size
-      )
-      ens_input_design <- design_result$X
-    }
-    
-    # handle SA design - check if already provided before generating
-    if (!is.null(sa_input_design)) {
-      # use provided design (from papply)
-    } else if ("sensitivity.analysis" %in% names(settings)) {
-      # Load samples to determine SA run requirements
-      samples.file <- file.path(settings$outdir, "samples.Rdata")
-      load(samples.file)
-      
-      # Calculate total SA runs: 1 (median) + sum(quantiles per trait per pft)
-      num_sa_runs <- 1  # Start with median run
-      
-      for (pft_name in names(sa.samples)) {
-        if (pft_name == "env") next
-        
-        n_traits <- ncol(sa.samples[[pft_name]])
-        quantile_names <- rownames(sa.samples[[pft_name]])
-        n_quantiles <- sum(quantile_names != "50")  # Exclude median quantile
-        
-        num_sa_runs <- num_sa_runs + (n_traits * n_quantiles)
-      }
+    # prepare designs (may already be normalized from MultiSettings)
+    designs <- .prepare_input_designs(settings, input_design)
 
-      # Generate SA-specific input design
-      design_result_sa <- PEcAn.uncertainty::generate_joint_ensemble_design(
-        settings = settings,
-        ensemble_size = num_sa_runs
-      )
-      sa_input_design <- design_result_sa$X
+    # determine ensemble size from design
+    ensemble_size <- if (!is.null(designs$ensemble)) {
+      nrow(designs$ensemble)
+    } else {
+      settings$ensemble$size %||% 1
     }
-    
-    ensemble_size <- nrow(ens_input_design)
-
 
     # check to see if there are posterior.files tags under pft
     posterior.files <- settings$pfts %>%
@@ -135,10 +70,68 @@ runModule.run.write.configs <- function(settings,
       write = isTRUE(settings$database$bety$write), # treat null as FALSE
       posterior.files = posterior.files,
       overwrite = overwrite,
-      input_design_ens = ens_input_design,
-      input_design_sa = sa_input_design
+      input_design = designs
     ))
   } else {
     stop("runModule.run.write.configs only works with Settings or MultiSettings")
   }
+}
+
+
+#' Prepare input designs for ensemble and sensitivity analysis
+#'
+#' Normalizes and generates input design matrices. This helper ensures
+#' consistent handling of the various input_design formats and
+#' auto-generates designs when needed.
+#'
+#' @param settings A single PEcAn settings object
+#' @param input_design Input design specification (see \code{runModule.run.write.configs})
+#' @return A list with \code{ensemble} and \code{sensitivity} entries (each a data.frame or NULL)
+#'
+#' @details
+#' Input normalization rules:
+#' \itemize{
+#'   \item If \code{input_design} is already a list with \code{ensemble}/\code{sensitivity}
+#'         keys, return as-is
+#'   \item If \code{input_design} is a single data.frame, interpret as ensemble design
+#'   \item If NULL and \code{settings$ensemble} exists, generate via
+#'         \code{generate_joint_ensemble_design}
+#'   \item If NULL and \code{settings$sensitivity.analysis} exists, generate via
+#'         \code{generate_OAT_SA_design}
+#' }
+#'
+#' @keywords internal
+
+.prepare_input_designs <- function(settings, input_design) {
+
+  # already normalized? return as-is
+  if (is.list(input_design) &&
+      any(c("ensemble", "sensitivity") %in% names(input_design))) {
+    return(input_design)
+  }
+
+  designs <- list(ensemble = NULL, sensitivity = NULL)
+
+  # single data.frame = ensemble design
+ if (is.data.frame(input_design)) {
+    designs$ensemble <- input_design
+  }
+
+  # generate ensemble design if needed
+  if (is.null(designs$ensemble) && "ensemble" %in% names(settings)) {
+    ensemble_size <- settings$ensemble$size %||% 1
+    design_result <- PEcAn.uncertainty::generate_joint_ensemble_design(
+      settings = settings,
+      ensemble_size = ensemble_size
+    )
+    designs$ensemble <- design_result$X
+  }
+
+  # generate SA design if needed
+  if (is.null(designs$sensitivity) && "sensitivity.analysis" %in% names(settings)) {
+    design_result <- PEcAn.uncertainty::generate_OAT_SA_design(settings)
+    designs$sensitivity <- design_result$X
+  }
+
+  return(designs)
 }
