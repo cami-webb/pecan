@@ -20,10 +20,11 @@ The PEcAn Meta-Analysis module runs on tabular data in a specific format. In a s
 
 This notebook demonstrates how to:
 
-1.  Load and configure PEcAn settings for meta-analysis.
-2.  Understand the `meta.analysis` settings in `pecan.xml`.
-3.  Run the meta-analysis module using pre-generated trait data.
+1.  Load pre-generated trait data and priors.
+2.  Configure meta-analysis settings directly in R.
+3.  Run the `meta_analysis_standalone` function.
 4.  Analyze and visualize the posterior distributions and MCMC diagnostics.
+5.  (Optional) Run meta-analysis using `pecan.xml` configuration (Workflow approach).
 
 ## The Scenario
 
@@ -52,7 +53,6 @@ options(repos = c(
 install.packages(c('PEcAn.MA', 'PEcAn.settings', 'PEcAn.utils', 'PEcAn.logger'))
 ```
        
-*   **A valid `pecan.xml` configuration file**: Start with the example at `pecan/documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml`.
 *   **Pre-generated Data**: This demo relies on `trait.data.Rdata` and `prior.distns.Rdata` files which are included in the `pft/temperate.coniferous` directory.
 
 # Load PEcAn Packages
@@ -68,76 +68,87 @@ library("PEcAn.utils")
 library("PEcAn.logger")
 ```
 
-# Load PEcAn Settings File
+# Load Data and Configuration
 
-Use the XML settings file (`pecan.xml`) exactly as in the Demo 1 Basic Run tutorial. See the "Load PEcAn Settings File" section of Demo 1 for a more detailed walkthrough of fields and schema. In this tutorial we focus on settings relevant to this notebook and explain the additional options associated with Meta analysis.
+Instead of using a `pecan.xml` file, we will define the configuration directly in R and load the necessary data files.
 
-## Settings
+## Load Data
 
-Example settings for this demo live at `pecan/documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml` and you can read more about the settings in the [PEcAn Documentation](https://pecanproject.github.io/pecan-documentation/develop/pecanXML.html#pecanXML), and sections focused on [meta-analysis](https://pecanproject.github.io/pecan-documentation/develop/xml-core-config.html#xml-meta-analysis) settings in particular.
+We need to load the `trait.data` (observations) and `prior.distns` (priors) for our PFT.
 
-Open that settings file and look at the `meta.analysis` section. You can modify these settings to change the number of MCMC iterations, whether to include random effects, and the convergence threshold. Some of the key settings in this demo include:
+```{r load-data}
+# Define the path to the PFT directory containing the data
+pft_dir <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pft/temperate.coniferous")
 
-```xml
-  <meta.analysis>
-    <iter>3000</iter>
-    <random.effects>
-      <on>FALSE</on>
-      <use_ghs>TRUE</use_ghs>
-    </random.effects>
-  </meta.analysis>
+# Load trait data
+load(file.path(pft_dir, "trait.data.Rdata"))
+# This loads an object named 'trait.data'
+
+# Load priors
+load(file.path(pft_dir, "prior.distns.Rdata"))
+# This loads an object named 'prior.distns'
+
+# Check what we loaded
+print(names(trait.data))
+print(head(prior.distns))
 ```
 
-Key tags include:
+## Configure Meta Analysis
+
+We can define the settings for the meta-analysis as an R list. This structure mirrors the `meta.analysis` section of a `pecan.xml` file, making it easy to translate between the two.
+
+You can modify these settings to change the number of MCMC iterations, whether to include random effects, and the convergence threshold.
+
+Key settings include:
 
 *   **iter**: MCMC (Markov Chain Monte Carlo) chain length, i.e. the total number of posterior samples in the meta-analysis, default is 3000. Smaller numbers will run faster but produce larger errors.
 *   **random.effects**: Settings related to whether to include random effects (site, treatment) in meta-analysis model.
     *   **on**: Default is set to `FALSE` to work around convergence problems caused by an over parameterized model (e.g. too many sites, not enough data). Can be turned to `TRUE` for including hierarchical random effects.
     *   **use_ghs**: Default is set to `TRUE` to include greenhouse measurements. Can be set to `FALSE` to exclude cases where all data is from greenhouse.
-*   **update**: Should previous results of meta.analysis and get.traits be re-used. If set to `TRUE` the meta-analysis and get.trait.data will always be executed. Setting this to `FALSE` will try and reuse existing results. Future versions will allow for AUTO as well which will try and reuse if the PFT/traits have not changed. The default value is `FALSE`.
 *   **threshold**: threshold for Gelman-Rubin convergence diagnostic (MGPRF); default is 1.2.
 
-
-## Load the settings file
-
-```{r load-settings}
-settings_path <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml")
-
-# Read the settings from the pecan.xml file
-settings <- PEcAn.settings::read.settings(settings_path)
+```{r config}
+# Define configuration as a list
+ma_settings <- list(
+  iter = 3000,
+  random.effects = list(
+    on = FALSE,
+    use_ghs = TRUE
+  ),
+  threshold = 1.2
+)
 ```
 
-See Demo 1 Section 6 for details on what these functions do. Briefly, they read the XML file, convert it into an R list object that PEcAn can use, check that settings are valid, fill in defaults, and create the output directory.
+# Run Meta Analysis (Standalone)
 
-# Run Meta Analysis
-
-We now run the meta-analysis. The `runModule.run.meta.analysis` function will:
-1.  Read the `trait.data.Rdata` and `prior.distns.Rdata` from the PFT output directory.
-2.  Run the Bayesian meta-analysis (MCMC) to estimate posterior distributions.
-3.  Save the results (`trait.mcmc.Rdata` and `post.distns.Rdata`).
+We use the `meta_analysis_standalone` function to run the analysis. We pass the values from our `ma_settings` list to the function arguments.
 
 ```{r run_meta_analysis}
-# Run meta-analysis
-PEcAn.MA::runModule.run.meta.analysis(settings)
+# Run standalone meta-analysis
+ma_results <- PEcAn.MA::meta_analysis_standalone(
+  trait_data = trait.data,
+  priors = prior.distns,
+  iterations = ma_settings$iter,
+  random = ma_settings$random.effects$on,
+  use_ghs = ma_settings$random.effects$use_ghs,
+  threshold = ma_settings$threshold,
+  pft_name = "temperate.coniferous"
+)
 ```
 
 # PEcAn Outputs {#sec-outputs}
 
+The `meta_analysis_standalone` function returns a list containing:
+
+*   `trait.mcmc`: The raw MCMC samples.
+*   `post.distns`: The fitted posterior distributions.
+*   `jagged.data`: The formatted data used in the analysis.
+
+It also saves these results to the output directory (default is a temporary directory, or the one specified in `outdir`).
+
 ## Output Directory Structure
 
 The meta-analysis produces several output files in the PFT directory.
-
-```{r output-files}
-# For a single PFT run, we can directly access the first PFT's output directory
-data_dir <- settings$pfts[[1]]$outdir
-list.files(data_dir)
-
-# If you have multiple PFTs, you can uncomment the following block to iterate over them:
-# for (pft in settings$pfts) {
-#   print(paste("Output files for PFT:", pft$name))
-#   print(list.files(pft$outdir))
-# }
-```
 
 The `pft` directory contains all the outputs for the Plant Functional Types included in the analysis. Inside the specific PFT directory (e.g., `temperate.coniferous`), you will find:
 
@@ -161,56 +172,30 @@ The `pft` directory contains all the outputs for the Plant Functional Types incl
 
 ## Posterior Distributions
 
-We can load the `post.distns.MA.Rdata` file to see the estimated parameters for the posterior distributions.
+We can inspect the `post.distns` element of the results to see the estimated parameters.
 
 ```{r inspect_posteriors}
-# For a single PFT run:
-load(file.path(data_dir, "post.distns.MA.Rdata"))
-print(post.distns)
-
-# For multiple PFTs, uncomment the following:
-# for (pft in settings$pfts) {
-#   print(paste("Posterior Distributions for PFT:", pft$name))
-#   load(file.path(pft$outdir, "post.distns.MA.Rdata"))
-#   print(post.distns)
-# }
+print(ma_results$post.distns)
 ```
 
 # Visualize Meta Analysis Results {#sec-visualize}
 
-It is important to check the MCMC chains for convergence. We can visualize the trace plots and density plots for each trait.
+It is important to check the MCMC chains for convergence. We can visualize the trace plots and density plots for each trait using the `trait.mcmc` object from our results.
 
 The `plot` function for MCMC objects typically produces two types of plots for each parameter:
 
 1.  **Trace Plot**: Shows the value of the parameter at each iteration of the MCMC chain. We look for a "fuzzy caterpillar" shape, indicating good mixing and convergence. There should be no visible trend (drift) up or down.
 2.  **Density Plot**: Shows the estimated posterior probability distribution of the parameter. This represents our updated belief about the parameter value after combining the prior with the data.
 
-```{r load_mcmc}
-load(file.path(data_dir, "trait.mcmc.Rdata"))
-```
-
 ```{r plot_mcmc}
 # Adjust plot margins to prevent clipping
 par(mar = c(2, 2, 2, 2))
 
-# For a single PFT run:
-# The trait.mcmc object is already loaded from data_dir in the previous chunk
-for (trait in names(trait.mcmc)) {
+# Iterate through each trait and plot the MCMC chains
+for (trait in names(ma_results$trait.mcmc)) {
   print(paste("Plotting", trait))
-  plot(trait.mcmc[[trait]], main = paste("MCMC Plots for", trait))
+  plot(ma_results$trait.mcmc[[trait]], main = paste("MCMC Plots for", trait))
 }
-
-# For multiple PFTs, uncomment the following:
-# for (pft in settings$pfts) {
-#   print(paste("Visualizing PFT:", pft$name))
-#   load(file.path(pft$outdir, "trait.mcmc.Rdata"))
-#
-#   # Iterate through each trait and plot the MCMC chains
-#   for (trait in names(trait.mcmc)) {
-#     print(paste("Plotting", trait))
-#     plot(trait.mcmc[[trait]], main = paste("MCMC Plots for", trait, "(", pft$name, ")"))
-#   }
-# }
 ```
 
 # Conclusion
@@ -231,6 +216,51 @@ Now that you have generated these posterior distributions, you can use them to c
     ```
 3.  **Rerun the model**: Execute your PEcAn workflow (e.g., Demo 01 or Demo 02).
 4.  **Compare results**: Observe how the width of the confidence intervals and the overall uncertainty analysis results change when using these informative priors compared to the default uninformative priors.
+
+# Alternative: Running as part of a Workflow (pecan.xml)
+
+The standalone method shown above is great for quick analysis or debugging. However, when running the meta-analysis as part of a larger, automated PEcAn workflow (e.g., connecting to BETYdb, running ecosystem models), it is often more convenient to use the `pecan.xml` configuration file and the `runModule.run.meta.analysis` function.
+
+This approach ensures that all settings are centralized and that outputs are automatically managed and registered in the workflow.
+
+## Load PEcAn Settings File
+
+Use the XML settings file (`pecan.xml`) exactly as in the Demo 1 Basic Run tutorial.
+
+```{r load-settings}
+settings_path <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml")
+
+# Read the settings from the pecan.xml file
+settings <- PEcAn.settings::read.settings(settings_path)
+```
+
+The `meta.analysis` section in `pecan.xml` controls the behavior:
+
+```xml
+  <meta.analysis>
+    <iter>3000</iter>
+    <random.effects>
+      <on>FALSE</on>
+      <use_ghs>TRUE</use_ghs>
+    </random.effects>
+    <update>FALSE</update>
+  </meta.analysis>
+```
+
+Key tags include:
+
+*   **update**: Should previous results of meta.analysis and get.traits be re-used. If set to `TRUE` the meta-analysis and get.trait.data will always be executed. Setting this to `FALSE` will try and reuse existing results. Future versions will allow for AUTO as well which will try and reuse if the PFT/traits have not changed. The default value is `FALSE`.
+
+## Run Meta Analysis (Module)
+
+The `runModule.run.meta.analysis` function handles the entire process: reading data from the PFT directory (which must be populated by `get.trait.data` in a full workflow), running the analysis, and saving results.
+
+```{r run_meta_analysis_module}
+# Run meta-analysis using settings
+PEcAn.MA::runModule.run.meta.analysis(settings)
+```
+
+This will produce the same `trait.mcmc.Rdata` and `post.distns.Rdata` files in the output directory specified in the settings.
 
 # Further Exploration
 
