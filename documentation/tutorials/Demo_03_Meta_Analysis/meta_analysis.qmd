@@ -132,7 +132,8 @@ ma_results <- PEcAn.MA::meta_analysis_standalone(
   random = ma_settings$random.effects$on,
   use_ghs = ma_settings$random.effects$use_ghs,
   threshold = ma_settings$threshold,
-  pft_name = "temperate.coniferous"
+  pft_name = "temperate.coniferous",
+  outdir = pft_dir
 )
 ```
 
@@ -255,7 +256,7 @@ Key tags include:
 
 The `runModule.run.meta.analysis` function handles the entire process: reading data from the PFT directory (which must be populated by `get.trait.data` in a full workflow), running the analysis, and saving results.
 
-```{r run_meta_analysis_module}
+```{r run_meta_analysis_module, eval = FALSE}
 # Run meta-analysis using settings
 PEcAn.MA::runModule.run.meta.analysis(settings)
 ```
