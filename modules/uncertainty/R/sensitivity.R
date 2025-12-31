@@ -60,8 +60,11 @@ read.sa.output <- function(traits, quantiles, pecandir, outdir, pft.name = "",
          next
       }
 
-      pass_pft <- switch(per.pft + 1, NULL, pft.name)
+      pass_pft <- if (isTRUE(per.pft)) pft.name else NULL
 
+      # TODO: If adding time-based filtering, consider dataframe = TRUE
+      # See benchmark module for usage example
+      
       # Pass ALL variables at once to avoid repeated file opening. And call read.output once
       out.tmp <- PEcAn.utils::read.output(
         runid = run.id,
