@@ -257,11 +257,6 @@ Here we visualize the results of the ensemble analysis. It shows the overall dis
 
 This section reproduces the plots saved in the `ensemble.analysis/` folder in order to show the user how to access and visualize the results programmatically so that they can further investigate output and customize plots.
 
-```{r debug-files}
-# Debug: List files in the output directory to verify generation
-print(paste("Listing files in:", settings$outdir))
-print(list.files(settings$outdir))
-```
 
 ```{r visualize-ensemble-results}
 # --- 1. Define Helper Variables ---
@@ -271,21 +266,22 @@ variable <- settings$ensemble$variable
 pft <- settings$pfts[[1]]
 start.year <- lubridate::year(settings$run$start.date)
 end.year <- lubridate::year(settings$run$end.date)
-ensemble.id <- if (!is.null(settings$ensemble$id)) settings$ensemble$id else "NOENSEMBLEID"
+
 
 # --- 2. Load and Plot Ensemble Output Distribution ---
 # This section visualizes the distribution of the ensemble model runs.
 # It generates a histogram and a boxplot to show the central tendency, spread,
 # and shape of the output variable's distribution.
 
-# Construct the path to the ensemble output file
-ens_file <- file.path(
-  settings$outdir,
-  paste0("ensemble.output.", ensemble.id, ".", variable, ".", start.year, ".", end.year, ".Rdata")
-)
+# Find the ensemble output file directly by pattern
+ens_file <- list.files(settings$outdir, pattern = "ensemble\\.output\\..*\\.Rdata", full.names = TRUE)[1]
 
-# Check if the file exists, then load and plot the data
-if (file.exists(ens_file)) {
+if (!is.na(ens_file)) {
+  parts <- strsplit(basename(ens_file), "\\.")[[1]]
+  if (length(parts) >= 3) {
+    settings$ensemble$id <- parts[3]
+  }
+
   ens_env <- new.env()
   load(ens_file, envir = ens_env)
   ens_data <- as.numeric(unlist(ens_env$ensemble.output))
@@ -304,7 +300,6 @@ if (file.exists(ens_file)) {
   PEcAn.logger::logger.warn("Could not find ensemble output file:", ens_file)
 }
 
-
 # --- 3. Plot Ensemble Time Series ---
 # This section visualizes the ensemble results over time, showing the mean,
 # median, and 95% confidence interval of the model output.
@@ -320,17 +315,11 @@ This block visualizes the results of the sensitivity analysis. The plots show ho
 
 ```{r visualize-sensitivity-results}
 # --- 1. Load Sensitivity Analysis Results ---
-# This section loads the saved sensitivity analysis data, which contains the
-# outputs needed to generate the sensitivity and variance decomposition plots.
-
-# Construct the path to the sensitivity analysis results file
-sens_file <- file.path(
-  settings$outdir,
-  paste0("sensitivity.results", ".", ensemble.id, ".", variable, ".", start.year, ".", end.year, ".Rdata")
-)
+# Find the sensitivity results file directly by pattern
+sens_file <- list.files(settings$outdir, pattern = "sensitivity\\.results\\..*\\.Rdata", full.names = TRUE)[1]
 
 # Check if the file exists, then load the data and generate plots
-if (file.exists(sens_file)) {
+if (!is.na(sens_file)) {
   sens_env <- new.env()
   load(sens_file, envir = sens_env)
   sensitivity.results <- sens_env$sensitivity.results
