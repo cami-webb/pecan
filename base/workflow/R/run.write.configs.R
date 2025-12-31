@@ -12,9 +12,8 @@
 #' @param posterior.files Filenames for posteriors for drawing samples for ensemble and sensitivity
 #'    analysis (e.g. post.distns.Rdata, or prior.distns.Rdata)
 #' @param overwrite logical: Replace output files that already exist?
-#' @param input_design DEPRECATED. Use input_design_ens and input_design_sa instead
-#' @param input_design_ens Input design matrix for ensemble analysis
-#' @param input_design_sa Input design matrix for sensitivity analysis
+#' @param input_design Input design specification. A list with \code{ensemble} and/or
+#'    \code{sensitivity} entries, each containing a data.frame of input indices.
 #'
 #' @details The default value for \code{posterior.files} is NA, in which case the
 #'    most recent posterior or prior (in that order) for the workflow is used.
@@ -27,10 +26,14 @@
 #'
 #' @author David LeBauer, Shawn Serbin, Ryan Kelly, Mike Dietze, Akash B V
 
-run.write.configs <- function(settings, ensemble.size, write = TRUE,
+run.write.configs <- function(settings, ensemble.size, input_design, write = TRUE,
                               posterior.files = rep(NA, length(settings$pfts)),
-                              overwrite = TRUE, input_design = NULL,
-                              input_design_ens = NULL, input_design_sa = NULL) {
+                              overwrite = TRUE) {
+
+  # extract designs from input_design list
+  input_design_ens <- if (!is.null(input_design)) input_design$ensemble else NULL
+  input_design_sa <- if (!is.null(input_design)) input_design$sensitivity else NULL
+                              
   ## Skip database connection if settings$database is NULL or write is False
   if (!isTRUE(write) && is.null(settings$database)) {
     PEcAn.logger::logger.info("Not writing this run to database, so database connection skipped")
@@ -229,25 +232,18 @@ run.write.configs <- function(settings, ensemble.size, write = TRUE,
   PEcAn.logger::logger.info("config files samples in ", file.path(settings$outdir, "run"))
 
   # write runs manifest
-
   manifest.file <- file.path(settings$outdir, "runs_manifest.csv")
 
-  if (nrow(run_manifest_df) > 0) {
-    if (overwrite && file.exists(manifest.file)) {
-      unlink(manifest.file)
-    }
-
-    utils::write.table(run_manifest_df,
-                       file = manifest.file,
-                       sep = ",",
-                       row.names = FALSE,
-                       col.names = !file.exists(manifest.file),
-                       append = file.exists(manifest.file))
-
-    PEcAn.logger::logger.info("Run manifest written to ", manifest.file)
-  }
+  # always write manifest (even if empty) so downstream knows workflow completed
+  utils::write.table(run_manifest_df,
+                     file = manifest.file,
+                     sep = ",",
+                     row.names = FALSE,
+                     col.names = overwrite || !file.exists(manifest.file),
+                     append = !overwrite)
+  
+  PEcAn.logger::logger.info("Run manifest written to ", manifest.file)
 
   options(scipen = scipen)
-  invisible(settings)
-  return(settings)
+  return(invisible(settings))
 }
