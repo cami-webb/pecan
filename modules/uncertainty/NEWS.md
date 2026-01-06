@@ -1,3 +1,7 @@
+# PEcAn.uncertainty 1.9.0.9000
+
+* run.ensemble.analysis() now respects `settings$modeloutdir` rather than assuming an `out/` folder inside `settings$outdir` (@Akash-paluvai, #3722).
+
 # PEcAn.uncertainty 1.8.2
 
 * PEcAn.uncertainty is now distributed under the BSD 3-clause license instead of the NCSA Open Source license.
