@@ -6,7 +6,7 @@ section for the next release.
 
 For more information about this file see also [Keep a Changelog](http://keepachangelog.com/) .
 
-## [unreleased]
+## Unreleased
 
 ### Added
 - Add function `PEcAn.MA::meta_analysis_standalone` to run meta-analysis without database or file IO.
