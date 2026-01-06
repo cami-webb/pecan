@@ -651,6 +651,7 @@
 "tibble","*","models/lpjguess","Imports",FALSE
 "tibble","*","modules/data.atmosphere","Imports",FALSE
 "tibble","*","modules/data.remote","Suggests",FALSE
+"tibble","*","modules/meta.analysis","Suggests",FALSE
 "tictoc","*","modules/assim.sequential","Suggests",FALSE
 "tidyr","*","base/db","Imports",FALSE
 "tidyr","*","models/ed","Imports",FALSE
