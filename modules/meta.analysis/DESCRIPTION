@@ -41,7 +41,8 @@ Suggests:
     knitr (>= 1.42),
     mockery,
     rmarkdown (>= 2.19),
-    testthat (>= 1.0.2)
+    testthat (>= 1.0.2),
+    tibble
 SystemRequirements: JAGS
 License: BSD_3_clause + file LICENSE
 VignetteBuilder: knitr, rmarkdown
