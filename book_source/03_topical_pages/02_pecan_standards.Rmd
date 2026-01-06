@@ -31,15 +31,20 @@ Meteorological (met) drivers provide climate forcing data required by
 ecosystem models within PEcAn. These datasets vary in spatial resolution,
 temporal coverage, and available variables.
 
-This chapter describes the available meteorological drivers supported by
-PEcAn and provides guidance on selecting an appropriate dataset.
+This chapter describes commonly used meteorological drivers supported by PEcAn and provides guidance on selecting an appropriate dataset.
 
-## Available drivers
+## Example meteorological drivers
 - [Daymet](#daymet)
 - [NARR](#narr)
 - [ERA5](#era5)
 - [PRISM](#prism)
 
+Note: This section highlights a subset of commonly used meteorological
+drivers. The full and up-to-date list of supported datasets is implemented
+in the `download` and `met2CF` functions in the `data.atmosphere` module.
+
+See:
+https://github.com/PecanProject/pecan/tree/develop/modules/data.atmosphere/R
 
 
 #### Dimensions:

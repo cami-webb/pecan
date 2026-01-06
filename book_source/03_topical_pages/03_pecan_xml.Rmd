@@ -435,16 +435,18 @@ The following are the most common types of inputs, along with their correspondin
 
 ##### `met`: Meteorological inputs {#xml-run-inputs-met}
 
--(Under construction. See the
--[`PEcAn.data.atmosphere` package documentation](https://pecanproject.github.io/package-documentation/develop/PEcAn.data.atmosphere/)
-for more details.)
+-PEcAn supports a wide range of meteorological driver datasets through the PEcAn.data.atmosphere module.
+This documentation provides examples of commonly used meteorological inputs, but the full and up-to-date set of supported drivers is defined in the download and met2CF functions within the data.atmosphere module,
+
+Users are encouraged to consult the source code for the authoritative list of supported datasets:
+https://github.com/PecanProject/pecan/tree/develop/modules/data.atmosphere/R
 
 
-##### (Experimental) `soil`: Soil inputs {#xml-run-inputs-soil}
+##### `soil`: Soil inputs {#xml-run-inputs-soil}
+Soil inputs are handled through the `PEcAn.data.land` module.
+ (See the `PEcAn.data.land` package, located in `modules/data.land`, for more details).
 
-(Under construction. See the `PEcAn.data.land` package, located in `modules/data.land`, for more details).
-
-##### (Experimental) `veg`: Vegetation initial conditions {#xml-run-inputs-veg}
+##### `veg`: Vegetation initial conditions {#xml-run-inputs-veg}
 
 ##### `poolinitcond`: initial condition inputs {#xml-run-inputs-poolinitcond}
 * `source`: Data source of initial condition .rd veg files ex: NEON_veg, FIA.
