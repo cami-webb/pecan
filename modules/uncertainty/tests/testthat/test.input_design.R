@@ -1,6 +1,6 @@
 make_sa_test_settings <- function() {
   list(
-    outdir = withr::local_tempdir(),
+    outdir = "/fake/output/path", # not accessed when sa_samples is provided
     pfts = list(list(name = "pft1")),
     ensemble = list(
       samplingspace = list(
@@ -11,23 +11,20 @@ make_sa_test_settings <- function() {
   )
 }
 
-make_mock_sa_samples <- function() {
-  list(
-    pft1 = structure(
-      matrix(1:9, nrow = 3, ncol = 3),
-      dimnames = list(c("25", "50", "75"), c("trait1", "trait2", "trait3"))
-    )
+mock_sa_samples <- list(
+  pft1 = structure(
+    matrix(1:9, nrow = 3, ncol = 3),
+    dimnames = list(c("25", "50", "75"), c("trait1", "trait2", "trait3"))
   )
-}
+)
 
 
 # ---------------- tests: generate_OAT_SA_design------------------------------
 
 test_that("generate_OAT_SA_design returns correct structure and run count", {
   settings <- make_sa_test_settings()
-  sa_samples <- make_mock_sa_samples()
   
-  result <- generate_OAT_SA_design(settings, sa_samples = sa_samples)
+  result <- generate_OAT_SA_design(settings, sa_samples = mock_sa_samples)
   
   # 1 median + 3 traits * 2 non-median quantiles = 7
   expect_equal(nrow(result$X), 7)
@@ -35,26 +32,16 @@ test_that("generate_OAT_SA_design returns correct structure and run count", {
   expect_true(is.data.frame(result$X))
 })
 
-test_that("generate_OAT_SA_design keeps non-param columns constant at 1", {
+test_that("generate_OAT_SA_design keeps param sequential and non-param constant at 1", {
   settings <- make_sa_test_settings()
-  sa_samples <- make_mock_sa_samples()
-  
-  result <- generate_OAT_SA_design(settings, sa_samples = sa_samples)
-  
-  non_param_cols <- setdiff(names(result$X), "param")
-  for (col in non_param_cols) {
-    expect_true(all(result$X[[col]] == 1),
-      info = paste("Column", col, "should be constant 1 for SA"))
-  }
-})
-
-test_that("generate_OAT_SA_design param column is sequential", {
-  settings <- make_sa_test_settings()
-  sa_samples <- make_mock_sa_samples()
-  
-  result <- generate_OAT_SA_design(settings, sa_samples = sa_samples)
+  result <- generate_OAT_SA_design(settings, sa_samples = mock_sa_samples)
   
   expect_equal(result$X$param, seq_len(nrow(result$X)))
+
+  non_param_cols <- setdiff(names(result$X), "param")
+  for (col in non_param_cols) {
+    expect_true(all(result$X[[!!col]] == 1))
+  }
 })
 
 
@@ -79,20 +66,14 @@ test_that("generate_joint_ensemble_design returns correct structure", {
 })
 
 test_that("OAT design has constant inputs while ensemble design varies them", {
+  # SA design already tested above - just get it for comparison
   settings <- make_sa_test_settings()
-  sa_samples <- make_mock_sa_samples()
-  sa_result <- generate_OAT_SA_design(settings, sa_samples = sa_samples)
+  sa_result <- generate_OAT_SA_design(settings, sa_samples = mock_sa_samples)
   
-  sa_non_param <- setdiff(names(sa_result$X), "param")
-  for (col in sa_non_param) {
-    expect_equal(length(unique(sa_result$X[[col]])), 1,
-      info = "SA design: non-param columns must be constant")
-  }
-  
-  ## ensemble design - non-param can vary (mocked to show variation)
+  # test that ensemble design STRUCTURE allows variation in non-param columns
   settings$run <- list(inputs = list(met = list(path = c("m1.nc", "m2.nc", "m3.nc"))))
   mockery::stub(generate_joint_ensemble_design, "input.ens.gen",
-    function(...) list(ids = c(1, 2, 3, 1, 2)))
+    function(...) list(ids = c(1, 2, 3, 1, 2))) # varied indices
   mockery::stub(generate_joint_ensemble_design, "get.parameter.samples",
     function(...) NULL)
   mockery::stub(generate_joint_ensemble_design, "file.exists",
@@ -100,8 +81,9 @@ test_that("OAT design has constant inputs while ensemble design varies them", {
   
   ens_result <- generate_joint_ensemble_design(settings, ensemble_size = 5)
   
-  expect_true(length(unique(ens_result$X$met)) > 1,
-    info = "Ensemble design: non-param columns should vary")
+  # key comparison: SA has 1 unique value(constant), ensemble has multiple(varied)
+  expect_equal(length(unique(sa_result$X$met)), 1)
+  expect_true(length(unique(ens_result$X$met)) > 1)
 })
 
 #------------------ tests: OAT design with write.sa.configs -------------------
