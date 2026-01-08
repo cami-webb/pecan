@@ -28,23 +28,20 @@ jobs:
         with:
           version: '1.8.17'
 
+
       - name: Parse notebook configuration
         id: config
+        env:
+          NOTEBOOKS_LIST: |
+            documentation/tutorials/Demo_1_Basic_Run/run_pecan.qmd
+            documentation/tutorials/Demo_02_Uncertainty_Analysis/uncertainty.qmd
+            documentation/tutorials/Demo_03_Meta_Analysis/meta_analysis.qmd
         run: |
-          # Extract paths from yaml using grep and sed
-          # Assumes simple format: "  - path: some/path.qmd"
-          paths=$(grep "path:" .github/notebooks.yaml | sed 's/.*path: *//')
-          
-          # 1. r_files: \"/work/path1\", \"/work/path2\"
-          # escape quotes for R vector
-          r_files_raw=$(echo "$paths" | awk '{printf "\\\"/work/%s\\\", ", $0}')
+          paths="$NOTEBOOKS_LIST"
+          r_files_raw=$(echo "$paths" | awk 'NF {printf "\\\"/work/%s\\\", ", $0}')
           r_files=${r_files_raw%, }
-          
-          # 2. render_cmd: quarto render /work/path1 --to html && ...
-          render_cmd_raw=$(echo "$paths" | awk '{printf "quarto render /work/%s --to html && ", $0}')
+          render_cmd_raw=$(echo "$paths" | awk 'NF {printf "quarto render /work/%s --to html && ", $0}')
           render_cmd=${render_cmd_raw% && }
-          
-          # 3. paths (space separated) for artifact loop
           paths_out=$(echo "$paths" | tr '\n' ' ')
           
           echo "r_files=$r_files" >> $GITHUB_OUTPUT

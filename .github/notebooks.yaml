@@ -1,4 +1,0 @@
-notebooks:
-  - path: documentation/tutorials/Demo_1_Basic_Run/run_pecan.qmd
-  - path: documentation/tutorials/Demo_02_Uncertainty_Analysis/uncertainty.qmd
-  - path: documentation/tutorials/Demo_03_Meta_Analysis/meta_analysis.qmd
