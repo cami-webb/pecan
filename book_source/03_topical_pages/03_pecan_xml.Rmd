@@ -178,10 +178,7 @@ In other words, this configuration...
   </database>
 ```
 
-... will be translated (by way of
-[`PEcAn.DB::db.open`](https://pecanproject.github.io/package-documentation/develop/PEcAn.DB/reference/db.open.html)
-(`settings$database$bety`)) into R code ...
-
+...will be translated (by way of `PEcAn.DB::db.open(settings$database$bety)`) into R code like the following:
 
 ```r
 con <- DBI::dbConnect(
@@ -209,9 +206,7 @@ The default `config.php` settings on any given platform (VM, Docker, etc.) or in
 
 Key R functions using these parameters are as follows:
 
-- [`PEcAn.DB::db.open`](https://pecanproject.github.io/package-documentation/develop/PEcAn.DB/reference/db.open.html)
-  —-Open a database connection and create a connection object
-,   which is used by many other functions for communicating with the PEcAn database.
+- `PEcAn.DB::db.open` -- Open a database connection and create a connection object, which is used by many other functions for communicating with the PEcAn database.
 
 #### `dbfiles`: Location of database files {#xml-dbfiles}
 
@@ -268,9 +263,7 @@ The PEcAn system requires at least 1 plant functional type (PFT) to be specified
 
 This information is currently used by the following PEcAn workflow function:
 
-- - [`PEcAn.workflow::get.traits`](https://pecanproject.github.io/package-documentation/develop/PEcAn.workflow/reference/get.traits.html)
-  — Retrieves trait data for selected PFTs from the database or posterior files
-
+- `get.traits` - ??????
 
 ### `meta.analysis`: Trait Meta Analysis {#xml-meta-analysis}
 
@@ -299,9 +292,7 @@ Some of the tags that can go in this section are:
 
 This information is currently used by the following PEcAn workflow function:
 
-- - [`PEcAn.MA::run.meta.analysis`](https://pecanproject.github.io/package-documentation/develop/PEcAn.MA/reference/run.meta.analysis.html)
-  — Performs Bayesian meta-analysis of trait data to generate posterior distributions
-
+- `PEcAn.MA::run.meta.analysis` - ???
 
 ### `model`: Model configuration {#xml-model}
 
@@ -435,16 +426,37 @@ The following are the most common types of inputs, along with their correspondin
 
 ##### `met`: Meteorological inputs {#xml-run-inputs-met}
 
--PEcAn supports a wide range of meteorological driver datasets through the PEcAn.data.atmosphere module.
-This documentation provides examples of commonly used meteorological inputs, but the full and up-to-date set of supported drivers is defined in the download and met2CF functions within the data.atmosphere module,
-
-Users are encouraged to consult the source code for the authoritative list of supported datasets:
-https://github.com/PecanProject/pecan/tree/develop/modules/data.atmosphere/R
+See the `PEcAn.data.atmosphere` package documentation for more details.
+In particular, users working with meteorological inputs should focus on
+the data download functions and the `met2CF` conversion utilities, which
+handle retrieval of raw meteorological products and conversion to
+CF-compliant NetCDF files used by PEcAn.
 
 
 ##### `soil`: Soil inputs {#xml-run-inputs-soil}
+
 Soil inputs are handled through the `PEcAn.data.land` module.
- (See the `PEcAn.data.land` package, located in `modules/data.land`, for more details).
+For full technical details, see the
+[PEcAn.data.land package documentation](https://pecan.ncsa.illinois.edu/pkgdocs/PEcAn.data.land/).
+
+In practice, most PEcAn workflows do not rely on automated soil data
+processing at runtime. Instead, users typically preprocess soil data
+and provide standardized `soil.nc` files that are referenced directly
+in `pecan.xml`.
+
+Although automated soil processing is supported in principle, there are
+currently only two soil data products commonly used in PEcAn workflows:
+gSSURGO and SoilGrids.
+
+The `<soil>` element in `pecan.xml` is primarily used to specify paths to
+preprocessed soil inputs rather than to trigger on-the-fly data
+processing.
+
+Note that some models reference soil inputs using the `<soil>` tag,
+while others use `<soilphysics>`. This inconsistency is historical and
+can cause confusion; a future harmonization of these tags would be
+beneficial.
+
 
 ##### `veg`: Vegetation initial conditions {#xml-run-inputs-veg}
 
@@ -453,7 +465,26 @@ Soil inputs are handled through the `PEcAn.data.land` module.
 * `output`: This tag can only must match the cooresponding tag in the modeltypes_formats table that matches with your model type ex for SIPNET model tag is poolinitcond.
 * `ensemble`: Number of initial conditions ensemble member files ex: 30.
 
-(Under construction. Follow developments in the `PEcAn.data.land` package, located in `modules/data.land` in the source code).
+###### `phenology`
+
+Defines the timing of vegetation growth and dormancy, such as leaf-out and
+senescence. Phenology information allows PEcAn to determine when vegetation
+is actively growing and interacting with climate drivers.
+
+Phenology inputs are typically derived from external datasets and help align
+model simulations with observed seasonal behavior.
+
+###### `management`
+
+Specifies management activities applied to vegetation, such as planting,
+harvesting, fertilization, or irrigation. Management inputs allow PEcAn to
+represent human interventions that affect ecosystem processes.
+
+Management information may vary over time and is commonly linked to site- or
+crop-specific datasets.
+
+
+ (Follow developments in the `PEcAn.data.land` package, located in `modules/data.land` in the source code).
 
 ##### `pft.site` Multi-site site / PFT mapping
 
