@@ -216,12 +216,12 @@ soil_params <- function(soil_type=NULL, sand=NULL, silt=NULL, clay=NULL, bulk=NU
   #---------------------------------------------------------------------------------------#
   
   ## final values to look up
-  for(z in which(!(mysoil$soil_n <= 13))){
+  for(z in which((mysoil$soil_n <= 13))){
     mysoil$soil_albedo[z] <- texture$albdry[mysoil$soil_n[z]]
     if(is.null(bulk))  mysoil$soil_bulk_density[z] <- texture$xrobulk[mysoil$soil_n[z]]
     mysoil$slden[z]       <- texture$slden[mysoil$soil_n[z]]
   }
-  for(z in which(!(mysoil$soil_n > 13))){
+  for(z in which((mysoil$soil_n > 13))){
     ## if lack class-specific values, use across-soil average
     mysoil$soil_albedo[z] <- stats::median(texture$albdry)
     if(is.null(bulk)) mysoil$soil_bulk_density[z] <- stats::median(texture$xrobulk)
