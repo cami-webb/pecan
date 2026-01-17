@@ -38,15 +38,17 @@ call_biocro_0.9 <- function(WetDat, genus, year_in_run,
     }
   )
   if (!biocro_checks_doy && min(WetDat[, "doy"]) > 1) {
+    n_unique_doy <- length(unique(WetDat[, "doy"]))
+    hours_per_day <- nrow(WetDat) / n_unique_doy / length(unique(WetDat[, "year"]))
+    if (hours_per_day < 1 || !is.finite(hours_per_day)) hours_per_day <- 24
+    
+    n_days <- n_unique_doy
+    
     if (!is.null(day1)) {
-      # Biocro calculates line number as `indes1 <- (day1 - 1) * 24`
-      indes1 <- Position(function(x) x == day1, WetDat[, "doy"])
-      day1 <- indes1 / 24 + 1
+      day1 <- 1
     }
     if (!is.null(dayn)) {
-      # Biocro calculates line number as `indesn <- (dayn) * 24`
-      indesn <- Position(function(x) x == dayn, WetDat[, "doy"], right = TRUE)
-      dayn <- indesn / 24
+      dayn <- n_days
     }
   }
 
