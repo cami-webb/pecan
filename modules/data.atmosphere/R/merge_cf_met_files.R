@@ -14,14 +14,16 @@
 #'
 #' @noRd
 
-merge_cf_met_files <- function(
-  primary_cf,
-  secondary_cf,
-  vars,
-  out_file,
-  align_time = TRUE
-) {
-
+  merge_cf_met_files <- function(
+    primary_cf,
+    secondary_cf,
+    vars,
+    out_file,
+    align_time = TRUE
+  ) {
+  # TODO (#3605): Implement time-axis validation and alignment between
+  # primary and secondary CF files (e.g. using cf2datetime() and logic
+  # from align_met.R). This is intentionally deferred to a follow-up PR.
 
   # ---- open inputs (read-only)
   nc_primary <- ncdf4::nc_open(primary_cf)
@@ -30,6 +32,10 @@ merge_cf_met_files <- function(
   nc_secondary <- ncdf4::nc_open(secondary_cf)
   on.exit(ncdf4::nc_close(nc_secondary), add = TRUE)
 
+
+  # TODO (#3605): Replace copy-and-modify approach with explicit
+  # CF-safe NetCDF construction. Output file is currently created by
+  # copying the primary file and updating selected variables.
   # ---- create output file by copying base file
   file.copy(primary_cf, out_file, overwrite = TRUE)
   nc_out <- ncdf4::nc_open(out_file, write = TRUE)
