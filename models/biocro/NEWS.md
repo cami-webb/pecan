@@ -1,6 +1,6 @@
 # PEcAn.BIOCRO 1.7.5.9000
 
-* Fixed `call_biocro_0.9` crash when weather data spans multiple years and planting date is after DOY 1 (#3787)
+* Fixed `call_biocro_0.9` crash by enforcing single-year weather data input (#3787)
 
 # PEcAn.BIOCRO 1.7.5
 

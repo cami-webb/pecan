@@ -142,12 +142,11 @@ test_that("call_biocro_0.9 adjusts day1 and dayn when weather is not a whole yea
 })
 
 
-test_that("call_biocro_0.9 handles multi-year data without dayn overflow", {
+test_that("call_biocro_0.9 throws error for multi-year data", {
   WetDat_single <- read.csv("data/US-Bo1.2004.csv", nrows = 7 * 24)
   WetDat_multi <- rbind(
     transform(WetDat_single, year = 2004),
-    transform(WetDat_single, year = 2005),
-    transform(WetDat_single, year = 2006)
+    transform(WetDat_single, year = 2005)
   )
   
   WetDat_subset <- WetDat_multi[WetDat_multi$doy >= 2, ]
@@ -164,15 +163,16 @@ test_that("call_biocro_0.9 handles multi-year data without dayn overflow", {
       }
     })
   
-  res <- call_biocro_0.9(
-    WetDat = WetDat_subset, genus = "Miscanthus", year_in_run = 1,
-    config = config, lat = 40, lon = -88,
-    tmp.result = list(), HarvestedYield = 0)
-  
-  args <- mockery::mock_args(biomock)[[1]]
-  expect_lte(args$dayn, 365)
-  expect_equal(args$dayn, length(unique(WetDat_subset$doy)))
+  expect_error(
+    call_biocro_0.9(
+      WetDat = WetDat_subset, genus = "Miscanthus", year_in_run = 1,
+      config = config, lat = 40, lon = -88,
+      tmp.result = list(), HarvestedYield = 0),
+    "WetDat must contain only one year of data"
+  )
 })
+
+
 
 test_that("call_biocro_1 passes expected arguments", {
   # stub out BioCro::Gro

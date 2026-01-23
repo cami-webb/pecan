@@ -38,6 +38,9 @@ call_biocro_0.9 <- function(WetDat, genus, year_in_run,
     }
   )
   if (!biocro_checks_doy && min(WetDat[, "doy"]) > 1) {
+    if (length(unique(WetDat[, "year"])) > 1) {
+      PEcAn.logger::logger.severe("WetDat must contain only one year of data when using BioCro 0.9")
+    }
     n_unique_doy <- length(unique(WetDat[, "doy"]))
     
     if (!is.null(day1)) {
