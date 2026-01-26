@@ -1,6 +1,6 @@
-source(here::here("models", "peprmt", "R", "PEPRMT_CH4_FINAL.R"))
-source(here::here("models", "peprmt", "R", "PEPRMT_GPP_FINAL.R"))
-source(here::here("models", "peprmt", "R", "PEPRMT_Reco_FINAL.R"))
+source(here::here("models", "peprmt", "R", "PEPRMT_model", "PEPRMT_CH4_FINAL.R"))
+source(here::here("models", "peprmt", "R", "PEPRMT_model", "PEPRMT_GPP_FINAL.R"))
+source(here::here("models", "peprmt", "R", "PEPRMT_model", "PEPRMT_Reco_FINAL.R"))
 
 run_PEPRMT <- function(target) {
   target <- data.frame(target)

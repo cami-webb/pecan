@@ -20,6 +20,9 @@
 met2model.PEPRMT <- function(in.path, in.prefix, outfolder, start_date, end_date,
                             overwrite = FALSE, verbose = FALSE, ...) {
 
+  PEcAn.logger::logger.info("START met2model.PEPRMT")
+  
+  ## PEPRMT requires the following inputs: 
   ## Time_2 = d[,1] # day of year (1-infinite # of days)
   #DOY_disc_2=d[,2] #discontinuous day of year that starts over every year (1-365 or 366)
   #Year_2=d[,3] #year 
@@ -146,11 +149,12 @@ met2model.PEPRMT <- function(in.path, in.prefix, outfolder, start_date, end_date
     }
   }  ## end loop over years
   
-  ## Assuming default values for ____
+  ## Assuming default values for some variables
   Dates = seq.Date(as.Date(start_date), as.Date(end_date), by = "1 day")
   Time_2 = as.integer(Dates - as.Date(start_date))+1
   DOY_disc_2 = yday(Dates) #discontinuous day of year that starts over every year (1-365 or 366)
   
+  # TO DO: currently missing all of the following drivers
   WT_2 = NA
   LAI_2 = NA
   GI_2 = NA

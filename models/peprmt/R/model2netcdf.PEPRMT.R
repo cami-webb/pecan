@@ -52,7 +52,7 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
                                       vals = 1:2, units="")
     
     ## Output names
-    # SOM_total (g C  m^-3)
+    # SOM_total (g C  m^-3) - 1m depth boundary
     # SOM_labile (g C  m^-3)
     # GPP_mod (gC m-2 day-1)
     # Reco_mod (gC m-2 day-1)
@@ -72,8 +72,8 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
     output[[4]] <- (sub.PEPRMT.output[, "NEE_mod"] * 0.001)   # NEE in kgC/m2/s
     
     ## Pools
-    output[[5]]  <- (sub.PEPRMT.output[, fluxes[1]])  # Soil Carbon, kgC/m2
-    output[[6]]  <- (sub.PEPRMT.output[, fluxes[2]])  # Soil Carbon, kgC/m2
+    output[[5]]  <- (sub.PEPRMT.output[, fluxes[1]] * 0.001)  # Soil Carbon, kgC/m2
+    output[[6]]  <- (sub.PEPRMT.output[, fluxes[2]] * 0.001)  # Soil Carbon, kgC/m2
     
     ## time_bounds
     output[[length(fluxes) +
