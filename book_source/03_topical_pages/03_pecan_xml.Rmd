@@ -210,7 +210,7 @@ The default `config.php` settings on any given platform (VM, Docker, etc.) or in
 Key R functions using these parameters are as follows:
 
 - [`PEcAn.DB::db.open`](https://pecanproject.github.io/package-documentation/develop/PEcAn.DB/reference/db.open.html)
-  —-Open a database connection and create a connection object,
+  -- Open a database connection and create a connection object,
    which is used by many other functions for communicating with the PEcAn database.
 
 #### `dbfiles`: Location of database files {#xml-dbfiles}
