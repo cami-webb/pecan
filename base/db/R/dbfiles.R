@@ -24,7 +24,7 @@
 ##'   siteid <- 1
 ##'   startdate <- as.Date("2000-01-01")
 ##'   enddate <- as.Date("2001-01-01")
-##'   dbcon <- NULL  # database connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.input.insert(
 ##'     in.path = 'trait.data.Rdata',
@@ -232,11 +232,11 @@ dbfile.input.insert <- function(in.path, in.prefix, siteid, startdate, enddate, 
 ##' @export
 ##' @author Rob Kooper, Tony Gardella, Hamze Dokoohaki
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##'   siteid <- 1
 ##'   startdate <- as.Date("2000-01-01")
 ##'   enddate <- as.Date("2001-01-01")
-##'   dbcon <- NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.input.check(siteid, startdate, enddate, 'application/x-RData', 'traits', dbcon)
 ##' }
@@ -387,7 +387,7 @@ dbfile.input.check <- function(siteid, startdate = NULL, enddate = NULL, mimetyp
 ##' @examples
 ##' \dontrun{
 ##'   pft <- "temp_pft"
-##'   dbcon = NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.posterior.insert('trait.data.Rdata', pft, 'application/x-RData', 'traits', dbcon)
 ##' }
@@ -455,9 +455,9 @@ dbfile.posterior.insert <- function(filename, pft, mimetype, formatname, con, ho
 ##' @author Rob Kooper
 ##' @export
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##'   pft <- "temp_pft"
-##'   dbcon = NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.posterior.check(pft, 'application/x-RData', 'traits', dbcon)
 ##' }
@@ -513,7 +513,7 @@ dbfile.posterior.check <- function(pft, mimetype, formatname, con, hostname = PE
 ##' @export
 ##' @examples
 ##' \dontrun{
-##'   dbcon <- NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.insert(
 ##'     in.path = "/data/files",
@@ -599,10 +599,10 @@ dbfile.insert <- function(in.path, in.prefix, type, id, con, reuse = TRUE, hostn
 ##' @author Rob Kooper, Alexey Shiklomanov
 ##' @export
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##'   type <- "Input"
 ##'   container.id <- 7
-##'   dbcon <- NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.check(type, container.id, dbcon)
 ##' }
@@ -658,10 +658,10 @@ dbfile.check <- function(type, container.id, con,
 ##' @author Rob Kooper
 ##' @export
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##'   type <- "Input"
 ##'   id <- 7
-##'   dbcon <- NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.file(type, id, dbcon)
 ##' }
@@ -686,10 +686,10 @@ dbfile.file <- function(type, id, con, hostname = PEcAn.remote::fqdn()) {
 ##' @author Rob Kooper
 ##' @export
 ##' @examples
-##' \donttest{
+##' \dontrun{
 ##'   type <- "Model"
 ##'   file <- "/usr/local/bin/sipnet"
-##'   dbcon <- NULL  # db connection
+##'   dbcon <- db.open(list(host = "postgres", user = "bety", password = "carya"))
 ##'
 ##'   dbfile.id(type, file, dbcon)
 ##' }
