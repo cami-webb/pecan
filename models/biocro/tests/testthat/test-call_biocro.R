@@ -79,17 +79,10 @@ test_that("call_biocro_0.9 passes expected arguments to every supported genus", 
     mockery::mock_args(canemock)[[1]]$willowphenoControl)
 
 
-  # BioGro is called once every invocation to test if BioCro checks input DOY,
-  # plus again for output in Miscanthus and Sorghum, equals six calls in total
-  mockery::expect_called(biomock, 6)
-  for (j in c(1,2,3,5)) {
-    mockery::expect_call(
-      biomock, j,
-      BioCro::BioGro(WetDat = matrix(c(0,10,0,0,0,0,0,0), nrow = 1),
-                     day1 = 10, dayn = 10, timestep = 24))
-  }
-  expect_equal(mockery::mock_args(biomock)[[4]]$day1, min(WetDat$doy))
-  expect_equal(mockery::mock_args(biomock)[[4]]$dayn, max(WetDat$doy))
+# BioGro is called for Miscanthus and Sorghum output
+  mockery::expect_called(biomock, 2)
+  expect_equal(mockery::mock_args(biomock)[[1]]$day1, min(WetDat$doy))
+  expect_equal(mockery::mock_args(biomock)[[1]]$dayn, max(WetDat$doy))
 
   expect_error(
     call_biocro_0.9(WetDat = WetDat, genus = "not_a_genus", year_in_run = 1,
@@ -101,22 +94,12 @@ test_that("call_biocro_0.9 passes expected arguments to every supported genus", 
 
 test_that("call_biocro_0.9 adjusts day1 and dayn when weather is not a whole year",{
 
-  # call_biocro_0.9 tests whether to adjust days by passing a one-line file
-  # with DOY > 1 and adjusting iff BioCro::BioGro throws an error.
-  # ==> To test, our BioGro stub needs to provide the error too.
+  # BioCro 0.9x treats day1/dayn as "day of file", so rescaling is always applied
+  # when data doesn't start on DOY 1.
   biomock <- mockery::mock(fake_b0.9_result, cycle = TRUE)
-  mockery::stub(
-    call_biocro_0.9,
-    "BioCro::BioGro",
-    function(WetDat, ...){
-      if(nrow(WetDat)==1 && WetDat$doy > 1){
-        stop("This error should be caught silently")
-      }else{
-        biomock(WetDat, ...)
-      }
-    })
+  mockery::stub(call_biocro_0.9, "BioCro::BioGro", biomock)
 
-  # whole file: day numbers unchanged
+  # whole file starting DOY 1: day numbers unchanged
   res_whole <- call_biocro_0.9(
     WetDat = WetDat, genus = "Miscanthus", year_in_run = 1, config = config,
     lat = 40, lon = -88, tmp.result = list(), HarvestedYield = 0)
@@ -131,14 +114,13 @@ test_that("call_biocro_0.9 adjusts day1 and dayn when weather is not a whole yea
   expect_equal(mockery::mock_args(biomock)[[2]]$day1, 1)
   expect_equal(mockery::mock_args(biomock)[[2]]$dayn, 3)
 
-  # subset starting DOY > 1: day numbers adjusted --
-  # BioCro secretly wants day of *file*, not day of year
+  # subset starting DOY > 1: day numbers adjusted to "day of file"
   res_jan <- call_biocro_0.9(
       WetDat = WetDat[WetDat$doy >= 3 & WetDat$doy <= 6,],
       genus = "Miscanthus", year_in_run = 1, config = config, lat = 40,
       lon = -88, tmp.result = list(), HarvestedYield = 0)
-  expect_equal(round(mockery::mock_args(biomock)[[3]]$day1), 1)
-  expect_equal(round(mockery::mock_args(biomock)[[3]]$dayn), 4)
+  expect_equal(mockery::mock_args(biomock)[[3]]$day1, 1)
+  expect_equal(mockery::mock_args(biomock)[[3]]$dayn, 4)
 })
 
 
@@ -152,16 +134,7 @@ test_that("call_biocro_0.9 throws error for multi-year data", {
   WetDat_subset <- WetDat_multi[WetDat_multi$doy >= 2, ]
   
   biomock <- mockery::mock(fake_b0.9_result, cycle = TRUE)
-  mockery::stub(
-    call_biocro_0.9,
-    "BioCro::BioGro",
-    function(WetDat, ...) {
-      if (nrow(WetDat) == 1 && WetDat$doy > 1) {
-        stop("This error should be caught silently")
-      } else {
-        biomock(WetDat, ...)
-      }
-    })
+  mockery::stub(call_biocro_0.9, "BioCro::BioGro", biomock)
   
   expect_error(
     call_biocro_0.9(
