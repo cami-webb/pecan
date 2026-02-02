@@ -13,7 +13,17 @@ call_biocro_0.9 <- function(WetDat, genus, year_in_run,
   if (!all(mapply(grepl, expected_cols, colnames(WetDat)))) {
     PEcAn.logger::logger.severe("Format error in weather file: Columns must be (", expected_cols, "), in that order.")
   }
-  day1 <- min(WetDat$doy) # data already subset upstream, but BioCro 0.9 assumes a full year if day1/dayn are unset
+  
+  if (length(unique(WetDat[, "year"])) > 1) {
+    PEcAn.logger::logger.severe("WetDat must contain only one year of data when using BioCro 0.9")
+  }
+  
+  n_days <- length(unique(WetDat[, "doy"]))
+  if (nrow(WetDat) != 24 * n_days) {
+    PEcAn.logger::logger.severe("WetDat must have exactly 24 rows per day (hourly timestep) when using BioCro 0.9")
+  }
+  
+  day1 <- min(WetDat$doy)
   dayn <- max(WetDat$doy)
   WetDat <- as.matrix(WetDat)
 
@@ -38,16 +48,11 @@ call_biocro_0.9 <- function(WetDat, genus, year_in_run,
     }
   )
   if (!biocro_checks_doy && min(WetDat[, "doy"]) > 1) {
-    if (length(unique(WetDat[, "year"])) > 1) {
-      PEcAn.logger::logger.severe("WetDat must contain only one year of data when using BioCro 0.9")
-    }
-    n_unique_doy <- length(unique(WetDat[, "doy"]))
-    
     if (!is.null(day1)) {
       day1 <- 1
     }
     if (!is.null(dayn)) {
-      dayn <- n_unique_doy
+      dayn <- n_days
     }
   }
 
