@@ -93,7 +93,7 @@ See the [Soil Data] section on more into on creating a standard soil data file.
 
 See the [Vegetation Data] section on more info on creating a standard vegetation data file
 
-## Output Standards {#OutputStandards}
+## Output Standards
 
 * created by `model2netcdf` functions
 * based on format used by [MsTMIP](http://nacp.ornl.gov/MsTMIP_variables.shtml)
