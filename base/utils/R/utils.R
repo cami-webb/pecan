@@ -337,7 +337,6 @@ pdf.stats <- function(distn, A, B) {
 #' @export
 #' @examples
 #' # convert parameter name to a string appropriate for end-use plotting
-#' \dontrun{
 #' trait.lookup('growth_resp_factor')
 #' trait.lookup('growth_resp_factor')$figid
 #'
@@ -519,7 +518,9 @@ tryl <- function(FUN) {
 #' @return FALSE if function returns error; else TRUE
 #' @export
 #' @examples
-#' \dontrun{require.modelpkg(BioCro)}
+#' \dontrun{
+#'   load.modelpkg(BioCro)
+#' }
 #' @author David LeBauer
 load.modelpkg <- function(model) {
   pecan.modelpkg <- paste0("PEcAn.", model)
