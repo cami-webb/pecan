@@ -4,8 +4,8 @@
 ##' @param format list, config list containing 
 ##' \itemize{
 ##'   \item \code{header},    numeric for number of header rows in file
-##'   \item \code{skip}       numeric for skip argument of utils::read.csv 
-##'   \item \code{na.strings} character vector for na.strings argument
+##'   \item \code{skip},       numeric for skip argument of utils::read.csv 
+##'   \item \code{na.strings}, character vector for na.strings argument
 ##'                           of utils::read.csv
 ##'   }
 ##' @param site list
