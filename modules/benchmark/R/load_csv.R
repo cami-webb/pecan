@@ -8,7 +8,7 @@
 ##'   \item \code{na.strings}, character vector for na.strings argument
 ##'                           of utils::read.csv
 ##'   }
-##' @param site list
+##' @param site list, currently ignored
 ##' @param vars column names to return. If NULL, returns all columns
 ##' 
 ##' @return a data frame with the processed data of the .csv file
