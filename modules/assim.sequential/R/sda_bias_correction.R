@@ -56,7 +56,36 @@ sda_bias_correction <- function (site.locs,
   # initialize model list for each variable.
   models <- res.vars <- vector("list", length = length(var.names)) %>% purrr::set_names(var.names)
   for (v in var.names) {
-    message(paste("processing", v))
+    # match variable and data names.
+    site.inds <- data.source <- c()
+    for (s in seq_along(pts)) {
+      # match variable name.
+      v.ind.pre <- which(names(obs.mean[[t-1]][[s]]) == v)
+      v.ind.t <- which(names(obs.mean[[t]][[s]]) == v)
+      if (length(v.ind.pre) > 0 &
+          length(v.ind.t) > 0) {
+        # match data name.
+        a.pre <- attributes(obs.mean[[t-1]][[s]])
+        a.pre <- a.pre$Source[v.ind.pre]
+        a.t <- attributes(obs.mean[[t]][[s]])
+        a.t <- a.t$Source[v.ind.t]
+        if (a.pre == a.t) {
+          site.inds[s] <- 1
+        } else {
+          site.inds[s] <- 0
+        }
+      } else {
+        site.inds[s] <- 0
+      }
+      # record the current data source.
+      if (site.inds[s] == 0) {
+        data.source <- c(data.source, NA)
+      } else {
+        data.source <- c(data.source, a.t)
+      }
+    }
+    # skip this variable if there is no data to be training.
+    if (all(is.na(data.source))) next
     # train residuals on the previous time point.
     # grab column index for the current variable.
     inds <- which(grepl(v, colnames(pre.X)))
@@ -82,11 +111,6 @@ sda_bias_correction <- function (site.locs,
     res.pre.pre <- colMeans(pre.pre.X[,inds]) - obs.v.pre
     # prepare training data set.
     ml.df <- cbind(cov.pre, res.pre.pre, colMeans(pre.X)[inds], res.pre)
-    colnames(ml.df)[length(ml.df)-1] <- "raw_dat" # rename the column name.
-    colnames(ml.df)[length(ml.df)-2] <- "res_lag" # rename the column name.
-    ml.df <- rbind(pre.states[[v]], ml.df) # grab previous covariates.
-    ml.df <- ml.df[which(stats::complete.cases(ml.df)),]
-    pre.states[[v]] <- ml.df # store the historical covariates for future use.
     # prepare predicting covariates.
     # extract covariates for the current time point.
     cov.file <- list.files(cov.dir, full.names = T)[which(grepl(y, list.files(cov.dir)))] # current covaraites.
@@ -95,51 +119,70 @@ sda_bias_correction <- function (site.locs,
     if ("LC" %in% colnames(cov.current)) {
       cov.current[,"LC"] <- factor(cov.current[,"LC"])
     }
+    # prepare predicting data set.
     cov.df <- cbind(cov.current, res.pre, colMeans(X)[inds])
-    complete.inds <- which(stats::complete.cases(cov.df))
-    cov.df <- cov.df[complete.inds,]
-    colnames(cov.df)[length(cov.df)] <- "raw_dat"
-    colnames(cov.df)[length(cov.df)-1] <- "res_lag"
-    cov.names <- colnames(cov.df) # grab band names for the covariate map.
-    if (nrow(ml.df) == 0) next # jump to the next loop if we have zero records.
-    if (is.null(py.init)) {
-      # random forest training.
-      formula <- stats::as.formula(paste("res.pre", "~", paste(cov.names, collapse = " + ")))
-      model <- randomForest::randomForest(formula,
-                                          data = ml.df,
-                                          ntree = 1000,
-                                          na.action = stats::na.omit,
-                                          keep.forest = TRUE,
-                                          importance = TRUE)
-      var.imp <- randomForest::importance(model)
-      models[[v]] <- var.imp # store the variable importance.
-      # predict residuals for the current time point.
-      res.current <- stats::predict(model, cov.df)
-    } else {
-      # using functions from the python script.
-      # training.
-      fi_ret <- py$train_full_model(
-        name = as.character(v), # current variable name.
-        X = as.matrix(ml.df[,-length(ml.df)]), # covariates + previous forecast means.
-        y = as.numeric(ml.df[["res.pre"]]), # residuals.
-        feature_names = colnames(ml.df[,-length(ml.df)])
-      )
-      # predicting.
-      res.current <- py$predict_residual(as.character(v), as.matrix(cov.df))
-      # store model outputs.
-      # weights.
-      w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
-      w_now <- min(max(as.numeric(w_now), 0), 1)
-      w_named <- c(KNN = w_now, TREE = 1 - w_now)
-      # var importance.
-      fi_ret <- tryCatch(reticulate::py_to_r(fi_ret), error = function(e) fi_ret)
-      fn <- as.character(unlist(fi_ret[["names"]], use.names = FALSE))
-      fv <- as.numeric(unlist(fi_ret[["importances"]], use.names = FALSE)) %>% purrr::set_names(fn)
-      models[[v]] <- list(weights = w_named, var.imp = fv) # store the variable importance.
+    # loop over data sources.
+    res.all <- c() # initialize the entire residual errors.
+    for (s in unique(data.source)) {
+      if (is.na(s)) next # if there is no observation.
+      message(paste("processing", s, v)) # report progress.
+      # grab sites that have matched observations across time.
+      s.inds <- which(site.inds == 1 & data.source == s)
+      # keep sites that match variable and data names.
+      s.df <- ml.df[s.inds,]
+      colnames(s.df)[length(s.df)-1] <- "raw_dat" # rename the column name.
+      colnames(s.df)[length(s.df)-2] <- "res_lag" # rename the column name.
+      s.df <- rbind(pre.states[[v]][[s]], s.df) # grab previous covariates.
+      s.df <- s.df[which(stats::complete.cases(s.df)),]
+      if (nrow(s.df) == 0) next # jump to the next loop if we have zero records.
+      pre.states[[v]][[s]] <- s.df # store the historical covariates for future use.
+      # keep sites that match variable and data sources.
+      s.cov.df <- cov.df[s.inds,]
+      complete.inds <- which(stats::complete.cases(s.cov.df))
+      s.cov.df <- s.cov.df[complete.inds,]
+      colnames(s.cov.df)[length(s.cov.df)] <- "raw_dat"
+      colnames(s.cov.df)[length(s.cov.df)-1] <- "res_lag"
+      cov.names <- colnames(s.cov.df) # grab band names for the covariate map.
+      if (is.null(py.init)) {
+        # random forest training.
+        formula <- stats::as.formula(paste("res.pre", "~", paste(cov.names, collapse = " + ")))
+        model <- randomForest::randomForest(formula,
+                                            data = s.df,
+                                            ntree = 1000,
+                                            na.action = stats::na.omit,
+                                            keep.forest = TRUE,
+                                            importance = TRUE)
+        var.imp <- randomForest::importance(model)
+        models[[v]][[s]] <- var.imp # store the variable importance.
+        # predict residuals for the current time point.
+        res.current <- stats::predict(model, s.cov.df)
+      } else {
+        # using functions from the python script.
+        # training.
+        fi_ret <- py$train_full_model(
+          name = as.character(v), # current variable name.
+          X = as.matrix(s.df[,-length(s.df)]), # covariates + previous forecast means.
+          y = as.numeric(s.df[["res.pre"]]), # residuals.
+          feature_names = colnames(s.df[,-length(s.df)])
+        )
+        # predicting.
+        res.current <- py$predict_residual(as.character(v), as.matrix(s.cov.df))
+        # store model outputs.
+        # weights.
+        w_now <- try(py$get_model_weights(as.character(v)), silent = TRUE)
+        w_now <- min(max(as.numeric(w_now), 0), 1)
+        w_named <- c(KNN = w_now, TREE = 1 - w_now)
+        # var importance.
+        fi_ret <- tryCatch(reticulate::py_to_r(fi_ret), error = function(e) fi_ret)
+        fn <- as.character(unlist(fi_ret[["names"]], use.names = FALSE))
+        fv <- as.numeric(unlist(fi_ret[["importances"]], use.names = FALSE)) %>% purrr::set_names(fn)
+        models[[v]][[s]] <- list(weights = w_named, var.imp = fv) # store the variable importance.
+      }
+      res.all <- c(res.all, res.current)
     }
     # assign NAs to places with no observations in the previous time point.
     res <- rep(NA, length(obs.v)) %>% purrr::set_names(unique(attributes(X)$Site))
-    res[complete.inds] <- res.current
+    res[complete.inds] <- res.all
     res[which(is.na(obs.v))] <- NA
     res.vars[[v]] <- res
     # correct the current forecasts.
