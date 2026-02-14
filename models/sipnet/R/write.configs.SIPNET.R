@@ -14,8 +14,21 @@
 ##' @author Michael Dietze
 write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs = NULL, IC = NULL,
                                 restart = NULL, spinup = NULL) {
+
+  sipnet_version <- package_version(settings$model$revision, strict = FALSE)
+  if (!is.na(sipnet_version)) {
+    rev_str <- paste0("v", sipnet_version$major)
+  } else {
+    # assume all non-numeric versions (eg "git") are expecting v1
+    rev_str <- "v1"
+  }
+
+
   ### WRITE sipnet.in
-  template.in <- system.file("sipnet.in", package = "PEcAn.SIPNET")
+  template.in <- system.file(
+    paste0("sipnet.in_", rev_str),
+    package = "PEcAn.SIPNET"
+  )
   config.text <- readLines(con = template.in, n = -1)
   writeLines(config.text, con = file.path(settings$rundir, run.id, "sipnet.in"))
   
@@ -143,11 +156,16 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
 
 
   ### WRITE *.param-spatial
-  template.paramSpatial <- system.file("template.param-spatial", package = "PEcAn.SIPNET")
-  file.copy(template.paramSpatial, file.path(settings$rundir, run.id, "sipnet.param-spatial"))
+  if (rev_str == "v1") {
+    template.paramSpatial <- system.file("template.param-spatial", package = "PEcAn.SIPNET")
+    file.copy(template.paramSpatial, file.path(settings$rundir, run.id, "sipnet.param-spatial"))
+  }
   
   ### WRITE *.param
-  template.param <- system.file("template.param", package = "PEcAn.SIPNET")
+  template.param <- system.file(
+    paste0("template.param_", rev_str),
+    package = "PEcAn.SIPNET"
+  )
   if ("default.param" %in% names(settings$model)) {
     template.param <- settings$model$default.param
   }
@@ -432,7 +450,8 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     # 10/31/2017 IF: these were the two assumptions used in the emulator paper in order to reduce dimensionality
     # These results in improved winter soil respiration values
     # they don't affect anything when the seasonal soil respiration functionality in SIPNET is turned-off
-    if(TRUE){
+    # 2025-07-22 CKB: soilRespQ10Cold and baseSoilRespCold were removed from Sipnet V2.0
+    if (rev_str == "v1") {
       # assume soil resp Q10 cold == soil resp Q10
       param[which(param[, 1] == "soilRespQ10Cold"), 2] <- param[which(param[, 1] == "soilRespQ10"), 2]
       # default SIPNET prior of baseSoilRespCold was 1/4th of baseSoilResp
