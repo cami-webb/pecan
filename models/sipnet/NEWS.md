@@ -1,5 +1,7 @@
 # PEcAn.SIPNET 1.10.0.9000
 
+* Initial support for SIPNET v2.0, whose features include simplified input files,
+    simulation of management events, tracking of N cycle components, and anaerobic CH4 generation.
 * Breaking: `met2model.SIPNET` now writes 12-column clim files (as expected by Sipnet >= v2.0) by default.
 	To get the previously standard 14-column output, set `use_v1_format = TRUE`.
 
