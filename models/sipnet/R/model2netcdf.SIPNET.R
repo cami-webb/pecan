@@ -178,6 +178,15 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
     output[["coarse_root_carbon_content"]] <- sub.sipnet.output$coarseRootC * 0.001  ## coarse_root_carbon_content kgC/m2
     output[["GWBI"]] <- (sub.sipnet.output$woodCreation * 0.001) / 86400 ## kgC/m2/s - this is daily in SIPNET
     output[["AGB"]] <- (sub.sipnet.output$plantWoodC + sub.sipnet.output$plantLeafC) * 0.001 # Total aboveground biomass kgC/m2
+    if ("n2oFlux" %in% names(sub.sipnet.output)) {
+      output[["N2O_flux"]] <- (sub.sipnet.output$n2oFlux * 0.001) / timestep.s
+      # convert g N m-2 per timestep -> kg N m-2 s-1
+    }
+    ch4_col <- intersect(c("ch4Flux", "ch4"), names(sub.sipnet.output))
+    if (length(ch4_col) > 0) {
+      output[["CH4_flux"]] <- (sub.sipnet.output[[ch4_col[1]]] * 0.001) / timestep.s
+      # convert g C m-2 per timestep -> kg C m-2 s-1
+    }
     output[["time_bounds"]] <- c(rbind(bounds[,1], bounds[,2]))
     
     # ******************** Declare netCDF variables ********************#
@@ -236,6 +245,13 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
                                        longname = "history time interval endpoints", dim=list(time_interval,time = t), 
                                        prec = "double")              
     )
+
+    if ("N2O_flux" %in% names(output)) {
+      nc_var[["N2O_flux"]] <- PEcAn.utils::to_ncvar("N2O_flux", dims)
+    }
+    if ("CH4_flux" %in% names(output)) {
+      nc_var[["CH4_flux"]] <- PEcAn.utils::to_ncvar("CH4_flux", dims)
+    }
     
     # ******************** Create netCDF and output variables ********************#
     ### Output netCDF data
@@ -264,8 +280,8 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
     }else{
       nc      <- ncdf4::nc_create(file.path(outdir, paste(y, "nc", sep = ".")), nc_var)
       ncdf4::ncatt_put(nc, "time", "bounds", "time_bounds", prec=NA)
-      for (i in seq_along(nc_var)) {
-        ncdf4::ncvar_put(nc, nc_var[[i]], output[[i]])
+      for (key in names(nc_var)) {
+        ncdf4::ncvar_put(nc, nc_var[[key]], output[[key]])
       }
       ncdf4::nc_close(nc)
     }
