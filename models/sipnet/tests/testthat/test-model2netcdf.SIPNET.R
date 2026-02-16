@@ -1,83 +1,69 @@
-test_that("model2netcdf.SIPNET produces netCDF from v2 output with GHG fluxes", {
-  outdir <- withr::local_tempdir(pattern = "sipnet_out_")
-  rundir <- withr::local_tempdir(pattern = "sipnet_run_")
+setup_sipnet_test <- function(sipnet_dat, delete.raw = FALSE) {
+  base <- withr::local_tempdir(pattern = "sipnet_test_", .local_envir = parent.frame())
+  outdir <- file.path(base, "out", "run1")
+  rundir <- file.path(base, "run", "run1")
+  dir.create(outdir, recursive = TRUE)
+  dir.create(rundir, recursive = TRUE)
 
-  # minimal sipnet.param — model2netcdf only reads leafCSpWt for LAI
   writeLines(
-    c("plantWoodInit\t30000\t0\t6600\t14000\t200",
-      "leafCSpWt\t32\t0\t13\t500\t0"),
+    c("plantWoodInit\t30000",
+      "leafCSpWt\t32"),
     file.path(rundir, "sipnet.param")
   )
 
-  # synthesise a 4-timestep sipnet.out (2 days x 12-hourly)
-  n <- 4L
-  ts_s <- 43200  # 12h in sec
-  sipnet_dat <- data.frame(
-    year = 2002, day = c(1, 1, 2, 2), time = c(6, 18, 6, 18),
+  out_path <- file.path(outdir, "sipnet.out")
+  writeLines("Notes: units in g/m2 per timestep; water in cm", out_path)
+  write.table(sipnet_dat, file = out_path, append = TRUE,
+              row.names = FALSE, quote = FALSE, sep = "\t")
+
+
+  model2netcdf.SIPNET(
+    outdir     = outdir,
+    sitelat    = 38.0,
+    sitelon    = -121.0,
+    start_date = "2002-01-01",
+    end_date   = "2002-12-31",
+    delete.raw = delete.raw,
+    revision   = "r136"
+  )
+
+  list(outdir = outdir, rundir = rundir, out_path = out_path)
+}
+
+make_base_sipnet <- function(n = 4L) {
+  data.frame(
+    year = 2002,
+    day = rep(c(1, 2), each = n / 2, length.out = n),
+    time = rep(c(6, 18), length.out = n),
     plantWoodC = 5000, plantLeafC = 200, woodCreation = 0.5,
     soil = 10000, microbeC = 8, coarseRootC = 1200, fineRootC = 800,
     litter = 400, soilWater = 14, soilWetnessFrac = 0.85, snow = 0,
     npp = 0.05, nee = 0.10, cumNEE = cumsum(rep(0.1, n)),
     gpp = 0.30, rAboveground = 0.04, rSoil = 0.09, rRoot = 0.01,
     ra = 0.05, rh = 0.08, rtot = 0.13,
-    evapotranspiration = 0.005, fluxestranspiration = 0.003,
-    n2oFlux = 0.002,
-    ch4Flux = 0.001
+    evapotranspiration = 0.005, fluxestranspiration = 0.003
   )
+}
 
-  out_path <- file.path(outdir, "sipnet.out")
-  writeLines(
-    "Notes: units in g/m2 per timestep; water in cm",
-    out_path
-  )
-  suppressWarnings(
-    write.table(sipnet_dat, file = out_path, append = TRUE,
-                row.names = FALSE, quote = FALSE, sep = "\t")
- )
 
-  # outdir must contain "/out/" so the gsub to find "/run/" works
-  # we've set up rundir separately, so patch the path convention:
-  # model2netcdf does gsub("/out/", "/run/", outdir) to find sipnet.param
-  # use the structure: <base>/out/run1  and  <base>/run/run1
-  base <- withr::local_tempdir(pattern = "sipnet_base_")
-  real_outdir <- file.path(base, "out", "run1")
-  real_rundir <- file.path(base, "run", "run1")
-  dir.create(real_outdir, recursive = TRUE)
-  dir.create(real_rundir, recursive = TRUE)
-  file.copy(out_path, file.path(real_outdir, "sipnet.out"))
-  writeLines(
-    c("plantWoodInit\t30000\t0\t6600\t14000\t200",
-      "leafCSpWt\t32\t0\t13\t500\t0"),
-    file.path(real_rundir, "sipnet.param")
-  )
-
-  suppressMessages(
-    model2netcdf.SIPNET(
-      outdir     = real_outdir,
-      sitelat    = 38.0,
-      sitelon    = -121.0,
-      start_date = "2002-01-01",
-      end_date   = "2002-12-31",
-      delete.raw = FALSE,
-      revision   = "r136"
-    )
-  )
-
-  nc_file <- file.path(real_outdir, "2002.nc")
+test_that("model2netcdf.SIPNET converts v2 output including N2O and CH4 fluxes", {
+  n <- 4L
+  ts_s <- 43200
+  sipnet_dat <- make_base_sipnet(n)
+  sipnet_dat$n2o <- 0.002
+  sipnet_dat$ch4 <- 0.001
+  paths <- setup_sipnet_test(sipnet_dat)
+  nc_file <- file.path(paths$outdir, "2002.nc")
   expect_true(file.exists(nc_file))
 
   nc <- ncdf4::nc_open(nc_file)
   on.exit(ncdf4::nc_close(nc), add = TRUE)
   vars <- names(nc$var)
 
-  # -- GHG variables --
   expect_true("N2O_flux" %in% vars)
   expect_true("CH4_flux" %in% vars)
-
-  # -- standard C-cycle variables --
   expect_true(all(c("GPP", "NEE", "TotalResp", "TotSoilCarb") %in% vars))
 
-  # -- g m-2 per timestep -> kg m-2 s-1 --
   n2o <- as.numeric(ncdf4::ncvar_get(nc, "N2O_flux"))
   ch4 <- as.numeric(ncdf4::ncvar_get(nc, "CH4_flux"))
   gpp <- as.numeric(ncdf4::ncvar_get(nc, "GPP"))
@@ -90,56 +76,15 @@ test_that("model2netcdf.SIPNET produces netCDF from v2 output with GHG fluxes", 
   expect_equal(nc$var$CH4_flux$units, "kg C m-2 s-1")
   expect_equal(nc$var$GPP$units,      "kg C m-2 s-1")
 
-  # -- dimensions --
   expect_equal(nc$dim$time$len, n)
-  expect_true(grepl("days since 2002", nc$dim$time$units))
+  expect_match(nc$dim$time$units, "days since 2002")
 })
 
 
-test_that("model2netcdf.SIPNET omits N2O/CH4 when columns absent (backward compat)", {
-  base <- withr::local_tempdir(pattern = "sipnet_v1_")
-  real_outdir <- file.path(base, "out", "run1")
-  real_rundir <- file.path(base, "run", "run1")
-  dir.create(real_outdir, recursive = TRUE)
-  dir.create(real_rundir, recursive = TRUE)
+test_that("model2netcdf.SIPNET omits N2O/CH4 when columns absent", {
+  paths <- setup_sipnet_test(make_base_sipnet(n = 2L))
 
-  writeLines(
-    c("plantWoodInit\t30000\t0\t6600\t14000\t200",
-      "leafCSpWt\t32\t0\t13\t500\t0"),
-    file.path(real_rundir, "sipnet.param")
-  )
-
-  sipnet_dat <- data.frame(
-    year = 2002, day = c(1, 1), time = c(6, 18),
-    plantWoodC = 5000, plantLeafC = 200, woodCreation = 0.5,
-    soil = 10000, microbeC = 8, coarseRootC = 1200, fineRootC = 800,
-    litter = 400, soilWater = 14, soilWetnessFrac = 0.85, snow = 0,
-    npp = 0.05, nee = 0.10, cumNEE = c(0.1, 0.2),
-    gpp = 0.30, rAboveground = 0.04, rSoil = 0.09, rRoot = 0.01,
-    ra = 0.05, rh = 0.08, rtot = 0.13,
-    evapotranspiration = 0.005, fluxestranspiration = 0.003
-  )
-
-  out_path <- file.path(real_outdir, "sipnet.out")
-  writeLines("Notes: g/m2", out_path)
-  suppressWarnings(
-    write.table(sipnet_dat, file = out_path, append = TRUE,
-                row.names = FALSE, quote = FALSE, sep = "\t")
-  )
-
-  suppressMessages(
-    model2netcdf.SIPNET(
-      outdir     = real_outdir,
-      sitelat    = 38.0,
-      sitelon    = -121.0,
-      start_date = "2002-01-01",
-      end_date   = "2002-12-31",
-      delete.raw = FALSE,
-      revision   = "r136"
-    )
-  )
-
-  nc <- ncdf4::nc_open(file.path(real_outdir, "2002.nc"))
+  nc <- ncdf4::nc_open(file.path(paths$outdir, "2002.nc"))
   on.exit(ncdf4::nc_close(nc), add = TRUE)
   vars <- names(nc$var)
 
@@ -150,48 +95,8 @@ test_that("model2netcdf.SIPNET omits N2O/CH4 when columns absent (backward compa
 
 
 test_that("delete.raw removes sipnet.out after conversion", {
-  base <- withr::local_tempdir(pattern = "sipnet_del_")
-  real_outdir <- file.path(base, "out", "run1")
-  real_rundir <- file.path(base, "run", "run1")
-  dir.create(real_outdir, recursive = TRUE)
-  dir.create(real_rundir, recursive = TRUE)
+  paths <- setup_sipnet_test(make_base_sipnet(n = 2L), delete.raw = TRUE)
 
-  writeLines(
-    c("plantWoodInit\t30000\t0\t6600\t14000\t200",
-      "leafCSpWt\t32\t0\t13\t500\t0"),
-    file.path(real_rundir, "sipnet.param")
-  )
-
-  sipnet_dat <- data.frame(
-    year = 2002, day = 1, time = 12,
-    plantWoodC = 5000, plantLeafC = 200, woodCreation = 0.5,
-    soil = 10000, microbeC = 8, coarseRootC = 1200, fineRootC = 800,
-    litter = 400, soilWater = 14, soilWetnessFrac = 0.85, snow = 0,
-    npp = 0.05, nee = 0.10, cumNEE = 0.1,
-    gpp = 0.30, rAboveground = 0.04, rSoil = 0.09, rRoot = 0.01,
-    ra = 0.05, rh = 0.08, rtot = 0.13,
-    evapotranspiration = 0.005, fluxestranspiration = 0.003
-  )
-
-  raw_path <- file.path(real_outdir, "sipnet.out")
-  writeLines("Notes: g/m2", raw_path)
-  suppressWarnings(
-    write.table(sipnet_dat, file = raw_path, append = TRUE,
-                row.names = FALSE, quote = FALSE, sep = "\t")
-  )
-
-  suppressMessages(
-    model2netcdf.SIPNET(
-      outdir     = real_outdir,
-      sitelat    = 38.0,
-      sitelon    = -121.0,
-      start_date = "2002-01-01",
-      end_date   = "2002-12-31",
-      delete.raw = TRUE,
-      revision   = "r136"
-    )
-  )
-
-  expect_false(file.exists(raw_path))
-  expect_true(file.exists(file.path(real_outdir, "2002.nc")))
+  expect_false(file.exists(paths$out_path))
+  expect_true(file.exists(file.path(paths$outdir, "2002.nc")))
 })
