@@ -342,7 +342,6 @@ pdf.stats <- function(distn, A, B) {
 #'
 #' # get a list of all traits and units in dictionary
 #' trait.lookup()[,c('figid', 'units')]
-#' }
 trait.lookup <- function(traits = NULL) {
   if (is.null(traits)) {
     return(PEcAn.utils::trait.dictionary)

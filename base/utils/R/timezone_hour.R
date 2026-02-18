@@ -6,7 +6,6 @@
 #' @return hours offset of the timezone
 #' @examples
 #' timezone_hour('America/New_York')
-#' }
 #' @export
 timezone_hour <- function(timezone) {
   if (is.numeric(timezone)) {

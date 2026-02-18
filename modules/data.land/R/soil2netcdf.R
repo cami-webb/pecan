@@ -29,7 +29,8 @@
 #'   soil_depth = c(0.2,0.5,1.0)
 #' )
 #'
-#' soil2netcdf(soil.data,"soil.nc") }
+#' soil2netcdf(soil.data,"soil.nc")
+#' }
 soil2netcdf <- function(soil.data, new.file) {
   if (any(lengths(soil.data) != length(soil.data[[1]]))) {
     PEcAn.logger::logger.warn(
