@@ -31,7 +31,6 @@ is passed through a higher priority method.
 \examples{
 \dontrun{
 settings <- read.settings(file="willowcreek.xml")
-test.settings.file <- system.file("tests/test.xml", package = "PEcAn.settings")
 }
 }
 \author{
