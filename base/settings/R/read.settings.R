@@ -26,7 +26,6 @@
 #' @examples
 #' \dontrun{
 #' settings <- read.settings(file="willowcreek.xml")
-#' test.settings.file <- system.file("tests/test.xml", package = "PEcAn.settings")
 #' }
 read.settings <- function(inputfile = "pecan.xml") {
   if (inputfile == "") {
