@@ -39,16 +39,17 @@ test_that("run.write.configs correctly skips database connection when bety is mi
   # When write is FALSE and bety is missing, the code should skip opening a DB connection
   # and not throw an error from attempting to pass NULL to db.open()
   
-  # By using expect_output or capturing logs, we could check the "Not writing this run to database"
-  # but simply ensuring it does not throw an error is enough to verify the regression
-  expect_error(
-    PEcAn.workflow::run.write.configs(
-      settings,
-      write = FALSE,
-      input_design = data.frame(param = 1),
-      ensemble.size = 1,
-      overwrite = FALSE
-    ),
-    NA # NA means we expect no error
-  )
+  expect_no_error({
+    runwrite_log <- capture.output(
+      PEcAn.workflow::run.write.configs(
+        settings,
+        write = FALSE,
+        input_design = data.frame(param = 1),
+        ensemble.size = 1,
+        overwrite = FALSE
+      ),
+      type = "message"
+    )
+  })
+  expect_match(runwrite_log, "Not writing this run to database", all = FALSE)
 })
