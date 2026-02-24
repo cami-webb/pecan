@@ -184,6 +184,7 @@ test_that("adjustments to day1 and dayn work right with live biocro calls", {
   # the solar geometry.
   res_q2_d1 <- call_with(met_q2_2004 |> dplyr::mutate(doy = doy - 90))
   expect_equal(length(res_q2_d1$LAI), 90 * 24)
+  expect_equal(res_q2$ThermalT, res_q2_d1$ThermalT)
 
   # two whole years
   expect_error(
