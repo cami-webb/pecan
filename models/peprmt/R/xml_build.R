@@ -26,7 +26,7 @@ options <- list(
     help = "Date to end simulations"
   ),
   optparse::make_option("--met_dir",
-    default = "data/ERA5_CA_RothC",
+    default = "data/ERA5_PEPRMT",
     help = paste(
       "Directory containing climate data.",
       "Should contain subdirs named by site id"
@@ -40,7 +40,7 @@ options <- list(
     )
   ),
   optparse::make_option("--site_file",
-    default = "site_info.csv",
+    default = "data/site_info.csv",
     help = paste(
       "CSV file containing one row for each site to be simulated.",
       "Must contain at least columns `id`, `lat`, `lon`, and `site.pft`"

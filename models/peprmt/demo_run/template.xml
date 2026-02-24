@@ -26,12 +26,13 @@
    <met>
     <method>sampling</method>
    </met>
+  <!-- TODO disabled for now
    <poolinitcond>
      <method>sampling</method>
    </poolinitcond> 
    <soil_physics>
     <method>sampling</method>
-   </soil_physics> 
+   </soil_physics> -->
   </samplingspace>
   <start.year><!-- inserted at config time --></start.year>
   <end.year><!-- inserted at config time --></end.year>
