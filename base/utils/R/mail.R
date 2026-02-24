@@ -9,10 +9,14 @@
 #' @return nothing
 #' @export
 #' @examples
-#' \donttest{
-#' if (interactive()) {
-#'   sendmail('bob@@example.com', 'joe@@example.com', 'Hi', 'This is R.')
-#' }
+#' \dontrun{
+#'   # Check if 'sendmail' is installed before running.
+#'   # This prevents errors in environments like Docker where the utility is missing.
+#'   if (nzchar(Sys.which("sendmail"))) {
+#'     sendmail("bob@@example.com", "joe@@example.com", "Hi", "This is R.")
+#'   } else {
+#'     message("System 'sendmail' utility not found. Skipping example.")
+#'   }
 #' }
 sendmail <- function(from, to, subject, body) {
   if (is.null(to)) {
