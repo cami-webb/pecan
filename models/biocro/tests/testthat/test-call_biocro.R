@@ -175,9 +175,9 @@ test_that("adjustments to day1 and dayn work right with live biocro calls", {
   expect_equal(length(res_q2$LAI), 90 * 24)
 
   # Q2 data, labeled as if starting DOY 1
-  # day1/dayn rescaling should allow this to run and produce same number of rows.
-  # Results won't be numerically identical because BioCro uses the raw DOY from
-  # the weather matrix for solar angle calculations, so shifting DOY changes
+  # day1/dayn rescaling should allow this to run and use identical weather values.
+  # Growth results won't be numerically identical because BioCro uses the raw DOY 
+  # from the weather matrix for solar angle calculations, so shifting DOY changes
   # the solar geometry.
   res_q2_d1 <- call_with(met_q2_2004 |> dplyr::mutate(doy = doy - 90))
   expect_equal(length(res_q2_d1$LAI), 90 * 24)
