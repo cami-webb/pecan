@@ -119,14 +119,14 @@ sda.enkf <- function(settings,
   if(!no_split){ 
     for(i in seq_along(settings$run$inputs$met$path)){
       ### model specific split inputs
-      my.split_args <- list(
+      split_args <- list(
         start.time = start.cut,
         stop.time = lubridate::ymd_hms(settings$state.data.assimilation$end.date, truncated = 3, tz="UTC"),
         inputs = settings$run$inputs$met$path[[i]],
         overwrite = TRUE
       )
       if (model != "SIPNET") {
-        my.split_args <- c(list(settings = settings), my.split_args)
+        split_args <- c(list(settings = settings), split_args)
       }
       settings$run$inputs$met$path[[i]] <- do.call(my.split_inputs, args = split_args)
     }
