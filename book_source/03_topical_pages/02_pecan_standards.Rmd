@@ -1,5 +1,14 @@
 # PEcAn standard formats {#pecan-standards}
 
+PEcAn relies on standardized data formats to ensure reproducibility, interoperability, and consistency across models, sites, and workflows. These standards define how inputs, internal representations, and outputs are structured throughout the PEcAn workflows.
+
+**In this chapter**
+
+- [Defining new input formats](#defining-new-input-formats)
+- [Time standards](#time-standard)
+- [Input standards](#input-standards)
+- [Output standards](#output-standards)
+
 ## Defining new input formats
 
 * New formats can be defined on the ['formats' page of BETYdb](http://betydb.org/formats)
@@ -13,6 +22,7 @@ To aid in the conversion between PEcAn internal ISO_8601 standard and CF convent
 ## Input Standards
 
 ### Meteorology Standards 
+
 
 #### Dimensions
 
@@ -84,7 +94,7 @@ See the [Soil Data] section on more into on creating a standard soil data file.
 
 See the [Vegetation Data] section on more info on creating a standard vegetation data file
 
-## Output Standards {#OutputStandards}
+## Output Standards
 
 * created by `model2netcdf` functions
 * based on format used by [MsTMIP](http://nacp.ornl.gov/MsTMIP_variables.shtml)
