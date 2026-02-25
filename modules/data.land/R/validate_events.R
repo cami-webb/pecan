@@ -1,7 +1,7 @@
 #' Validate PEcAn events JSON against schema v0.1.0
 #'
 #' Validates a PEcAn events JSON file (single-site object or an array of site
-#' objects) against the bundled JSON Schema (draft 2020-12) using the AJV
+#' objects) against the bundled JSON Schema using the AJV
 #' engine.
 #'
 #' - Logs an error and returns FALSE if the JSON file does not exist or does
@@ -10,6 +10,7 @@
 #'   not installed, so calling code can proceed without a hard dependency.
 #'
 #' @param events_json character. Path to the JSON file to validate.
+#' @param schema_version character. Version of the PEcAn events schema to validate against.
 #' @param verbose logical. When `TRUE`, include detailed AJV messages on error.
 #'
 #' @return Logical TRUE if valid, FALSE if invalid.
@@ -22,7 +23,7 @@
 #' #                                package = "PEcAn.data.land"))
 #'
 #' @export
-validate_events_json <- function(events_json, verbose = TRUE) {
+validate_events_json <- function(events_json, schema_version = "0.1.1", verbose = TRUE) {
   if (!file.exists(events_json)) {
     PEcAn.logger::logger.error(glue::glue("events_json file does not exist: {events_json}"))
     return(FALSE)
@@ -33,7 +34,11 @@ validate_events_json <- function(events_json, verbose = TRUE) {
     return(NA)
   }
 
-  schema <- system.file("events_schema_v0.1.0.json", package = "PEcAn.data.land", mustWork = TRUE)
+  schema <- system.file(
+    paste0("events_schema_v", schema_version, ".json"),
+    package = "PEcAn.data.land",
+    mustWork = TRUE
+  )
   ok <- jsonvalidate::json_validate(events_json, schema = schema, engine = "ajv", verbose = verbose, error = FALSE)
   if (isTRUE(ok)) {
     PEcAn.logger::logger.info(glue::glue("events_json file is valid: {events_json}"))
