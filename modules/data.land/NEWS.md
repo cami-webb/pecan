@@ -10,6 +10,11 @@
 * Datasets
   *  `landiq_crop_mapping_codes` dataset mapping LandIQ crop classification codes to human-readable crop names.
   *  `bism_kc_by_crop` dataset containing BISm crop coefficient schedules and stage timing references for use in ET estimation, including columns that map to LandIQ class and subclass.
+  *  `n_application_rate_data` dataset with recommended N application rates for 33 California crops from CDFA-FREP and UC ANR sources.
+  *  `compost_amendment_data` dataset with C:N ratios, carbon, nitrogen, and PAN for 32 organic amendment materials.
+* Functions
+  *  `look_up_n_application_rate()` for looking up crop-specific N application rates by partial name match.
+  *  `look_up_compost_amendment()` for looking up organic amendment properties by material name.
 
 ## Changed
 
