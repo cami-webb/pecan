@@ -59,7 +59,7 @@
               { "if": { "properties": { "event_type": { "const": "planting" } } },
                 "then": { "required": ["crop_code", "leaf_c_kg_m2"] } },
               { "if": { "properties": { "event_type": { "const": "harvest" } } },
-                "then": { "required": ["crop_code", "frac_above_removed_0to1"] } },
+                "then": { "required": ["frac_above_removed_0to1"] } },
               { "if": { "properties": { "event_type": { "const": "irrigation" } } },
                 "then": { "required": ["amount_mm", "method"] } },
               { "if": { "properties": { "event_type": { "const": "fertilization" } } },
