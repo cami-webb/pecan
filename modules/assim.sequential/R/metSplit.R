@@ -37,13 +37,13 @@ metSplit <- function(conf.settings, inputs, settings, model, no_split = FALSE, o
       if (!no_split) {
         for (i in seq_len(nens)) {
           #---------------- model specific split inputs
-          my.split_args <- list(
+          split_args <- list(
             start.time = (lubridate::ymd_hms(start.time, truncated = 3) + lubridate::second(lubridate::hms("00:00:01"))),
             stop.time = lubridate::ymd_hms(stop.time, truncated = 3),
             inputs = inputs$met$samples[[i]]
           )
           if (model != "SIPNET") {
-            my.split_args <- c(list(settings = settings), my.split_args)
+            split_args <- c(list(settings = settings), split_args)
           }
           inputs.split$met$samples[[i]] <- do.call(my.split_inputs, args = split_args)
         }
