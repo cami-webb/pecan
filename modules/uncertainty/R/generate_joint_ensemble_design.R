@@ -3,6 +3,26 @@
 #' all sites in a multi-site run. This function generates sample indices that
 #' are shared across sites to ensure consistent parameter sampling.
 #'
+#' @details
+#' Note on internal dependencies
+#'
+#' If samples.Rdata doesn't exist we call get.parameter.samples(), which loads
+#' parameter distributions.
+#'
+#' In practice it:
+#' - uses pft$posterior.files directly when it is defined (an Rdata file with
+#'   post.distns or prior.distns),
+#' - otherwise figures out an output directory from pft$outdir or, if needed,
+#'   via pft$posteriorid in the database,
+#' - then looks in that directory for post.distns.Rdata, falling back to
+#'   prior.distns.Rdata,
+#' - and, for MCMC posteriors, looks up trait.mcmc*.Rdata linked to the same
+#'   posteriorid or a trait.mcmc.Rdata file in that directory.
+#'
+#' Difference from generate_OAT_SA_design: This function samples inputs
+#' randomly or quasi-randomly, while generate_OAT_SA_design holds all
+#' non-parameter inputs constant to isolate parameter effects.
+#'
 #' @param settings PEcAn settings object. This function directly uses:
 #'   \itemize{
 #'     \item \code{settings$outdir} - Output directory path for samples.Rdata
@@ -29,27 +49,6 @@
 #'   If \code{sobol = TRUE}, returns a \code{sensitivity::soboljansen()}
 #'   result object with the design matrix in \code{$X} plus additional
 #'   components for Sobol index calculations.
-#'
-#' @details
-#' Note on internal dependencies
-#'
-#' If samples.Rdata doesn't exist we call get.parameter.samples(), which loads
-#' parameter distributions.
-#'
-#' In practice it:
-#' - uses pft$posterior.files directly when it is defined (an Rdata file with
-#'   post.distns or prior.distns),
-#' - otherwise figures out an output directory from pft$outdir or, if needed,
-#'   via pft$posteriorid in the database,
-#' - then looks in that directory for post.distns.Rdata, falling back to
-#'   prior.distns.Rdata,
-#' - and, for MCMC posteriors, looks up trait.mcmc*.Rdata linked to the same
-#'   posteriorid or a trait.mcmc.Rdata file in that directory.
-#'
-#' Difference from generate_OAT_SA_design: This function samples inputs
-#' randomly or quasi-randomly, while generate_OAT_SA_design holds all
-#' non-parameter inputs constant to isolate parameter effects.
-#'
 #'
 #' @export
 
