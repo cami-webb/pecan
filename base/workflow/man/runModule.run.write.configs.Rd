@@ -27,9 +27,6 @@ or `generate_OAT_SA_design()` for sensitivity analysis.}
 A modified settings object, invisibly
 }
 \description{
-Generate model-specific run configuration files for one or more PEcAn runs
-}
-\details{
 This function serves as the orchestration layer between PEcAn workflows and
 the config-writing machinery. It generates appropriate input designs
 (ensemble and/or SA) if not provided. For MultiSettings, it generates designs once
