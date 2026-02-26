@@ -5,14 +5,6 @@
 #' one-at-a-time across quantiles. This differs from ensemble design where
 #' all inputs vary together.
 #'
-#' @param settings PEcAn settings object. See details for required elements.
-#' @param sa_samples Optional. Pre-loaded SA samples (named list with one
-#'   element per PFT, each a matrix with quantiles as rows and traits as columns).
-#'   If NULL (default), samples are generated via \code{get.parameter.samples}.
-#'
-#' @return list with component X: a data.frame with columns for each input type
-#'   and one row per SA run. Non-parameter columns are all 1 (constant).
-#'
 #' @details 
 #' ## Settings requirements
 #' 
@@ -53,6 +45,14 @@
 #' - and, for MCMC posteriors, looks up trait.mcmc*.Rdata linked to the same
 #'   posteriorid or a trait.mcmc.Rdata file in that directory.
 #'
+#' @param settings PEcAn settings object. See details for required elements.
+#' @param sa_samples Optional. Pre-loaded SA samples (named list with one
+#'   element per PFT, each a matrix with quantiles as rows and traits as columns).
+#'   If NULL (default), samples are generated via \code{get.parameter.samples}.
+#'
+#' @return list with component X: a data.frame with columns for each input type
+#'   and one row per SA run. Non-parameter columns are all 1 (constant).
+#'
 #' @examples
 #' \dontrun{
 #' # Generate SA design for a multi-site run
@@ -74,6 +74,7 @@
 #' @export
 #' @author Akash B V
 #' @importFrom rlang %||%
+
 generate_OAT_SA_design <- function(settings, sa_samples = NULL) {
   
   samples_file <- file.path(settings$outdir, "samples.Rdata")
