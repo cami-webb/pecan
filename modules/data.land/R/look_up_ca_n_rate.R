@@ -40,17 +40,17 @@ look_up_ca_n_rate <- function(
 
   if (!is.null(pft_group)) {
     dat <- dat |>
-      dplyr::filter(tolower(.data$pft_group) == tolower(pft_group))
+      dplyr::filter(tolower(.data$pft_group) == tolower(.env$pft_group))
   }
 
   # try exact match first (case-insensitive)
   result <- dat |>
-    dplyr::filter(tolower(.data$crop) == tolower(crop))
+    dplyr::filter(tolower(.data$crop) == tolower(.env$crop))
 
   # if no exact match, try partial and suggest
   if (nrow(result) == 0) {
     partial <- dat |>
-      dplyr::filter(grepl(tolower(crop), tolower(.data$crop), fixed = TRUE))
+      dplyr::filter(grepl(tolower(.env$crop), tolower(.data$crop), fixed = TRUE))
 
     if (nrow(partial) > 0) {
       PEcAn.logger::logger.warn(
@@ -127,17 +127,17 @@ look_up_ca_compost_amendment <- function(material, n_class = NULL) {
 
   if (!is.null(n_class)) {
     dat <- dat |>
-      dplyr::filter(toupper(.data$n_class) == toupper(n_class))
+      dplyr::filter(toupper(.data$n_class) == toupper(.env$n_class))
   }
 
   # try exact match first (case-insensitive)
   result <- dat |>
-    dplyr::filter(tolower(.data$material) == tolower(material))
+    dplyr::filter(tolower(.data$material) == tolower(.env$material))
 
   # if no exact match, try partial and suggest
   if (nrow(result) == 0) {
     partial <- dat |>
-      dplyr::filter(grepl(tolower(material), tolower(.data$material), fixed = TRUE))
+      dplyr::filter(grepl(tolower(.env$material), tolower(.data$material), fixed = TRUE))
 
     if (nrow(partial) > 0) {
       PEcAn.logger::logger.warn(
