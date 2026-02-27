@@ -133,7 +133,12 @@ if (nrow(missing_crops) > 0) {
   )
 }
 
-dp_with_cropname <- dp_crops_filled |> dplyr::filter(!is.na(crop_name))
+dp_with_cropname <- dp_crops_filled |> 
+  dplyr::filter(!is.na(crop_name)) |>
+  dplyr::left_join(
+    crop_whc |> dplyr::select("crop_name", "whc_min_frac"),
+    by = "crop_name"
+  )
 ```
 
 # Join with ETo data
@@ -142,7 +147,9 @@ Join with ETref data.
 
 ```{r}
 dp_with_eto <- dp_with_cropname |>
-  dplyr::left_join(etref, by = c("id", "date"))
+  dplyr::left_join((
+    etref |> dplyr::select("id", "date", "etref_mm_day")
+  ), by = c("id", "date"))
 ```
 
 Calculate ETc directly using eto_to_etc_bism. Group by crop_name and apply since eto_to_etc_bism takes a single crop at a time.
@@ -160,7 +167,8 @@ dp_with_etc <- dp_with_eto |>
   dplyr::select(
     dplyr::any_of(c("id", "parcel_id", "lat", "lon")),
     "date",
-    "etc_mm_day"
+    "etc_mm_day",
+    "whc_min_frac"
   )
 ```
 
@@ -198,12 +206,12 @@ resolve_multicrop <- function(etc_data, id_col = "id", date_col = "date") {
 dp_with_etc <- resolve_multicrop(dp_with_etc)
 ```
 
-Join with precipitation data (inner_join to ensure matching dates). Rename etc_mm_day to et_mm_day for apply_water_balance compatibility.
+Join with precipitation data (inner_join to ensure matching dates).
 
 ```{r}
 dp_crops_all <- dp_with_etc |>
   dplyr::inner_join(precip, by = c("id", "date")) |>
-  dplyr::select(c("id", "lat", "lon", "date", "etc_mm_day", "precip_mm_day"))
+  dplyr::select(c("id", "lat", "lon", "date", "etc_mm_day", "precip_mm_day", "whc_min_frac"))
 ```
 
 # Calculate water balance

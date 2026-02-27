@@ -300,7 +300,7 @@
 #'   \item{crop_number}{BIS crop number (character). Blank for crops not in BIS.}
 #'   \item{crop_name}{Crop name.}
 #'   \item{Category}{Crop category (e.g., Woody Perennial, Annual (Hardy)).}
-#'   \item{minWHC}{Minimum WHC (fraction, 0-1).}
+#'   \item{whc_min_frac}{Minimum WHC as fraction of total WHC (0-1).}
 #'   \item{Comments}{Rationale for the minimum WHC value.}
 #' }
 #' @source Expert knowledge; California irrigation scheduling guidelines.

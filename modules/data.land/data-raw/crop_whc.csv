@@ -1,4 +1,4 @@
-"crop_number","crop_name","Category","minWHC","Comments"
+"crop_number","crop_name","Category","whc_min_frac","Comments"
 "3.01","Almonds","Woody Perennial","0.35","Deep roots but managed to avoid nut shrivel during heat."
 "3.02","Apple","Woody Perennial","0.35","Deep roots but managed for fruit sizing."
 "1.02","Artichokes","Non-woody Perennial","0.4","Large established crown systems with moderate drought tolerance."

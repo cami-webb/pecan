@@ -4,18 +4,20 @@
 \alias{apply_water_balance}
 \title{Apply water balance calculations to a data frame with multiple sites}
 \usage{
-apply_water_balance(df, idcol, whc = 500)
+apply_water_balance(df, idcol, whc_mm = 500)
 }
 \arguments{
-\item{df}{Data frame with columns: date, location_id, et_mm_day, precip_mm_day}
+\item{df}{Data frame with columns: `date`, `location_id`, `etc_mm_day`,
+`precip_mm_day`, and `whc_min_frac`}
 
 \item{idcol}{Column name for grouping (typically, `location_id`, `parcel_id` or similar)}
 
-\item{whc}{Water holding capacity (mm)}
+\item{whc_mm}{Water holding capacity (mm)}
 }
 \value{
-Data frame with added columns: W_t, irr, runoff
+Data frame with added columns: `W_t`, `irr`, `runoff`
 }
 \description{
-Groups by location and applies calc_water_balance to each group.
+Groups by location and applies calc_water_balance to each group. Unlike
+`calc_water_balance`, the units here *do* matter -- they should be `mm_day`.
 }

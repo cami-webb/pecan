@@ -4,17 +4,16 @@
 \alias{calc_water_balance}
 \title{Calculate water balance for a time series at a single site}
 \usage{
-calc_water_balance(et, precip, whc = 500, w_min_frac = 0.375)
+calc_water_balance(et, precip, whc, w_min_frac)
 }
 \arguments{
-\item{et}{Vector of evapotranspiration values (mm/day)}
+\item{et}{Vector of evapotranspiration values (distance / time)}
 
-\item{precip}{Vector of precipitation values (mm/day)}
+\item{precip}{Vector of precipitation values (distance / time)}
 
-\item{whc}{Water holding capacity (mm), default 500}
+\item{whc}{Water holding capacity (distance)}
 
-\item{w_min_frac}{Fraction of WHC for minimum water level, default 0.375 is
-halfway between the recommended defaults for woody PFTs (0.25) and annuals (0.50)}
+\item{w_min_frac}{Fraction of WHC for minimum water level}
 }
 \value{
 List with vectors: W_t (water balance), irr (irrigation), runoff
@@ -22,5 +21,7 @@ List with vectors: W_t (water balance), irr (irrigation), runoff
 \description{
 This is the core water balance calculation that operates on primitive
 numeric vectors for easy testing and debugging. Each input is a time series
-of daily values for a single location (one date per row).
+of daily values for a single location (one date per row). The units for all
+quantities are arbitrary, but they should be consistent (distance / time;
+e.g., most commonly, mm/day).
 }
