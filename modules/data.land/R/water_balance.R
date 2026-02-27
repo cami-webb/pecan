@@ -7,10 +7,11 @@
 #' @param et Vector of evapotranspiration values (mm/day)
 #' @param precip Vector of precipitation values (mm/day)
 #' @param whc Water holding capacity (mm), default 500
-#' @param w_min_frac Fraction of WHC for minimum water level, default 0.15
+#' @param w_min_frac Fraction of WHC for minimum water level, default 0.375 is
+#' halfway between the recommended defaults for woody PFTs (0.25) and annuals (0.50)
 #' @return List with vectors: W_t (water balance), irr (irrigation), runoff
 #' @export
-calc_water_balance <- function(et, precip, whc = 500, w_min_frac = 0.15) {
+calc_water_balance <- function(et, precip, whc = 500, w_min_frac = 0.375) {
   n <- length(et)
   if (length(precip) != n) {
     stop("et and precip must have the same length")

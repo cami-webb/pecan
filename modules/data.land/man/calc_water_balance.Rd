@@ -4,7 +4,7 @@
 \alias{calc_water_balance}
 \title{Calculate water balance for a time series at a single site}
 \usage{
-calc_water_balance(et, precip, whc = 500, w_min_frac = 0.15)
+calc_water_balance(et, precip, whc = 500, w_min_frac = 0.375)
 }
 \arguments{
 \item{et}{Vector of evapotranspiration values (mm/day)}
@@ -13,7 +13,8 @@ calc_water_balance(et, precip, whc = 500, w_min_frac = 0.15)
 
 \item{whc}{Water holding capacity (mm), default 500}
 
-\item{w_min_frac}{Fraction of WHC for minimum water level, default 0.15}
+\item{w_min_frac}{Fraction of WHC for minimum water level, default 0.375 is
+halfway between the recommended defaults for woody PFTs (0.25) and annuals (0.50)}
 }
 \value{
 List with vectors: W_t (water balance), irr (irrigation), runoff
