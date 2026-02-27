@@ -28,6 +28,8 @@ Imports:
     coda,
     curl,
     dplyr,
+    duckdb,
+    duckspatial,
     foreach,
     fs,
     future,
