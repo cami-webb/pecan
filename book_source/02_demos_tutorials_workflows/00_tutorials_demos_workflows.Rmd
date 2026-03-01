@@ -1,4 +1,5 @@
 # (PART) Tutorials, Demos and How To's {-}
 
-This part contains hands-on tutorials, demonstrations, and step-by-step
-guides that show how to use PEcAn in practical modeling workflows.
+This section contains step-by-step tutorials, example workflows,
+and demonstrations designed to help users get started with PEcAn and learn
+common usage patterns through practical examples.
