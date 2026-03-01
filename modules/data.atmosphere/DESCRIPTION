@@ -27,7 +27,6 @@ BugReports: https://github.com/PecanProject/pecan/issues
 Depends: R (>= 4.1.0)
 Imports:
     abind (>= 1.4.5),
-    udunits2,
     amerifluxr,
     assertthat,
     arrow,
