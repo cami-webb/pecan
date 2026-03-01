@@ -17,6 +17,7 @@
 #' pts <- tibble::tibble(lon = c(-120, -110), lat = c(35, 40), site_id = 1:2)
 #' result <- extract_chirps_remote(pts, as.Date(c("2020-06-15", "2021-06-15")))
 #' }
+#' @export
 extract_chirps_remote <- function(design_points, dates) {
   CHIRPS_REMOTE_ROOT <- "https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/netcdf/p05"
 
