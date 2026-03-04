@@ -5,6 +5,16 @@
     simulation of management events, tracking of N cycle components, and anaerobic CH4 generation.
 * Breaking: `met2model.SIPNET` now writes 12-column clim files (as expected by Sipnet >= v2.0) by default.
 	To get the previously standard 14-column output, set `use_v1_format = TRUE`.
+* NITROGEN_CYCLE, LITTER_POOL, and ANAEROBIC enabled by default for SIPNET v2 runs.
+* Fixed `model2netcdf.SIPNET` for v2 output header format (no Notes line; SIPNET #267).
+* Removed 13 obsolete v1 parameters from `template.param_v2` (microbeInit, qualityLeaf, etc.)
+  and added 16 new nitrogen cycle, anaerobic, and methane parameters.
+* Added nitrogen cycle (mineral_N, soil_organic_N, litter_N, N2O, N leaching, N fixation,
+  N uptake) and methane (CH4) output conversion to NetCDF in `model2netcdf.SIPNET`.
+* Fixed crash when `litterWater` column absent in v2 output (LITTER_WATER removed in v2).
+* `write.config.SIPNET` now validates runtime flag dependencies (NITROGEN_CYCLE requires
+  LITTER_POOL and ANAEROBIC) and guards v1 only parameters (litterWHC, litWaterDrainRate,
+  litterWFracInit, microbeInit, m_ballBerry) from being set when using v2 templates.
 
 # PEcAn.SIPNET 1.10.0
 
