@@ -25,8 +25,8 @@
 #'
 #' These were needed by older versions of Sipnet, but never had any effect on
 #'  PEcAn runs: PEcAn never used gridded runs and always configured Sipnet to
-#'  calculate soil moistuer internally.
-#' Model support for both of these columns was removed from Sipnet >= v2.0.
+#'  calculate soil moisture internally.
+#' Model support for both the spatial index and soil moisture columns was removed from Sipnet >= v2.0.
 #' Newer versions now accept 14-column files, but ignore the first
 #'  and last columns with a warning.
 #'
