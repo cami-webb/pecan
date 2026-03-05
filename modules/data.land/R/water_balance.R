@@ -21,14 +21,17 @@
 #' @param et Vector of evapotranspiration values (distance / time)
 #' @param precip Vector of precipitation values (distance / time)
 #' @param whc Water holding capacity (distance); the plant-available range from
-#'   wilting point to field capacity (i.e., `whc = field_capacity - wilting_point`)
+#'   wilting point to field capacity (i.e., `whc = field_capacity - wilting_point`).
+#'   Can be a single value or a vector of the same length as `et`.
 #' @param whc_min_frac Fraction of WHC for minimum water level (irrigation
-#'   trigger); unused if `w_min` is explicitly specified
+#'   trigger); unused if `w_min` is explicitly specified.
+#'   Can be a single value or a vector of the same length as `et`.
 #' @param W_initial Initial soil water content at start of time series
-#'   (distance); defaults to `whc` (field capacity) if NULL
+#'   (distance); defaults to `whc[1]` (field capacity) if NULL
 #' @param w_min Minimum water level threshold (distance); irrigation is
 #'   triggered when soil water falls below this level; defaults to
-#'   `whc_min_frac * whc` if NULL
+#'   `whc_min_frac * whc` if NULL.
+#'   Can be a single value or a vector of the same length as `et`.
 #' @param seepage_rate Daily seepage loss for rice paddies (distance / time);
 #'   only used when `is_rice = TRUE`
 #' @param is_rice Logical; if TRUE, applies a constant seepage loss (mm/day)
@@ -67,16 +70,21 @@ calc_water_balance <- function(
     )
   }
 
-  if (!length(whc) == 1) {
-    PEcAn.logger::logger.severe(
-      "whc must have length 1; actual length = ", length(whc)
-    )
+  ensure_vec <- function(x, n, name) {
+    if (length(x) == 1) {
+      rep(x, n)
+    } else if (length(x) == n) {
+      x
+    } else {
+      PEcAn.logger::logger.severe(
+        sprintf("%s must have length 1 or %d; actual length = %d", name, n, length(x))
+      )
+    }
   }
 
-  if (!length(whc_min_frac) == 1) {
-    PEcAn.logger::logger.severe(
-      "whc_min_frac must have length 1; actual length = ", length(whc_min_frac)
-    )
+  whc <- ensure_vec(whc, n, "whc")
+  if (!is.null(whc_min_frac)) {
+    whc_min_frac <- ensure_vec(whc_min_frac, n, "whc_min_frac")
   }
 
   if (is_rice && is.null(seepage_rate)) {
@@ -84,12 +92,17 @@ calc_water_balance <- function(
   }
 
   if (is.null(w_min)) {
+    if (is.null(whc_min_frac)) {
+      PEcAn.logger::logger.severe("Either whc_min_frac or w_min must be provided")
+    }
     w_min <- whc_min_frac * whc
+  } else {
+    w_min <- ensure_vec(w_min, n, "w_min")
   }
 
   if (is.null(W_initial)) {
     # Initialize at field capacity (i.e., full WHC)
-    W_prev <- whc
+    W_prev <- whc[1]
   } else {
     W_prev <- W_initial
   }
@@ -100,27 +113,27 @@ calc_water_balance <- function(
 
   for (t in seq_len(n)) {
     # Only water above w_min is available for seepage
-    seepage <- if (is_rice) min(seepage_rate, max(0, W_prev - w_min)) else 0.0
+    seepage <- if (is_rice) min(seepage_rate, max(0, W_prev - w_min[t])) else 0.0
 
     # Potential state after precip and ET
     W0 <- W_prev + precip[t] - et[t] - seepage
 
     # If W0 falls below w_min (e.g., high ET and seepage; low precip), irrigate
     # to field capacity (i.e., full WHC).
-    if (W0 < w_min) {
-      irr[t] <- whc - W0
-      W0 <- whc
+    if (W0 < w_min[t]) {
+      irr[t] <- whc[t] - W0
+      W0 <- whc[t]
     } else {
       irr[t] <- 0
     }
 
     # If W0 exceeds field capacity (i.e., whc), the difference is runoff.
-    if (W0 > whc) {
-      runoff[t] <- W0 - whc
-      W_t[t] <- whc
+    if (W0 > whc[t]) {
+      runoff[t] <- W0 - whc[t]
+      W_t[t] <- whc[t]
     } else {
       runoff[t] <- 0
-      W_t[t] <- max(W0, w_min)
+      W_t[t] <- max(W0, w_min[t])
     }
 
     W_prev <- W_t[t]
@@ -137,9 +150,10 @@ calc_water_balance <- function(
 #' `calc_water_balance`, the units here *do* matter -- they should be `mm_day`.
 #'
 #' @param df Data frame with columns: `date`, `location_id`, `etc_mm_day`,
-#' `precip_mm_day`, and `whc_min_frac`
+#' `precip_mm_day`, and `whc_min_frac` (optional, defaults to 0.375).
+#' If a `whc_mm` column is present, it is used as the water holding capacity.
 #' @param idcol Column name for grouping (typically, `location_id`, `parcel_id` or similar)
-#' @param whc_mm Water holding capacity (mm)
+#' @param whc_mm Water holding capacity (mm); ignored if `whc_mm` is a column in `df`.
 #' @return Data frame with added columns: `W_t`, `irr`, `runoff`
 #' @export
 apply_water_balance <- function(df, idcol, whc_mm = 500) {
@@ -172,6 +186,10 @@ apply_water_balance <- function(df, idcol, whc_mm = 500) {
     df[["whc_min_frac"]] <- default_whc_min_frac
   }
 
+  if (!("whc_mm" %in% colnames(df))) {
+    df[["whc_mm"]] <- whc_mm
+  }
+
   df |>
     dplyr::arrange(.data[[idcol]], .data$date) |> # nolint: object_usage_linter
     dplyr::mutate(
@@ -182,11 +200,8 @@ apply_water_balance <- function(df, idcol, whc_mm = 500) {
       results = tibble::as_tibble(calc_water_balance(
         et = .data$etc_mm_day,
         precip = .data$precip_mm_day,
-        whc = whc_mm,
-        # NOTE: Use unique here because, in a merged crop data frame, this gets
-        # expanded to a vector of values. They *should* all be unique per
-        # `idcol`; if they're not, `calc_water_balance` should fail loudly.
-        whc_min_frac = unique(.data$whc_min_frac)
+        whc = .data$whc_mm,
+        whc_min_frac = .data$whc_min_frac
       )),
       .by = dplyr::all_of(idcol)
     ) |>
