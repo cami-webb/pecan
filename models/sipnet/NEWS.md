@@ -4,7 +4,9 @@
 * Initial support for SIPNET v2.0, whose features include simplified input files,
     simulation of management events, tracking of N cycle components, and anaerobic CH4 generation.
 * Breaking: `met2model.SIPNET` now writes 12-column clim files (as expected by Sipnet >= v2.0) by default.
-	To get the previously standard 14-column output, set `use_v1_format = TRUE`.
+	To get the previously standard 14-column output, set `sipnet_version = "1"`.
+* Replaced hardcoded `86400` (seconds per day) in `met2model.SIPNET` with
+	`PEcAn.utils::ud_convert(1, "day", "s")` for clarity.
 * NITROGEN_CYCLE, LITTER_POOL, and ANAEROBIC enabled by default for SIPNET v2 runs.
 * Fixed `model2netcdf.SIPNET` for v2 output header format (no Notes line; SIPNET #267).
 * Removed 13 obsolete v1 parameters from `template.param_v2` (microbeInit, qualityLeaf, etc.)
