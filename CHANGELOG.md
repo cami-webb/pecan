@@ -18,6 +18,7 @@ For more information about this file see also [Keep a Changelog](http://keepacha
   *  `bism_kc_by_crop` dataset containing BISm crop coefficient schedules and stage timing references for use in ET estimation, including columns that map to LandIQ class and subclass.
 
 ### Fixed
+- Fixed `web/08-finished.php`: show database info instead of "Still running" when workflow folder doesn't exist locally (#3501).
 
 ### Changed
 - `assign.treatments` has been renamed to `assign_treatments` and moved from `PEcAn.utils` to `PEcAn.MA` since that's the only place where it's used.
