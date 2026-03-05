@@ -16,17 +16,20 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
                                 restart = NULL, spinup = NULL) {
 
   rev_raw <- settings$model$revision
-  # integers like "2" are not valid version strings for package_version();
-  # normalise to "MAJOR.0" so the parser accepts them.
-  if (grepl("^[0-9]+$", rev_raw)) {
-    rev_raw <- paste0(rev_raw, ".0")
-  }
-  sipnet_version <- package_version(rev_raw, strict = FALSE)
-  if (!is.na(sipnet_version)) {
-    rev_str <- paste0("v", sipnet_version$major)
-  } else {
-    # assume all non-numeric versions (eg "git") are expecting v1
-    rev_str <- "v1"
+  # determine which SIPNET major version we're configuring for.
+  # settings$model$revision may be a SIPNET version ("1", "2", "2.0")
+  # or a internal model identifier ("136", "unk", "git", NULL).
+  # Only "1" and "2" (and their dotted forms) are valid SIPNET versions;
+  # everything else defaults to v1 for backward compatibility
+  rev_str <- "v1"
+  if (!is.null(rev_raw) && nzchar(rev_raw)) {
+    if (grepl("^[0-9]+$", rev_raw)) {
+      rev_raw <- paste0(rev_raw, ".0")
+    }
+    sv <- package_version(rev_raw, strict = FALSE)
+    if (!is.na(sv) && sv$major %in% c(1L, 2L)) {
+      rev_str <- paste0("v", sv$major)
+    }
   }
 
 
