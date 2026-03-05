@@ -14,7 +14,11 @@ all_mukeys <- unique(unlist(mukeys_list))
 
 soil_data <- PEcAn.data.land::gSSURGO.Query(
   mukeys = all_mukeys,
-  fields = c("chorizon.awc_r")
+  fields = c(
+    "chorizon.hzdept_r",
+    "chorizon.hzdepb_r",
+    "chorizon.awc_r"
+  )
 )
 
 result <- design_points |>
