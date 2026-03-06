@@ -26,3 +26,8 @@ All previous tagged releases are available as source code and compiled binaries 
 
 **SIPNET testrun**
 
+```bash
+/usr/local/bin/sipnet --version
+/usr/local/bin/sipnet --help
+```
+
