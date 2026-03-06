@@ -17,6 +17,12 @@ make
 sudo cp sipnet /usr/local/bin/sipnet
 ```
 
-For detailed installation instructions, build options, and dependencies, please see the [SIPNET Installation Guide](https://pecanproject.github.io/sipnet/install.html).
+For detailed installation instructions, build options, and dependencies,
+please see the [SIPNET Installation Guide](https://pecanproject.github.io/sipnet/install.html).
 
-**Note:** Previous installation methods using tarballs (`sipnet_unk.tar.gz`, `sipnet_r136.tar.gz`) are deprecated. Please use the repository method above for the most up-to-date version. All previous tagged releases are available as source code and compiled binaries from the SIPNET releases page.
+**Note:** Previous installation methods using tarballs (`sipnet_unk.tar.gz`, `sipnet_r136.tar.gz`) are deprecated.
+Please use the repository method above for the most up-to-date version.
+All previous tagged releases are available as source code and compiled binaries from the SIPNET releases page.
+
+**SIPNET testrun**
+
