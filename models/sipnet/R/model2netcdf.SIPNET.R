@@ -156,9 +156,9 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
     # Water variables
     # Units are labeled as mm here, but many places refer to it as kg water m-2
     # (which is equivalent to mm, but ud_convert doesn't know that)
-    output[["Qle"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$evapotranspiration, "cm", "mm") * PEcAn.data.atmosphere::get.lv()) / timestep.s  # Qle W/m2
+    output[["Qle"]] <- (PEcAn.utils::ud_convert(sub.sipnet.output$evapotranspiration, "cm", "mm") * PEcAn.data.atmosphere::get.lv()) / timestep.s  # Qle W/m2
     # Note that Sipnet reports transpiration, and no other variables, in cm/day not cm/timestep.
-    output[["Transp"]] <- (sub.sipnet.output$fluxestranspiration, "cm/day", "mm/sec") # Transpiration
+    output[["Transp"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$fluxestranspiration, "cm/day", "mm/sec") # Transpiration
     output[["SoilMoist"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$soilWater, "cm", "mm")  # Soil moisture kgW/m2
     output[["SoilMoistFrac"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$soilWetnessFrac, "cm", "mm")  # Fractional soil wetness
     output[["SWE"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$snow, "cm", "mm")  # Snow Water Equivalent
