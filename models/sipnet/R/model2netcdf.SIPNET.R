@@ -152,26 +152,22 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
                                               sub.sipnet.output$coarseRootC + sub.sipnet.output$fineRootC, "g/m2", "kg/m2")),
       "TotSoilCarb" = PEcAn.utils::ud_convert(sub.sipnet.output$soil + sub.sipnet.output$litter, "g/m2", "kg/m2")
     )
-    if (revision == "unk") {
-      ## *** NOTE : npp in the sipnet output file is actually evapotranspiration, this is due to a bug in sipnet.c : ***
-      ## *** it says "npp" in the header (written by L774) but the values being written are trackers.evapotranspiration (L806) ***
-      ## evapotranspiration in SIPNET is cm^3 water per cm^2 of area, to convert it to latent heat units W/m2 multiply with :
-      ## 0.01 (cm2m) * 1000 (water density, kg m-3) * latent heat of vaporization (J kg-1)
-      ## latent heat of vaporization is not constant and it varies slightly with temperature, get.lv() returns 2.5e6 J kg-1 by default
-      output[["Qle"]] <- (sub.sipnet.output$npp * 10 * PEcAn.data.atmosphere::get.lv()) / timestep.s  # Qle W/m2
-    } else {
-      output[["Qle"]] <- (sub.sipnet.output$evapotranspiration * 10 * PEcAn.data.atmosphere::get.lv()) / timestep.s  # Qle W/m2
-    }
-    output[["Transp"]] <- (sub.sipnet.output$fluxestranspiration * 10) / timestep.s  # Transpiration kgW/m2/s
-    output[["SoilMoist"]] <- (sub.sipnet.output$soilWater * 10)  # Soil moisture kgW/m2
-    output[["SoilMoistFrac"]] <- (sub.sipnet.output$soilWetnessFrac)  # Fractional soil wetness
-    output[["SWE"]] <- (sub.sipnet.output$snow * 10)  # SWE
+
+    # Water variables
+    # Units are labeled as mm here, but many places refer to it as kg water m-2
+    # (which is equivalent to mm, but ud_convert doesn't know that)
+    output[["Qle"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$evapotranspiration, "cm", "mm") * PEcAn.data.atmosphere::get.lv()) / timestep.s  # Qle W/m2
+    # Note that Sipnet reports transpiration, and no other variables, in cm/day not cm/timestep.
+    output[["Transp"]] <- (sub.sipnet.output$fluxestranspiration, "cm/day", "mm/sec") # Transpiration
+    output[["SoilMoist"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$soilWater, "cm", "mm")  # Soil moisture kgW/m2
+    output[["SoilMoistFrac"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$soilWetnessFrac, "cm", "mm")  # Fractional soil wetness
+    output[["SWE"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$snow, "cm", "mm")  # Snow Water Equivalent
     output[["litter_carbon_content"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$litter, "g/m2", "kg/m2")
     # litterWater was removed in SIPNET v2; only extract if present
     if ("litterWater" %in% names(sub.sipnet.output)) {
-      # Units are labeled elsewhere as kg water m-2 (which is equivalent to mm, but ud_convert doesn't know that)
       output[["litter_mass_content_of_water"]] <- PEcAn.utils::ud_convert(sub.sipnet.output$litterWater, "cm", "mm")
     }
+
     #calculate LAI for standard output
     # LAI = plantLeafC / leafCSpWt
     # both operands are in carbon units (gC/m2 and gC/m2_leaf),
