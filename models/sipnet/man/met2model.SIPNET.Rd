@@ -14,7 +14,7 @@ met2model.SIPNET(
   overwrite = FALSE,
   verbose = FALSE,
   year.fragment = FALSE,
-  sipnet_version = "2",
+  clim_format_version = c("v2", "v1"),
   ...
 )
 }
@@ -41,9 +41,8 @@ Default NULL uses all variables from input file}
 \item{year.fragment}{the function should ignore whether or not the data is
 stored as a set of complete years (such as for forecasts).}
 
-\item{sipnet_version}{Version string for SIPNET (e.g. "1", "2", "2.0").
-Versions < 2 write the legacy 14-column format; >= 2 writes 12 columns.
-Default "2"}
+\item{clim_format_version}{SIPNET clim file format to generate.
+Default "v2" writes 12 columns, "v1" writes the legacy 14-column format.}
 
 \item{...}{Additional arguments, currently ignored}
 }
@@ -71,7 +70,7 @@ The columns of the output file are:
 \item Wind speed (m/s)
 }
 
-When sipnet_version < "2" (i.e. v1), the table has 14 columns:
+When clim_format_version is "v1", the table has 14 columns:
 \itemize{
 \item column 1 is a spatial grid index, always set to 0
 \item columns 2-13 are the 12 described above
