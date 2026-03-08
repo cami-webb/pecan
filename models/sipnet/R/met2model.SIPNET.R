@@ -17,7 +17,7 @@
 #'    * Canopy vapor pressure (Pa)
 #'    * Wind speed (m/s)
 #'
-#' When sipnet_version < "2" (i.e. v1), the table has 14 columns:
+#' When clim_format_version is "v1", the table has 14 columns:
 #'
 #'  * column 1 is a spatial grid index, always set to 0
 #'  * columns 2-13 are the 12 described above
@@ -52,9 +52,8 @@
 #' @param verbose should the function be very verbose
 #' @param year.fragment the function should ignore whether or not the data is
 #'  stored as a set of complete years (such as for forecasts).
-#' @param sipnet_version Version string for SIPNET (e.g. "1", "2", "2.0").
-#'  Versions < 2 write the legacy 14-column format; >= 2 writes 12 columns.
-#'  Default "2"
+#' @param clim_format_version SIPNET clim file format to generate.
+#'  Default "v2" writes 12 columns, "v1" writes the legacy 14-column format.
 #' @param ... Additional arguments, currently ignored
 #' @author Luke Dramko, Michael Dietze, Alexey Shiklomanov, Rob Kooper
 met2model.SIPNET <- function(in.path,
@@ -66,14 +65,10 @@ met2model.SIPNET <- function(in.path,
                              overwrite = FALSE,
                              verbose = FALSE,
                              year.fragment = FALSE,
-                             sipnet_version = "2",
+                             clim_format_version = c("v2", "v1"),
                              ...) {
 
-  # parse version to decide output format, same approach as write.config.SIPNET
-  sv <- sipnet_version
-  if (grepl("^[0-9]+$", sv)) sv <- paste0(sv, ".0")
-  sv <- package_version(sv, strict = FALSE)
-  use_legacy_format <- is.na(sv) || sv < "2.0"
+  use_legacy_format <- isTRUE(match.arg(clim_format_version) == "v1")
 
   seconds_per_day <- PEcAn.utils::ud_convert(1, "day", "s")
 
