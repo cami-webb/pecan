@@ -95,7 +95,11 @@ site_info <- site_info |>
     ERA5_grid_cell = paste0(
       ((lat + 0.25) %/% 0.5) * 0.5, "N_",
       ((abs(lon) + 0.25) %/% 0.5) * 0.5, "W"
-    )
+    ),
+    # Hack: prepare.settings wants every site to have a name as well as an ID.
+    # It's probably never used downstream, but add here to quiet the check.
+    # TODO remove the upstream rule
+    name = id
   )
 
 settings <- read.settings(args$template_file) |>
