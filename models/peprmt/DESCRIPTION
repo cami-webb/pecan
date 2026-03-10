@@ -12,10 +12,11 @@ Description: This module provides functions to link PEPRMT to PEcAn.
 URL: https://pecanproject.github.io
 BugReports: https://github.com/PecanProject/pecan/issues
 Imports:
-    PEcAn.logger,
-    PEcAn.remote,
+    dplyr,
     lubridate (>= 1.6.0),
     ncdf4 (>= 1.15),
+    PEcAn.logger,
+    PEcAn.remote,
     PEcAn.utils,
     readr
 Suggests:
