@@ -7,11 +7,18 @@
 #' \code{posterior.file} is \code{NA}, with a deprecation warning.
 #'
 #' @param posterior.file path to a posterior file or directory, or \code{NA}.
-#' @param outdir Legacy PFT output directory (fallback).
-#' @param posteriorid Posterior ID for db lookup.
-#' @param con db connection
-#' @param hostname host name for db file lookup.
-#' @return list with \code{prior.distns}, \code{trait.mcmc}, \code{is.pda}.
+#' @param outdir \strong{Deprecated.} Legacy PFT output directory used only
+#'   when \code{posterior.file} is \code{NA}. Will be removed in a future
+#'   version; pass an explicit \code{posterior.file} instead.
+#' @param posteriorid \strong{Deprecated.} Posterior ID for DB lookup, used
+#'   only in the legacy fallback path.
+#' @param con \strong{Deprecated.} Database connection, used only in the
+#'   legacy fallback path.
+#' @param hostname \strong{Deprecated.} Hostname for DB file lookup, used
+#'   only in the legacy fallback path.
+#' @return list with \code{prior.distns}, \code{trait.mcmc}, \code{is.joint}.
+#'   \code{is.joint} is \code{TRUE} when MCMC samples represent a joint
+#'   posterior (e.g. from PDA) and parameter correlations should be preserved.
 #' @keywords internal
 #' @author Siddhey Patil
 load.posteriors <- function(posterior.file,
@@ -19,12 +26,6 @@ load.posteriors <- function(posterior.file,
                             posteriorid = NULL,
                             con = NULL,
                             hostname = NULL) {
-  result <- list(
-    prior.distns = NULL,
-    trait.mcmc = NULL,
-    is.pda = FALSE
-  )
-
   if (!is.na(posterior.file)) {
     result <- load.posteriors.from.path(posterior.file)
   } else {
@@ -46,14 +47,19 @@ load.posteriors <- function(posterior.file,
 
 #' Load posteriors from an explicit path (file or directory)
 #'
+#' Scans \code{.Rdata} files at \code{path} and detects MCMC samples
+#' by object class (\code{coda::is.mcmc.list}) rather than by variable
+#' name.  Distribution summaries are detected by the names
+#' \code{post.distns} and \code{prior.distns}.
+#'
 #' @param path file path or directory path
-#' @return List with \code{prior.distns}, \code{trait.mcmc}, \code{is.pda}
+#' @return List with \code{prior.distns}, \code{trait.mcmc}, \code{is.joint}
 #' @keywords internal
 load.posteriors.from.path <- function(path) {
   result <- list(
     prior.distns = NULL,
     trait.mcmc = NULL,
-    is.pda = FALSE
+    is.joint = FALSE
   )
 
   if (!file.exists(path)) {
@@ -92,15 +98,31 @@ load.posteriors.from.path <- function(path) {
       }
     )
 
-    # Detect Monte Carlo samples
-    if (exists("trait.mcmc", envir = env, inherits = FALSE)) {
-      PEcAn.logger::logger.info(
-        "Found Monte Carlo samples (trait.mcmc) in: ", f
-      )
-      result$trait.mcmc <- env$trait.mcmc
+    # Detect Monte Carlo samples by object class (coda::is.mcmc.list)
+    # rather than assuming the variable is named "trait.mcmc"
+    for (obj_name in ls(env)) {
+      obj <- get(obj_name, envir = env)
+      # trait.mcmc is a named list of mcmc.list objects (one per trait)
+      if (is.list(obj) && !is.data.frame(obj) &&
+          length(obj) > 0 &&
+          all(vapply(obj, coda::is.mcmc.list, logical(1)))) {
+        PEcAn.logger::logger.info(
+          "Found Monte Carlo samples (", obj_name, ") in: ", f
+        )
+        result$trait.mcmc <- obj
+        break
+      }
+      # Single mcmc.list (not wrapped in a named list)
+      if (coda::is.mcmc.list(obj)) {
+        PEcAn.logger::logger.info(
+          "Found mcmc.list object (", obj_name, ") in: ", f
+        )
+        result$trait.mcmc <- stats::setNames(list(obj), obj_name)
+        break
+      }
     }
 
-    # Detect distribution summaries (post.distns takes priority naming,but prior.distns also accepted)
+    # Detect distribution summaries (post.distns takes priority, prior.distns also accepted)
     if (exists("post.distns", envir = env, inherits = FALSE)) {
       PEcAn.logger::logger.info(
         "Found distribution summaries (post.distns) in: ", f
@@ -128,17 +150,37 @@ load.posteriors.from.path <- function(path) {
     )
   }
 
+  # Detect joint posterior: check for a companion mcmc.pda.* file in the
+  # same directory, which PDA always creates alongside trait.mcmc.pda.*
+  if (!is.null(result$trait.mcmc)) {
+    scan_dir <- if (dir.exists(path)) path else dirname(path)
+    pda_companions <- list.files(
+      scan_dir, pattern = "^mcmc\\.pda\\.", ignore.case = TRUE
+    )
+    if (length(pda_companions) > 0) {
+      result$is.joint <- TRUE
+      PEcAn.logger::logger.info(
+        "Detected joint posterior (PDA companion file found in ",
+        scan_dir, ")"
+      )
+    }
+  }
+
   return(result)
 }
 
 
 #' Legacy fallback: load posteriors from outdir and/or database
 #'
+#' \strong{Deprecated.} This path is used only when
+#' \code{posterior.file} is \code{NA} and will be removed in a
+#' future release.
+#'
 #' @param outdir PFT output directory
 #' @param posteriorid Posterior ID for database lookup
 #' @param con db connection
 #' @param hostname host name for dbfile lookup
-#' @return List with \code{prior.distns}, \code{trait.mcmc}, \code{is.pda}
+#' @return List with \code{prior.distns}, \code{trait.mcmc}, \code{is.joint}
 #' @keywords internal
 load.posteriors.legacy <- function(outdir = NULL,
                                    posteriorid = NULL,
@@ -147,7 +189,7 @@ load.posteriors.legacy <- function(outdir = NULL,
   result <- list(
     prior.distns = NULL,
     trait.mcmc = NULL,
-    is.pda = FALSE
+    is.joint = FALSE
   )
 
   ## Step 1: Load distribution summaries from outdir
@@ -207,11 +249,11 @@ load.posteriors.legacy <- function(outdir = NULL,
             if (exists("post.distns", envir = env, inherits = FALSE)) {
               result$prior.distns <- result$prior.distns %||% env$post.distns
             }
-            # Check if this is a PDA file (content-based: presence of pda-specific markers,
-            # or fall back to filename heuristic for backward compat)
+            # In the legacy DB path, detect joint posterior via filename
+            # heuristic (PDA convention: trait.mcmc.pda.*)
             fname_lower <- tolower(files$file_name[idx])
             if (grepl("pda", fname_lower)) {
-              result$is.pda <- TRUE
+              result$is.joint <- TRUE
             }
             break # Use first MCMC found
           }
@@ -238,9 +280,11 @@ load.posteriors.legacy <- function(outdir = NULL,
           "Found Monte Carlo samples in outdir file: ", f
         )
         result$trait.mcmc <- env$trait.mcmc
+        # In the legacy outdir-scan path, detect joint posterior via
+        # filename heuristic (PDA convention: trait.mcmc.pda.*)
         fname_lower <- tolower(basename(f))
         if (grepl("pda", fname_lower)) {
-          result$is.pda <- TRUE
+          result$is.joint <- TRUE
         }
         break
       }

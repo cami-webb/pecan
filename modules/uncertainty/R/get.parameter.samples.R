@@ -93,8 +93,8 @@ get.parameter.samples <- function(settings,
     if (!is.null(posterior$trait.mcmc)) {
       distns$trait.mcmc <- posterior$trait.mcmc
       ma.results <- TRUE
-      # PDA samples are fitted together, preserve correlations downstream
-      if (posterior$is.pda) {
+      # Joint posteriors (e.g. from PDA) should preserve correlations
+      if (posterior$is.joint) {
         independent <- FALSE
       }
     } else {
