@@ -8,14 +8,16 @@
 ##' @param sitelon Longitude of the site
 ##' @param start_date Start time of the simulation
 ##' @param end_date End time of the simulation
+##' @param delete_raw logical: remove out.csv after converting?
 ##' @export
 ##' @author Abigail Lewis
 
-model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) {
+model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date, delete_raw = FALSE) {
   runid <- basename(outdir)
+  raw_output <- file.path(outdir, "out.csv")
   
   ### Read in model output in PEPRMT format
-  PEPRMT.output      <- utils::read.csv(file.path(outdir, "out.csv"))
+  PEPRMT.output      <- utils::read.csv(raw_output)
   PEPRMT.output.dims <- dim(PEPRMT.output)
   
   years <- unique(PEPRMT.output$Year)
@@ -108,8 +110,12 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date) 
       ncdf4::ncvar_put(nc, nc_var[[i]], output[[i]])
     }
     ncdf4::nc_close(nc)
-    
+
   }  ### End of year loop
+
+  if (delete_raw) {
+    file.remove(raw_output)
+  }
 } # model2netcdf.PEPRMT
 # ==================================================================================================#
 ## EOF

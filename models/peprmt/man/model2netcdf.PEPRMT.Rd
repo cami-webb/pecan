@@ -4,7 +4,14 @@
 \alias{model2netcdf.PEPRMT}
 \title{Function to convert PEPRMT model output to standard netCDF format}
 \usage{
-model2netcdf.PEPRMT(outdir, sitelat, sitelon, start_date, end_date)
+model2netcdf.PEPRMT(
+  outdir,
+  sitelat,
+  sitelon,
+  start_date,
+  end_date,
+  delete_raw = FALSE
+)
 }
 \arguments{
 \item{outdir}{Location of PEPRMT model output}
@@ -16,6 +23,8 @@ model2netcdf.PEPRMT(outdir, sitelat, sitelon, start_date, end_date)
 \item{start_date}{Start time of the simulation}
 
 \item{end_date}{End time of the simulation}
+
+\item{delete_raw}{logical: remove out.csv after converting?}
 }
 \description{
 Convert PEPRMT output to netCDF
