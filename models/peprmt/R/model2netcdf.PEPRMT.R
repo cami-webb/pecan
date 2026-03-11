@@ -30,7 +30,7 @@ model2netcdf.PEPRMT <- function(outdir, sitelat, sitelon, start_date, end_date, 
     print(paste("---- Processing year: ", y))  #turn on for debugging
     
     ## Subset data for processing
-    sub.PEPRMT.output <- subset(PEPRMT.output, .data$Year == y)
+    sub.PEPRMT.output <- dplyr::filter(PEPRMT.output, .data$Year == y)
     sub.PEPRMT.output.dims <- dim(sub.PEPRMT.output)
 
     # ******************** Declare netCDF variables ********************#
