@@ -31,9 +31,12 @@ try_trait_mapping <- c(
 #' @param trait_map A named character vector for mapping TRY TraitName to PEcAn vname. 
 #'   Names should be TRY TraitName and values should be PEcAn vname. 
 #'   If NULL, defaults to `try_trait_mapping()`.
+#' @param species_map An optional named vector mapping TRY `SpeciesName` to PEcAn BETY `specie_id`. 
+#'   If provided, this is used to assign `specie_id` instead of using the raw `AccSpeciesID`. 
+#'   If omitted, the returning data will include a `species_name` column to help users map PFTs later.
 #' @return A data frame formatted similarly to BETYdb output to be passed to `PEcAn.MA::jagify`.
 #' @export
-format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
+format_try_for_ma <- function(try_data, trait_map = try_trait_mapping, species_map = NULL) {
   # Ensure required columns are present. We do not explicitly filter out rows with missing TraitID 
   # so that covariates can be retained and mapped via trait_map if needed.
   data_filtered <- try_data
@@ -75,7 +78,14 @@ format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
   }
 
   # Prepare specie_id
-  if ("AccSpeciesID" %in% names(data_filtered)) {
+  if (!is.null(species_map) && "SpeciesName" %in% names(data_filtered)) {
+    specie_id_val <- unname(species_map[as.character(data_filtered$SpeciesName)])
+    unmapped_spp <- is.na(specie_id_val)
+    if (any(unmapped_spp)) {
+      warning(sprintf("Some species were not found in species_map and will be assigned NA specie_id: %s", 
+                      paste(unique(data_filtered$SpeciesName[unmapped_spp]), collapse = ", ")))
+    }
+  } else if ("AccSpeciesID" %in% names(data_filtered)) {
     specie_id_val <- data_filtered$AccSpeciesID
   } else if ("SpeciesName" %in% names(data_filtered)) {
     specie_id_val <- as.integer(factor(data_filtered$SpeciesName))
@@ -108,6 +118,7 @@ format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
     time = if ("Time" %in% names(data_filtered)) data_filtered$Time else NA,
     cultivar_id = NA,
     specie_id = specie_id_val,
+    species_name = if ("SpeciesName" %in% names(data_filtered)) data_filtered$SpeciesName else NA,
     mean = mean_val,
     statname = if ("ErrorRisk" %in% names(data_filtered)) "SE" else NA,
     stat = if ("ErrorRisk" %in% names(data_filtered)) as.numeric(data_filtered$ErrorRisk) else as.numeric(NA),
