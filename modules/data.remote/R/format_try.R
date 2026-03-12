@@ -44,8 +44,14 @@ format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
   # Map TRY TraitName to PEcAn variable names using trait_map
   data_filtered$vname <- unname(trait_map[as.character(data_filtered$TraitName)])
   
-  # Filter out unmapped traits
-  data_filtered <- data_filtered[!is.na(data_filtered$vname), ]
+  # Filter out unmapped traits and warn user about what was dropped
+  unmapped_idx <- is.na(data_filtered$vname)
+  if (any(unmapped_idx)) {
+    unmapped_names <- unique(data_filtered$TraitName[unmapped_idx])
+    warning(sprintf("The following TRY traits or covariates were not mapped and will be filtered out: %s", 
+                    paste(unmapped_names, collapse = ", ")))
+  }
+  data_filtered <- data_filtered[!unmapped_idx, ]
   
   if (nrow(data_filtered) == 0) {
     stop("No traits were mapped successfully. Result is empty.")
