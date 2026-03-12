@@ -31,10 +31,9 @@ try_trait_mapping <- c(
 #' @param trait_map A named character vector for mapping TRY TraitName to PEcAn vname. 
 #'   Names should be TRY TraitName and values should be PEcAn vname. 
 #'   If NULL, defaults to `try_trait_mapping()`.
-#' @param citation_id Default citation ID, defaults to -9999 per BETYdb conventions.
 #' @return A data frame formatted similarly to BETYdb output to be passed to `PEcAn.MA::jagify`.
 #' @export
-format_try_for_ma <- function(try_data, trait_map = try_trait_mapping, citation_id = -9999) {
+format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
   # Automatically select only trait data rows (TraitID is not NA) and exclude covariates
   if (!"TraitID" %in% names(try_data)) {
     stop("Input data must contain a 'TraitID' column.")
@@ -98,7 +97,7 @@ format_try_for_ma <- function(try_data, trait_map = try_trait_mapping, citation_
   
   res <- data.frame(
     id = if ("ObsDataID" %in% names(data_filtered)) data_filtered$ObsDataID else 1:nrow(data_filtered),
-    citation_id = citation_id,
+    citation_id = -9999,
     site_id = site_id_val,
     treatment_id = NA,
     name = "control",
@@ -119,7 +118,7 @@ format_try_for_ma <- function(try_data, trait_map = try_trait_mapping, citation_
   )
   
   if ("DatasetID" %in% names(data_filtered)) {
-    res$citation_id <- ifelse(is.na(data_filtered$DatasetID), citation_id, as.numeric(data_filtered$DatasetID))
+    res$citation_id <- ifelse(is.na(data_filtered$DatasetID), -9999, as.numeric(data_filtered$DatasetID))
   }
   if ("ObservationID" %in% names(data_filtered)) {
     res$treatment_id <- as.numeric(data_filtered$ObservationID)
