@@ -34,12 +34,9 @@ try_trait_mapping <- c(
 #' @return A data frame formatted similarly to BETYdb output to be passed to `PEcAn.MA::jagify`.
 #' @export
 format_try_for_ma <- function(try_data, trait_map = try_trait_mapping) {
-  # Automatically select only trait data rows (TraitID is not NA) and exclude covariates
-  if (!"TraitID" %in% names(try_data)) {
-    stop("Input data must contain a 'TraitID' column.")
-  }
-  data_filtered <- try_data[!is.na(try_data$TraitID), ]
-  
+  # Ensure required columns are present. We do not explicitly filter out rows with missing TraitID 
+  # so that covariates can be retained and mapped via trait_map if needed.
+  data_filtered <- try_data
   if (!"TraitName" %in% names(data_filtered) || !("StdValue" %in% names(data_filtered))) {
     stop("Input data must contain 'TraitName' and 'StdValue' columns. Without these, this function cannot format actual traits!")
   }
