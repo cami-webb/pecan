@@ -1,39 +1,59 @@
-#' Writes a configuration files for SIPNET model
+#' Writes configuration files for one invocation of the SIPNET model
 #'
 #' @description
 #' Creates the following SIPNET files:
 #'
-#' - `*.clim` --- SIPNET meteorology driver (from
-#' `settings$run$inputs$met$path`, overriden by `inputs$met$path`). Note that
-#' this determines the ' SIPNET start and end dates. 
 #' - `job.sh` --- Job submission script. Populated from `inst/template.job`
 #' - `events.in` --- Copied from `inputs$events$path` or
 #' `settings$run$inputs$events$path`. This needs to be in the SIPNET event
 #' format; see [write.events.SIPNET()] for generating these files
 #' - `*.param` --- SIPNET parameter file. Includes both traits and initial
 #' conditions.
+#' - `*.clim` --- SIPNET meteorology driver (from
+#' `settings$run$inputs$met$path`, overriden by `inputs$met$path`). Note that
+#' this determines the ' SIPNET start and end dates. Technically write.configs does
+#' not create this file, but rather records its current path in `job.sh` to be used
+#' to create a symlink to it at runtime.
 #'
 #' @details
 #' 
+#' # Model version specification
+#'
+#' `write.config.SIPNET()` matches its output format to the version of Sipnet
+#' listed in `settings$model$revision`. This should be a numeric version
+#' (e.g. `2.0.1`) and needs to match the version of your Sipnet binary.
+#' You can check your binary's version by running
+#' `./path/to/your/sipnet --version`, which should report something similar
+#' to `SIPNET version 2.0.0 (4baf19a66c)`; if it says "illegal option" then you
+#' have Sipnet 1.x and can report the version as "v1".
+#'
 #' # Command line arguments
 #'
-#' SIPNET command line arguments can be passed through a named list via
-#' `settings$model$binary_args`. For example, this...
+#' SIPNET run-time options can be passed through a named list via
+#' `settings$model$options`. For example, this...
 #'
 #' ```
 #' settings$model$binary <- "path/to/sipnet.dev"
-#' settings$model$binary_args <- list(
-#'   "restart-in" = "path/to/restart.in",
-#'   "restart-out" = "path/to/restart.out",
-#'   "quiet" = NULL
+#' settings$model$options <- list(
+#'   RESTART_IN = "path/to/restart.in",
+#'   RESTART_OUT = "path/to/restart.out",
+#'   ANAEROBIC = 1,
+#'   GDD = 0
 #' )
 #' ```
 #'
-#' ...will be rendered the following string in `job.sh`:
+#' ...will be rendered as the following in `sipnet.in...:
 #'
 #' ```
-#' "path/to/sipnet.dev" --restart-in=path/to/restart.in --restart-out=path/to/restart.out --quiet
+#' RESTART_IN = path/to/restart.in
+#' RESTART_OUT = path/to/restart.out
+#' GDD = 0
+#' ANAEROBIC = 1
 #' ```
+#'
+#' ...though not necessarily in this order. If the `sipnet.in` template already
+#' defines an option specified in settings$model$options, its value will be
+#' updated in place; options not already in the file will be added to the bottom.
 #'
 #' @param defaults nested list of named constant parameter values. The
 #' structure is `list(list(constants = list(trait1 = <value>, trait2 = <value>, ...)))`.
