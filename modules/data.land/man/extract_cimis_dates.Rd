@@ -4,7 +4,7 @@
 \alias{extract_cimis_dates}
 \title{Extract CIMIS reference ET for multiple dates}
 \usage{
-extract_cimis_dates(design_points, dates, ...)
+extract_cimis_dates(design_points, dates, .progress = FALSE, ...)
 }
 \arguments{
 \item{design_points}{`data.frame` of design points with columns
@@ -12,7 +12,11 @@ extract_cimis_dates(design_points, dates, ...)
 
 \item{dates}{Sequence of dates for which to extract data}
 
-\item{...}{Additional arguments to `purrr::map`}
+\item{.progress}{Whether to show a progress bar. Use \code{TRUE} to turn on
+a basic progress bar, use a string to give it a name, or see
+\link[purrr]{progress_bars} for more details.}
+
+\item{...}{Additional arguments to [extract_cimis_date()]}
 }
 \value{
 `design_points` `data.frame` extended with ETref data for all dates.

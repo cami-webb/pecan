@@ -76,16 +76,18 @@ extract_cimis_date <- function(
 #' Extract CIMIS reference ET for multiple dates
 #'
 #' @param dates Sequence of dates for which to extract data
-#' @param ... Additional arguments to `purrr::map`
+#' @param ... Additional arguments to [extract_cimis_date()]
 #' @inheritParams extract_cimis_date
+#' @inheritParams purrr::map
 #'
 #' @return `design_points` `data.frame` extended with ETref data for all dates.
 #' @export
-extract_cimis_dates <- function(design_points, dates, ...) {
+extract_cimis_dates <- function(design_points, dates, .progress = FALSE, ...) {
   df_list <- purrr::map(
     dates,
     purrr::possibly(extract_cimis_date, NULL, quiet = FALSE),
     design_points = design_points,
+    .progress = .progress,
     ...
   )
   dplyr::bind_rows(df_list)

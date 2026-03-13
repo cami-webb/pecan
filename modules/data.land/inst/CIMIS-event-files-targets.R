@@ -5,6 +5,10 @@
 
 library(targets)
 
+devtools::document("modules/data.land")
+devtools::install("modules/data.land", upgrade = FALSE)
+devtools::reload("modules/data.land")
+
 targets_file <- here::here("_targets.R")
 targets_store <- here::here("_targets/")
 tar_config_set(
@@ -18,34 +22,9 @@ tar_script(
     library(targets)
     library(tarchetypes)
 
-    # if (interactive()) {
-    devtools::load_all(here::here("modules/data.land"))
-    # } else {
-    #   library(PEcAn.data.land)
-    # }
-
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
-
-    #' Generate a sequence of dates for a given year/season (1=winter, 2=spring,
-    #' 3=summer, 4=fall).
-    fill_season <- function(year, season) {
-      if (season == 1) {
-        start <- lubridate::make_date(year, 1, 1)
-        end   <- lubridate::make_date(year, 3, 31)
-      } else if (season == 2) {
-        start <- lubridate::make_date(year, 4, 1)
-        end   <- lubridate::make_date(year, 6, 30)
-      } else if (season == 3) {
-        start <- lubridate::make_date(year, 7, 1)
-        end   <- lubridate::make_date(year, 9, 30)
-      } else if (season == 4) {
-        start <- lubridate::make_date(year, 10, 1)
-        end   <- lubridate::make_date(year, 12, 31)
-      }
-      seq.Date(start, end, "day")
-    }
 
     #' Calculate effective available water capacity (mm) for a soil profile
     #' clipped to a given rooting depth.
@@ -97,12 +76,7 @@ tar_script(
     # Package options
     # -------------------------------------------------------------------------
 
-    tar_option_set(
-      packages = c(
-        "dplyr", "tidyr", "purrr", "readr", "tibble",
-        "lubridate", "glue", "ggplot2", "arrow", "rlang"
-      )
-    )
+    tar_option_set(packages = c("ggplot2", "rlang"))
 
     # -------------------------------------------------------------------------
     # Pipeline
@@ -110,119 +84,95 @@ tar_script(
 
     list(
 
-      # --- Inputs from environment variables ---------------------------------
+      # --- Input paths
 
-      tar_target(design_points_path, Sys.getenv("DESIGN_POINTS")),
-      tar_target(cimis_eto_cog_path, Sys.getenv("CIMIS_ETO_COG")),
-      tar_target(parcels_path,       Sys.getenv("LANDIQ_PARCELS")),
-      tar_target(crops_path,         Sys.getenv("LANDIQ_CROPS")),
+      tar_target(design_points_path, path.expand(Sys.getenv("DESIGN_POINTS"))),
+      tar_target(cimis_eto_cog_path, path.expand(Sys.getenv("CIMIS_ETO_COG"))),
+      tar_target(parcels_path,       path.expand(Sys.getenv("LANDIQ_PARCELS"))),
+      tar_target(crops_path,         path.expand(Sys.getenv("LANDIQ_CROPS"))),
+      tar_target(mslsp_path,         path.expand(Sys.getenv("LANDIQ_TIMESERIES"))),
       tar_target(event_output_dir,   path.expand(Sys.getenv("EVENT_OUTPUT_DIR"))),
-
-      # --- Validate all input paths exist ------------------------------------
 
       tar_target(validated_paths, {
         stopifnot(
           file.exists(design_points_path),
           dir.exists(cimis_eto_cog_path),
           file.exists(parcels_path),
-          file.exists(crops_path)
+          file.exists(crops_path),
+          dir.exists(mslsp_path),
+          length(list.files(mslsp_path, "\\.parquet")) == 7
         )
         dir.create(event_output_dir, showWarnings = FALSE, recursive = TRUE)
         TRUE
       }),
 
-      # --- Base inputs -------------------------------------------------------
-
-      tar_target(
-        dates,
-        seq.Date(as.Date("2020-03-01"), as.Date("2020-11-30"), "day")
-      ),
-
       tar_target(
         design_points,
-        readr::read_csv(design_points_path, show_col_types = FALSE) |> head(10)
-      ),
-
-      # --- Remote data extractions (slow; most benefit from caching) ---------
-
-      tar_target(
-        etref,
-        design_points |>
-          extract_cimis_dates(dates, cimis_eto_cog_path, .progress = TRUE)
+        readr::read_csv(design_points_path, show_col_types = FALSE) |>
+          # Remove duplicate IDs
+          dplyr::slice(1, .by = "id")
       ),
 
       tar_target(
-        precip,
-        extract_chirps_remote(design_points, dates)
+        dp_with_parcels,
+        PEcAn.data.land::get_landiq_parcel_ids(design_points, parcels_path) |>
+          dplyr::mutate(parcel_id = as.character(parcel_id))
+      ),
+
+      tar_target(
+        dp_with_phenology,
+        PEcAn.data.land::mslsp_to_canopycover(
+          mslsp_path,
+          parcel_ids = unique(dp_with_parcels[["parcel_id"]])
+        ) |>
+          dplyr::mutate(
+            landiq_SUBCLASS = as.integer(.data$landiq_SUBCLASS)
+          ) |>
+          dplyr::inner_join(dp_with_parcels, by = "parcel_id") |>
+          dplyr::select(-dplyr::starts_with("UniqueID_"))
       ),
 
       # --- LandIQ crop data --------------------------------------------------
 
       tar_target(
-        dp_with_crops,
-        get_landiq(
-          design_points,
-          parcels_file = parcels_path,
-          crops_file   = crops_path
-        ) |>
-          tibble::as_tibble()
-      ),
-
-      #' NOTE: Some LandIQ classes/subclasses map onto multiple BISM crop types.
-      #' HACK: select just the first crop per class/subclass group.
-      tar_target(
-        bism_crop_unique,
-        bism_kc_by_crop |>
-          dplyr::distinct(landiq_class, landiq_subclass, crop_name) |>
-          dplyr::slice(1, .by = c("landiq_class", "landiq_subclass"))
-      ),
-
-      tar_target(
         design_point_crops,
-        dp_with_crops |>
-          dplyr::left_join(
-            bism_crop_unique,
-            by = c("CLASS" = "landiq_class", "SUBCLASS" = "landiq_subclass")
-          )
-      ),
+        {
+          #' NOTE: Some LandIQ classes/subclasses map onto multiple BISM crop types.
+          #' HACK: select just the first crop per class/subclass group.
+          bism_crop_unique <- PEcAn.data.land::bism_kc_by_crop |>
+            dplyr::distinct(.data$landiq_class, .data$landiq_subclass, .data$crop_name) |>
+            dplyr::slice(1, .by = c("landiq_class", "landiq_subclass"))
 
-      #' Expand crop seasons to daily rows using hard-coded quarterly dates.
-      #' In reality these would be resolved from phenology data.
-      tar_target(
-        dp_crops_filled,
-        design_point_crops |>
-          dplyr::filter(!is.na(season)) |>
-          tidyr::fill(
-            "CLASS", "SUBCLASS", "crop_name",
-            .direction = "downup",
-            .by = "parcel_id"
-          ) |>
-          dplyr::mutate(date = purrr::map2(year, season, fill_season)) |>
-          tidyr::unnest(date) |>
-          dplyr::filter(date %in% dates)
-      ),
+          dp_crops <- dp_with_phenology |>
+            dplyr::left_join(
+              bism_crop_unique,
+              by = c(
+                "landiq_CLASS" = "landiq_class",
+                "landiq_SUBCLASS" = "landiq_subclass"
+              )
+            )
 
-      #' Warn about parcels with no matching BIS crop, then filter them out.
-      tar_target(
-        dp_with_cropname, {
-          missing_crops <- dp_crops_filled |> dplyr::filter(is.na(crop_name))
+          missing_crops <- dp_crops |> dplyr::filter(is.na(crop_name))
           if (nrow(missing_crops) > 0) {
             missing_crop_strs <- missing_crops |>
-              dplyr::distinct(CLASS, SUBCLASS) |>
+              dplyr::distinct(.data$landiq_CLASS, .data$landiq_SUBCLASS) |>
               dplyr::mutate(
-                string = glue::glue("CLASS: {CLASS} SUBCLASS: {SUBCLASS}")
+                string = glue::glue(
+                  "CLASS: {.data$landiq_CLASS} ",
+                  "SUBCLASS: {.data$landiq_SUBCLASS}"
+                )
               ) |>
-              dplyr::pull(string)
+              dplyr::pull(.data$string)
             warning(
               "Skipping ", nrow(missing_crops),
               " rows with no matching BIS crop. Relevant pairs are: [",
               paste(missing_crop_strs, collapse = "; "), "]"
             )
           }
-          dp_crops_filled |>
-            dplyr::filter(!is.na(crop_name)) |>
+          dp_crops |>
+            dplyr::filter(!is.na(.data$crop_name)) |>
             dplyr::left_join(
-              crop_whc |>
+              PEcAn.data.land::crop_whc |>
                 dplyr::select("crop_name", "whc_min_frac", "rooting_depth_m"),
               by = "crop_name"
             )
@@ -232,22 +182,24 @@ tar_script(
       # --- SSURGO soil data --------------------------------------------------
 
       tar_target(
-        design_points_sf,
-        dplyr::distinct(design_points, id, lon, lat)
-      ),
-
-      tar_target(
         mukeys_list,
-        purrr::map2(
-          design_points_sf$lon,
-          design_points_sf$lat,
-          ~ ssurgo_mukeys_point(point = c(.x, .y), distance = 20)
-        )
+        {
+          design_points_sf <- design_points |> 
+            dplyr::distinct(id, lon, lat)
+          purrr::map2(
+            design_points_sf$lon,
+            design_points_sf$lat,
+            ~ PEcAn.data.land::ssurgo_mukeys_point(
+              point = c(.x, .y),
+              distance = 10
+            )
+          )
+        }
       ),
 
       tar_target(
         soil_raw,
-        gSSURGO.Query(
+        PEcAn.data.land::gSSURGO.Query(
           mukeys = unique(unlist(mukeys_list)),
           fields = c("chorizon.awc_r", "chorizon.hzdept_r", "chorizon.hzdepb_r")
         )
@@ -261,9 +213,9 @@ tar_script(
 
       tar_target(
         dp_with_whc,
-        dp_with_cropname |>
+        design_point_crops |>
           dplyr::mutate(
-            mukey = mukeys_list[match(id, design_points_sf$id)]
+            mukey = mukeys_list[match(id, design_points$id)]
           ) |>
           tidyr::unnest(mukey) |>
           dplyr::mutate(mukey = as.numeric(mukey)) |>
@@ -283,6 +235,30 @@ tar_script(
             whc_mm = dplyr::if_else(whc_mm > 0, whc_mm, 500, missing = 500)
           )
       ),
+
+      # --- Remote data extractions (slow; most benefit from caching) ---------
+
+      tar_target(
+        precip_et_dates,
+        with(design_point_crops, seq(min(date), max(date), by = "1 day"))
+      ),
+
+      tar_target(
+        etref,
+        design_point_crops |>
+          PEcAn.data.land::extract_cimis_dates(
+            precip_et_dates,
+            cimis_eto_cog_path,
+            download_missing = TRUE,
+            .progress = TRUE
+          )
+      ),
+
+      tar_target(
+        precip,
+        PEcAn.data.land::extract_chirps_remote(design_points, precip_et_dates)
+      ),
+
 
       # --- ETc and water balance ---------------------------------------------
 
@@ -426,4 +402,11 @@ tar_script(
 )
 
 #' Run the pipeline. Targets that are already up-to-date will be skipped.
-tar_make()
+# tar_make()
+# tar_invalidate(dp_with_crops)
+tar_make(c(precip))
+
+if (interactive()) {
+  # tar_load(c("design_points", "dp_with_crops", "phenology"))
+  tar_load_everything()
+}

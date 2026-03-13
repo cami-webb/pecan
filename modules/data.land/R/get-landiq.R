@@ -10,12 +10,14 @@
 get_landiq <- function(design_points, parcels_file, crops_file) {
   dp_with_parcels <- get_landiq_parcel_ids(design_points, parcels_file)
 
-  crops <- arrow::read_parquet(crops_file) |>
-    dplyr::semi_join(dp_with_parcels, by = "parcel_id") |>
-    dplyr::select("parcel_id", "year", "season", "CLASS", "SUBCLASS")
+  crops <- arrow::open_dataset(crops_file) |>
+    dplyr::filter(.data$parcel_id %in% unique(dp_with_parcels[["parcel_id"]])) |> 
+    dplyr::select("parcel_id", "year", "season", "CLASS", "SUBCLASS") |>
+    dplyr::collect()
 
   dp_with_crops <- dp_with_parcels |>
-    dplyr::left_join(crops, by = "parcel_id")
+    dplyr::left_join(crops, by = "parcel_id") |>
+    tibble::as_tibble()
 
   dp_with_crops
 }

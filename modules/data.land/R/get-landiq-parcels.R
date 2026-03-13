@@ -14,7 +14,8 @@ get_landiq_parcel_ids <- function(design_points, parcels_file) {
     sf::st_transform(sf::st_crs(parcels_vect))
   dp_vect <- terra::vect(pts_sf)
   matched <- terra::intersect(dp_vect, parcels_vect)
-  matched_sf <- sf::st_as_sf(matched)
+  matched_sf <- sf::st_as_sf(matched) |>
+    sf::st_drop_geometry()
   dp_with_parcels <- design_points |>
     dplyr::left_join(matched_sf, by = "id")
   dp_with_parcels
