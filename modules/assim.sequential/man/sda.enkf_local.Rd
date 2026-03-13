@@ -14,7 +14,7 @@ sda.enkf_local(
   outdir = NULL,
   control = list(TimeseriesPlot = FALSE, OutlierDetection = FALSE, send_email = NULL,
     keepNC = TRUE, forceRun = TRUE, MCMC.args = NULL, merge_nc = TRUE),
-  debias = list(cov.dir = NULL, start.year = NULL)
+  debias = list(cov.dir = NULL, t.start = NULL)
 )
 }
 \arguments{
@@ -42,9 +42,9 @@ sda.enkf_local(
 `merge_nc` determine if we want to merge all netCDF files across sites and ensembles.
 If it's set as `TRUE`, we will then combine all netCDF files into the `merged_nc` folder within the `outdir`.}
 
-\item{debias}{List: R list containing the covariance directory and the start year.
+\item{debias}{List: R list containing the covariance directory and the start time point.
 covariance directory should include GeoTIFF files named by year.
-start year is numeric input which decide when to start the debiasing feature.}
+start time point is numeric input which decide when to start the debiasing feature.}
 }
 \value{
 NONE
