@@ -188,7 +188,7 @@ met2model.SIPNET <- function(in.path,
       lat <- ncdf4::ncvar_get(nc, "latitude")
       lon <- ncdf4::ncvar_get(nc, "longitude")
       Tair <-ncdf4::ncvar_get(nc, "air_temperature")  ## in Kelvin
-      Tair_C <- PEcAn.utils::ud_convert(Tair, "K", "degC")
+      Tair_C <- PEcAn.utils::ud_convert(as.numeric(Tair), "K", "degC")
       Qair <-ncdf4::ncvar_get(nc, "specific_humidity")  #humidity (kg/kg)
       
       # if we have wind speed.
