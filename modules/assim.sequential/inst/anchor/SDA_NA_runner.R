@@ -92,7 +92,7 @@ qsub_sda(settings = settings,
                         merge_nc = TRUE),
          block.index = NULL,
          debias = list(cov.dir = "/projectnb/dietzelab/dongchen/anchorSites/NA_runs/covariates_lc_ts/covariates_nolatlon/", 
-                       t.start = 1), prefix = "batch_Mar_10")
+                       t.start = 1, residual.lag = TRUE), prefix = "batch_Mar_10")
 
 # export sda output.
 PEcAnAssimSequential::sda_assemble("/projectnb/dietzelab/dongchen/anchorSites/NA_runs/SDA_8k_site/batch_Mar_10", 
