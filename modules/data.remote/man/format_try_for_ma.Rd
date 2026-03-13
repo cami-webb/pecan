@@ -4,14 +4,14 @@
 \alias{format_try_for_ma}
 \title{Convert TRY database data to PEcAn format for meta-analysis}
 \usage{
-format_try_for_ma(try_data, trait_map = try_trait_mapping, species_map = NULL)
+format_try_for_ma(try_data, trait_map = try_trait_mapping(), species_map = NULL)
 }
 \arguments{
 \item{try_data}{A data frame containing data from the TRY database.}
 
 \item{trait_map}{A named character vector for mapping TRY TraitName to PEcAn vname. 
 Names should be TRY TraitName and values should be PEcAn vname. 
-If NULL, defaults to \code{try_trait_mapping()}.}
+Defaults to \code{try_trait_mapping()}.}
 
 \item{species_map}{An optional named vector mapping TRY \code{SpeciesName} to PEcAn BETY \code{specie_id}.
 If provided, this is used to assign \code{specie_id} instead of using the raw \code{AccSpeciesID}.

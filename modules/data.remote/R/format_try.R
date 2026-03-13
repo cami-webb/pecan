@@ -2,18 +2,20 @@
 #' 
 #' @return A named character vector where names are TRY trait names and values are PEcAn variable names.
 #' @export
-try_trait_mapping <- c(
-  `Leaf carbon (C) content per leaf dry mass` = "leafC",
-  `Leaf nitrogen (N) content per leaf dry mass` = "leafN",
-  `Leaf phosphorus (P) content per leaf dry mass` = "leafP",
-  `Specific leaf area (SLA) or specific leaf area (SLA)` = "SLA",
-  `Leaf area per leaf dry mass (specific leaf area, SLA or 1/LMA)` = "SLA",
-  `Leaf dry mass per leaf fresh mass (leaf dry matter content, LDMC)` = "LDMC",
-  `Wood density (stem specific density, stem dry mass per stem fresh volume) or wood specific gravity` = "wood_density",
-  `Plant height vegetative` = "plant_height",
-  `Leaf assimilation rate (Amax)` = "Amax",
-  `Leaf respiration rate in the dark per leaf area (dark respiration)` = "dark_respiration"
-)
+try_trait_mapping <- function() {
+  c(
+    `Leaf carbon (C) content per leaf dry mass` = "leafC",
+    `Leaf nitrogen (N) content per leaf dry mass` = "leafN",
+    `Leaf phosphorus (P) content per leaf dry mass` = "leafP",
+    `Specific leaf area (SLA) or specific leaf area (SLA)` = "SLA",
+    `Leaf area per leaf dry mass (specific leaf area, SLA or 1/LMA)` = "SLA",
+    `Leaf dry mass per leaf fresh mass (leaf dry matter content, LDMC)` = "LDMC",
+    `Wood density (stem specific density, stem dry mass per stem fresh volume) or wood specific gravity` = "wood_density",
+    `Plant height vegetative` = "plant_height",
+    `Leaf assimilation rate (Amax)` = "Amax",
+    `Leaf respiration rate in the dark per leaf area (dark respiration)` = "dark_respiration"
+  )
+}
 
 #' Convert TRY database data to PEcAn format for meta-analysis
 #' 
@@ -30,13 +32,13 @@ try_trait_mapping <- c(
 #' @param try_data A data frame containing data from the TRY database.
 #' @param trait_map A named character vector for mapping TRY TraitName to PEcAn vname. 
 #'   Names should be TRY TraitName and values should be PEcAn vname. 
-#'   If NULL, defaults to `try_trait_mapping()`.
+#'   Defaults to `try_trait_mapping()`.
 #' @param species_map An optional named vector mapping TRY `SpeciesName` to PEcAn BETY `specie_id`. 
 #'   If provided, this is used to assign `specie_id` instead of using the raw `AccSpeciesID`. 
 #'   If omitted, the returning data will include a `species_name` column to help users map PFTs later.
 #' @return A data frame formatted similarly to BETYdb output to be passed to `PEcAn.MA::jagify`.
 #' @export
-format_try_for_ma <- function(try_data, trait_map = try_trait_mapping, species_map = NULL) {
+format_try_for_ma <- function(try_data, trait_map = try_trait_mapping(), species_map = NULL) {
   # Ensure required columns are present. We do not explicitly filter out rows with missing TraitID 
   # so that covariates can be retained and mapped via trait_map if needed.
   data_filtered <- try_data
