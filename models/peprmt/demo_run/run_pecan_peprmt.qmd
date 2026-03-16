@@ -37,7 +37,7 @@ This notebook demonstrates how to:
 
 ### The Scenario Being Modeled:
 
-We are modeling ____ at ____ sites. The model configuration uses the PEPRMT-Tidal process-based ecosystem model. [model details]
+We are modeling greenhouse gas dynamics (gross primary productivity, ecosystem respiration, and methane emissions) at ____ sites. The model configuration uses the PEPRMT-Tidal process-based ecosystem model. [model details]
 
 The simulation is run for _____ time period. 
 
@@ -56,8 +56,15 @@ options(repos = c(
   pecanproject = 'https://pecanproject.r-universe.dev',
   CRAN = 'https://cloud.r-project.org'))
 # Download and install PEcAn.all in R
-install.packages(c('PEcAn.all', 'PEcAn.SIPNET'))
+install.packages(c('PEcAn.all', 'PEcAn.PEPRMT'))
 ```
+
+```{r}
+remotes::install_github("pecanproject/pecan#3871", subdir = "base/all", ref = "develop")
+remotes::install_github("abbylewis/pecan", subdir = "models/peprmt", 
+                        ref = "peprmt")
+```
+
 
 (Note that the chunk above does not run automatically since it will overwrite a version of PEcAn you installed by other methods. Run it by hand when needed.)
 
@@ -86,15 +93,6 @@ This section prints your R session information for reproducibility. Having this 
 
 ```{r version-info}
 PEcAn.all::pecan_version()
-```
-
-# Install PEPRMT
-
-If you haven't already installed the PEPRMT R package, you can do so by running the following code. 
-
-```{r download-peprmt}
-# Install from GitHub
-devtools::install_github("https://github.com/abbylewis/PEPRMT-Tidal")
 ```
 
 # Load PEcAn Packages
@@ -349,7 +347,7 @@ If you want to remove all files and directories created by this workflow and sta
 ```{r cleanup}
 # WARNING: This will permanently delete all workflow output files!
 # Uncomment the line below to enable cleanup.
-# fs::dir_delete(settings$outdir)
+fs::dir_delete(settings$outdir)
 ```
 
 # Session Info
