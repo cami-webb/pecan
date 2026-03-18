@@ -60,10 +60,5 @@
   <name>localhost</name>
   <outdir><!-- altered at config time -->output/out</outdir>
   <rundir><!-- altered at config time -->output/run</rundir>
-  <modellauncher>
-    <binary>parallel -j ${NCPUS:-1} --skip-first-line '{}/job.sh' ::::</binary>
-    <qsub.extra>""<!-- apparently required by prepare.settings, so here's an empty string --></qsub.extra>
-    <Njobmax>1000</Njobmax>
-  </modellauncher>
  </host>
 </pecan>

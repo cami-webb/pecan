@@ -335,13 +335,6 @@
   <name>localhost</name>
   <outdir>output/out</outdir>
   <rundir>output/run</rundir>
-  <modellauncher>
-   <binary>parallel -j ${NCPUS:-1} --skip-first-line &apos;{}/job.sh&apos; ::::</binary>
-   <qsub.extra>
-    <text>&quot;&quot;</text>
-   </qsub.extra>
-   <Njobmax>1000</Njobmax>
-  </modellauncher>
  </host>
  <multisettings>
   <multisettings>run</multisettings>
