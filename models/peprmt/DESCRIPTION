@@ -27,8 +27,6 @@ Suggests:
     terra,
     testthat (>= 1.0.2),
     xts
-#SystemRequirements: dalec
-OS_type: unix
 License: BSD_3_clause + file LICENSE
 Copyright: Authors
 LazyLoad: yes
