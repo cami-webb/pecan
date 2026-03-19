@@ -1,15 +1,54 @@
 ##' Get trait data from the database for a single PFT
 ##'
-##' @details `pft` should be a list containing at least `name` and `outdir`, and optionally `posteriorid` and `constants`. BEWARE: All existing files in `outir` will be deleted!
-##' @param pft list of settings for the pft whose traits to retrieve. See details
-##' @param modeltype type of model that is used, this is used to distinguish between different pfts with the same name.
+##' Queries BETYdb for trait observations and prior distributions for a single
+##' plant functional type (PFT). Results are saved to `.RData` and `.csv` files
+##' in the PFT output directory (`pft$outdir`), and also registered in the
+##' database as posterior records when `write = TRUE`.
+##'
+##' @details
+##' `pft` should be a list containing at least `name` and `outdir`, and
+##' optionally `posteriorid` and `constants`.
+##' **BEWARE:** All existing files in `pft$outdir` will be deleted on entry.
+##'
+##' **File-based side effects (saved to `pft$outdir`):**
+##' \describe{
+##'   \item{`trait.data.Rdata`}{Contains a single object `trait.data`: a named
+##'     list of data frames, one per trait. Each data frame has columns from
+##'     BETYdb's traits/yields views (e.g., `mean`, `stat`, `n`, `site_id`,
+##'     `treatment_id`). Names correspond to trait variable names
+##'     (e.g., `"SLA"`, `"Vcmax"`).}
+##'   \item{`prior.distns.Rdata`}{Contains a single object `prior.distns`: a
+##'     data frame with one row per trait and columns `distn`, `parama`,
+##'     `paramb`, and `n`. Row names are trait variable names. Traits listed
+##'     in `pft$constants` are excluded.}
+##'   \item{`trait.data.csv`}{CSV export of `trait.data` (all traits
+##'     row-bound).}
+##'   \item{`prior.distns.csv`}{CSV export of `prior.distns`.}
+##'   \item{`species.csv` or `cultivars.csv`}{PFT membership list used to
+##'     detect changes between runs.}
+##' }
+##'
+##' **Downstream contract:** The files `trait.data.Rdata` and
+##' `prior.distns.Rdata` are expected by [run.meta.analysis.pft()], which
+##' loads them from `pft$outdir`. This implicit file-based coupling means
+##' the two functions must agree on directory path and object names. A future
+##' refactoring goal is to pass these objects directly via function arguments
+##' instead.
+##'
+##' @param pft list of settings for the pft whose traits to retrieve. See details.
+##' @param modeltype type of model that is used, this is used to distinguish
+##'   between different pfts with the same name.
 ##' @param dbfiles location where previous results are found
 ##' @param dbcon database connection
-##' @param forceupdate set this to true to force an update, auto will check to see if an update is needed.
+##' @param forceupdate set this to true to force an update, auto will check to
+##'   see if an update is needed.
 ##' @param write (Logical) If `TRUE` updated posteriors will be written to
-##'   BETYdb.  Defaults to FALSE.
+##'   BETYdb.  Defaults to `FALSE`.
 ##' @param trait.names list of trait names to retrieve
-##' @return updated pft with posteriorid
+##' @return The `pft` input list, updated with `pft$posteriorid` set to the
+##'   ID of the (possibly new) posterior record in BETYdb. Note: the function's
+##'   primary outputs (`trait.data`, `prior.distns`) are currently communicated
+##'   only through files saved in `pft$outdir`, not through the return value.
 ##' @author David LeBauer, Shawn Serbin, Rob Kooper
 ##' @export
 get.trait.data.pft <-
