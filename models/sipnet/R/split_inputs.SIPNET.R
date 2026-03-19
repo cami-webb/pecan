@@ -22,7 +22,7 @@ split_inputs.SIPNET <- function(start.time, stop.time, inputs, overwrite = FALSE
   if(is.null(outpath)){
     outpath <- path
   }
-  if(!dir.exists(outpath)) dir.create(outpath)
+  if(!dir.exists(outpath)) dir.create(outpath, recursive = TRUE)
   
 
   file <- NA
