@@ -1,12 +1,3 @@
-
-count_file_lines <- function(path) {
-  system2("wc", c("-l", path), stdout = TRUE) |>
-    trimws() |>
-    strsplit("\\s+") |>
-    sapply("[[", 1) |>
-    as.integer()
-}
-
 test_that("split_inputs", {
 
   climfile <- system.file("niwot.clim", package = "PEcAn.SIPNET")
@@ -32,23 +23,15 @@ test_that("split_inputs", {
   expect_length(clim_split, 4)
   expect_true(all(file.exists(clim_split)))
 
-  # All lines appear in exactly 1 split file
-  expect_equal(
-    clim_split |> sapply(count_file_lines) |> sum(),
-    count_file_lines(climfile)
-  )
-  # Lines are numerically identical
+  # All lines appear,numerically equal, in exactly 1 split file
   # NB raw text does differ (split_inputs changes some `0.000` to `0`, etc),
   # but should parse equal when read as numeric.
   expect_equal(
-    read.table(climfile, nrows = 5),
-    read.table(clim_split[1], nrows = 5)
+    read.table(climfile),
+    clim_split |>
+      lapply(read.table) |>
+      do.call(what = "rbind")
   )
-  expect_equal(
-    read.table(text = system2("tail", c("-n5", climfile), stdout = TRUE)),
-    read.table(text = system2("tail", c("-n5", clim_split[4]), stdout = TRUE))
-  )
-
 })
 
 test_that("v2 clim format", {
@@ -62,6 +45,6 @@ test_that("v2 clim format", {
     outpath = outdir
   )
   expect_length(clim_split, 1)
-  expect_equal(count_file_lines(clim_split), 90 * 2) # Jan-March 2x/day
+  expect_length(readLines(clim_split), 90 * 2) # Jan-March 2x/day
   expect_equal(ncol(read.table(clim_split, nrows = 1)), 12)
 })
