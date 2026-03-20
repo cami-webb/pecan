@@ -10,9 +10,7 @@ calc_water_balance(
   whc,
   whc_min_frac,
   W_initial = NULL,
-  w_min = NULL,
-  seepage_rate = NULL,
-  is_rice = FALSE
+  w_min = NULL
 )
 }
 \arguments{
@@ -35,11 +33,6 @@ Can be a single value or a vector of the same length as `et`.}
 triggered when soil water falls below this level; defaults to
 `whc_min_frac * whc` if NULL.
 Can be a single value or a vector of the same length as `et`.}
-
-\item{seepage_rate}{Daily seepage loss for rice paddies (distance / time);
-only used when `is_rice = TRUE`}
-
-\item{is_rice}{Logical; if TRUE, applies a constant seepage loss (mm/day)}
 }
 \value{
 List with vectors: W_t (soil water), irr (irrigation), runoff

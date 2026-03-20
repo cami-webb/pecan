@@ -8,12 +8,14 @@ apply_water_balance(df, idcol, whc_mm = 500)
 }
 \arguments{
 \item{df}{Data frame with columns: `date`, `location_id`, `etc_mm_day`,
-`precip_mm_day`, and `whc_min_frac` (optional, defaults to 0.375).
+`precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to 0.375).
 If a `whc_mm` column is present, it is used as the water holding capacity.}
 
-\item{idcol}{Column name for grouping (typically, `location_id`, `parcel_id` or similar)}
+\item{idcol}{Column name for grouping (typically, `location_id`, `parcel_id`
+or similar)}
 
-\item{whc_mm}{Water holding capacity (mm); ignored if `whc_mm` is a column in `df`.}
+\item{whc_mm}{Water holding capacity (mm); ignored if `whc_mm` is a column
+in `df`.}
 }
 \value{
 Data frame with added columns: `W_t`, `irr`, `runoff`

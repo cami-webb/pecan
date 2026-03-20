@@ -32,9 +32,6 @@
 #'   triggered when soil water falls below this level; defaults to
 #'   `whc_min_frac * whc` if NULL.
 #'   Can be a single value or a vector of the same length as `et`.
-#' @param seepage_rate Daily seepage loss for rice paddies (distance / time);
-#'   only used when `is_rice = TRUE`
-#' @param is_rice Logical; if TRUE, applies a constant seepage loss (mm/day)
 #' @return List with vectors: W_t (soil water), irr (irrigation), runoff
 #' @examples
 #' # Calculate WHC from field capacity, wilting point, and rooting depth
@@ -55,10 +52,9 @@ calc_water_balance <- function(
   whc,
   whc_min_frac,
   W_initial = NULL, #nolint: object_name_linter
-  w_min = NULL,
-  seepage_rate = NULL,
-  is_rice = FALSE
+  w_min = NULL
 ) {
+
   # nolint start: object_name_linter
   n <- length(et)
 
@@ -77,7 +73,12 @@ calc_water_balance <- function(
       x
     } else {
       PEcAn.logger::logger.severe(
-        sprintf("%s must have length 1 or %d; actual length = %d", name, n, length(x))
+        sprintf(
+          "%s must have length 1 or %d; actual length = %d",
+          name,
+          n,
+          length(x)
+        )
       )
     }
   }
@@ -87,13 +88,11 @@ calc_water_balance <- function(
     whc_min_frac <- ensure_vec(whc_min_frac, n, "whc_min_frac")
   }
 
-  if (is_rice && is.null(seepage_rate)) {
-    PEcAn.logger::logger.severe("Seepage rate must be defined for rice fields")
-  }
-
   if (is.null(w_min)) {
     if (is.null(whc_min_frac)) {
-      PEcAn.logger::logger.severe("Either whc_min_frac or w_min must be provided")
+      PEcAn.logger::logger.severe(
+        "Either whc_min_frac or w_min must be provided"
+      )
     }
     w_min <- whc_min_frac * whc
   } else {
@@ -112,13 +111,10 @@ calc_water_balance <- function(
   runoff <- numeric(n)
 
   for (t in seq_len(n)) {
-    # Only water above w_min is available for seepage
-    seepage <- if (is_rice) min(seepage_rate, max(0, W_prev - w_min[t])) else 0.0
-
     # Potential state after precip and ET
-    W0 <- W_prev + precip[t] - et[t] - seepage
+    W0 <- W_prev + precip[t] - et[t]
 
-    # If W0 falls below w_min (e.g., high ET and seepage; low precip), irrigate
+    # If W0 falls below w_min (e.g., high ET; low precip), irrigate
     # to field capacity (i.e., full WHC).
     if (W0 < w_min[t]) {
       irr[t] <- whc[t] - W0
@@ -144,20 +140,158 @@ calc_water_balance <- function(
   list(W_t = W_t, irr = irr, runoff = runoff)
 }
 
+#' Calculate water balance for a flooded rice paddy
+#'
+#' Models the water balance of a flooded rice system with a two-layer
+#' structure: a ponded water layer above a saturated soil profile. This is
+#' physically distinct from the upland soil water balance in
+#' calc_water_balance(). Water is managed to maintain a target flood depth,
+#' with support for mid-season drainage events.
+#'
+#' State variable:
+#'   - pond_depth: depth of standing water above the soil surface
+#'
+#' The soil profile is assumed to be continuously saturated during flooded
+#' periods, so plant-available soil water is not tracked separately. ET is
+#' applied directly to the pond layer (open-water ET during flooded periods).
+#'
+#' Irrigation is triggered when pond_depth falls below flood_min. Farmers
+#' refill to flood_target. Runoff (bund overflow) occurs when pond_depth
+#' exceeds flood_max.
+#'
+#' Mid-season drainage is specified as a logical vector (drain[t] = TRUE means
+#' the field is intentionally drained on day t). During drainage days, the
+#' pond is drawn down to pond_depth = 0 and irrigation is suppressed. This
+#' represents practices such as weed control or pre-harvest drainage.
+#'
+#' @param et        Numeric vector. Daily reference ET. During flooded
+#'                  periods this is treated as open-water ET; no crop
+#'                  coefficient is applied here but you can pre-multiply if
+#'                  needed.
+#' @param precip    Numeric vector. Daily precipitation.
+#' @param flood_target Numeric scalar. Target ponded water depth.
+#'                  Irrigation refills to this level.
+#' @param flood_min Numeric scalar. Minimum acceptable pond depth before
+#'                  irrigation is triggered.
+#' @param flood_max Numeric scalar. Maximum pond depth before bund
+#'                  overflow / runoff occurs.
+#' @param seepage   Numeric scalar. Daily seepage + percolation loss
+#'                  Represents losses through the bund and downward percolation
+#'                  through the hardpan (if any). Typical range: 1-5 mm/day
+#'                  for well-puddled California soils.
+#' @param drain     Logical vector (same length as et). TRUE on days when an
+#'                  intentional drainage event occurs (e.g., mid-season drain,
+#'                  pre-harvest drawdown). Pond is set to 0 on these days and
+#'                  irrigation is suppressed.
+#' @param pond_init Numeric scalar. Initial pond depth at t = 1.
+#'                  Defaults to flood_target.
+#'
+#' @return A list with numeric vectors of length n:
+#'   \item{pond_depth}{Ponded water depth at end of each day}
+#'   \item{irr}{Irrigation applied}
+#'   \item{runoff}{Bund overflow / surface runoff}
+#'
+#' @export
+calc_water_balance_rice <- function(
+  et,
+  precip,
+  flood_target,
+  flood_min,
+  flood_max,
+  seepage,
+  drain = NULL,
+  pond_init = flood_target
+) {
+  n <- length(et)
+
+  if (length(precip) != n) {
+    stop("et and precip must be the same length")
+  }
+  if (is.null(drain)) {
+    drain <- rep(FALSE, n)
+  }
+  if (length(drain) != n) {
+    stop("drain must be the same length as et")
+  }
+  if (flood_min >= flood_target) {
+    stop("flood_min must be less than flood_target")
+  }
+  if (flood_target >= flood_max) {
+    stop("flood_target must be less than flood_max")
+  }
+  if (seepage < 0) {
+    stop("seepage must be non-negative")
+  }
+
+  pond_depth <- numeric(n)
+  irr <- numeric(n)
+  runoff <- numeric(n)
+
+  pond_prev <- pond_init
+
+  for (t in seq_len(n)) {
+    # --- Intentional drainage day -----------------------------------------
+    # The field is deliberately drained (mid-season weed control, pre-harvest,
+    # etc.). All water in the pond is released as managed drainage, counted
+    # as runoff. Irrigation is suppressed for the day.
+    if (drain[t]) {
+      runoff[t] <- pond_prev + precip[t] # drain existing pond + any rain
+      irr[t] <- 0
+      pond_depth[t] <- 0
+      pond_prev <- 0
+      next
+    }
+
+    # --- Normal flooded day -----------------------------------------------
+
+    # 1. Fluxes: precip adds, ET and seepage remove.
+    #    Seepage is capped at available pond depth so we don't go below zero
+    #    before irrigation is assessed.
+    actual_seepage <- min(seepage, max(0, pond_prev))
+    pond0 <- pond_prev + precip[t] - et[t] - actual_seepage
+
+    # 2. Irrigation: refill to flood_target if pond drops below flood_min.
+    #    Note that pond0 can be negative if ET is very high (e.g., early
+    #    season before the pond is established). Irrigation covers the full
+    #    deficit back to the target.
+    if (pond0 < flood_min) {
+      irr[t] <- flood_target - pond0
+      pond0 <- flood_target
+    } else {
+      irr[t] <- 0
+    }
+
+    # 3. Runoff (bund overflow): any depth exceeding flood_max spills over.
+    if (pond0 > flood_max) {
+      runoff[t] <- pond0 - flood_max
+      pond_depth[t] <- flood_max
+    } else {
+      runoff[t] <- 0
+      pond_depth[t] <- max(pond0, 0)
+    }
+
+    pond_prev <- pond_depth[t]
+  }
+
+  list(pond_depth = pond_depth, irr = irr, runoff = runoff)
+}
+
 #' Apply water balance calculations to a data frame with multiple sites
 #'
 #' Groups by location and applies calc_water_balance to each group. Unlike
 #' `calc_water_balance`, the units here *do* matter -- they should be `mm_day`.
 #'
 #' @param df Data frame with columns: `date`, `location_id`, `etc_mm_day`,
-#' `precip_mm_day`, and `whc_min_frac` (optional, defaults to 0.375).
+#' `precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to 0.375).
 #' If a `whc_mm` column is present, it is used as the water holding capacity.
-#' @param idcol Column name for grouping (typically, `location_id`, `parcel_id` or similar)
-#' @param whc_mm Water holding capacity (mm); ignored if `whc_mm` is a column in `df`.
+#' @param idcol Column name for grouping (typically, `location_id`, `parcel_id`
+#' or similar)
+#' @param whc_mm Water holding capacity (mm); ignored if `whc_mm` is a column
+#' in `df`.
 #' @return Data frame with added columns: `W_t`, `irr`, `runoff`
 #' @export
 apply_water_balance <- function(df, idcol, whc_mm = 500) {
-  need_cols <- c("etc_mm_day", "precip_mm_day", "date")
+  need_cols <- c("etc_mm_day", "precip_mm_day", "date", "crop_name")
   missing_cols <- need_cols[!(need_cols %in% colnames(df))]
   default_whc_min_frac <- 0.375
   if (length(missing_cols) > 0) {
@@ -190,14 +324,65 @@ apply_water_balance <- function(df, idcol, whc_mm = 500) {
     df[["whc_mm"]] <- whc_mm
   }
 
-  df |>
+  try_wb_rice <- function(...) {
+    tryCatch(
+      calc_water_balance_rice(...),
+      error = function(e) {
+        warning("Hit the following error: \n\n", e$message)
+        list(
+          pond_depth = NA_real_,
+          irr = NA_real_,
+          runoff = NA_real_
+        )
+      }
+    )
+  }
+
+  rice <- df |>
+    dplyr::filter(.data$crop_name == "Rice") |>
     dplyr::arrange(.data[[idcol]], .data$date) |> # nolint: object_usage_linter
     dplyr::mutate(
       year = as.integer(format(.data$date, "%Y")),
       week = as.integer(format(.data$date, "%U")),
       day_of_year = as.integer(format(.data$date, "%j")),
-      whc_min_frac = tidyr::replace_na(.data$whc_min_frac, default_whc_min_frac),
-      results = tibble::as_tibble(calc_water_balance(
+      results = tibble::as_tibble(try_wb_rice(
+        et = .data$etc_mm_day,
+        precip = .data$precip_mm_day,
+        flood_target = 125,
+        flood_min = 62.5,
+        flood_max = 175,
+        seepage = 2.5
+      )),
+      .by = dplyr::all_of(idcol)
+    ) |>
+    tidyr::unpack(.data$results)
+
+  try_wb <- function(...) {
+    tryCatch(
+      calc_water_balance(...),
+      error = function(e) {
+        warning("Hit the following error: \n\n", e$message)
+        list(
+          W_t = NA_real_,
+          irr = NA_real_,
+          runoff = NA_real_
+        )
+      }
+    )
+  }
+
+  others <- df |>
+    dplyr::filter(.data$crop_name != "Rice") |>
+    dplyr::arrange(.data[[idcol]], .data$date) |> # nolint: object_usage_linter
+    dplyr::mutate(
+      year = as.integer(format(.data$date, "%Y")),
+      week = as.integer(format(.data$date, "%U")),
+      day_of_year = as.integer(format(.data$date, "%j")),
+      whc_min_frac = tidyr::replace_na(
+        .data$whc_min_frac,
+        default_whc_min_frac
+      ),
+      results = tibble::as_tibble(try_wb(
         et = .data$etc_mm_day,
         precip = .data$precip_mm_day,
         whc = .data$whc_mm,
@@ -206,4 +391,6 @@ apply_water_balance <- function(df, idcol, whc_mm = 500) {
       .by = dplyr::all_of(idcol)
     ) |>
     tidyr::unpack(.data$results)
+
+  dplyr::bind_rows(rice, others)
 }
