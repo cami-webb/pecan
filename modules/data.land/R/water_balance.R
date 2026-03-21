@@ -205,22 +205,22 @@ calc_water_balance_rice <- function(
   n <- length(et)
 
   if (length(precip) != n) {
-    stop("et and precip must be the same length")
+    PEcAn.logger::logger.severe("et and precip must be the same length")
   }
   if (is.null(drain)) {
     drain <- rep(FALSE, n)
   }
   if (length(drain) != n) {
-    stop("drain must be the same length as et")
+    PEcAn.logger::logger.severe("drain must be the same length as et")
   }
   if (flood_min >= flood_target) {
-    stop("flood_min must be less than flood_target")
+    PEcAn.logger::logger.severe("flood_min must be less than flood_target")
   }
   if (flood_target >= flood_max) {
-    stop("flood_target must be less than flood_max")
+    PEcAn.logger::logger.severe("flood_target must be less than flood_max")
   }
   if (seepage < 0) {
-    stop("seepage must be non-negative")
+    PEcAn.logger::logger.severe("seepage must be non-negative")
   }
 
   pond_depth <- numeric(n)
