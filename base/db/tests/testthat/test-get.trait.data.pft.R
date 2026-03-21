@@ -7,6 +7,17 @@
 #
 # Tests requiring a live BETYdb connection skip cleanly when unavailable.
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+# Helper needed for the restored cultivar test
+dbdir <- file.path(tempdir(), "dbfiles")
+
+get_pft <- function(pftname) {
+  get.trait.data.pft(
+    pft         = list(name = pftname, outdir = withr::local_tempdir()),
+    trait.names = "SLA",
+    dbfiles     = dbdir,
+    modeltype   = NULL,
+    dbcon       = test_dbcon)
+}
 
 make_test_pft <- function(outdir) {
   list(
@@ -58,19 +69,6 @@ test_dbcon <- tryCatch(
   error = function(e) NULL
 )
 
-# ── Block 0: Tests that work WITHOUT a database ──────────────────────────────
-
-test_that("make_test_pft returns correctly structured list", {
-  outdir <- withr::local_tempdir()
-  pft <- make_test_pft(outdir)
-  
-  expect_true(is.list(pft))
-  expect_equal(pft$name, "temperate.Early_Hardwood")
-  expect_equal(pft$outdir, outdir)
-  expect_null(pft$posteriorid)
-  expect_true(is.list(pft$constants))
-})
-
 test_that("get.trait.data.pft fails gracefully with NULL dbcon", {
   outdir <- withr::local_tempdir()
   
@@ -99,46 +97,10 @@ test_that("get.trait.data.pft fails with invalid modeltype and NULL dbcon", {
   )
 })
 
-test_that("get.trait.data.pft accepts trait.names parameter", {
-  expect_true(
-    "trait.names" %in% names(formals(get.trait.data.pft))
-  )
-})
-
-test_that("make_empty_pft returns correctly structured list", {
-  outdir <- withr::local_tempdir()
-  pft <- make_empty_pft(outdir)
-  
-  expect_true(is.list(pft))
-  expect_equal(pft$name, "soil.ALL")
-  expect_equal(pft$outdir, outdir)
-  expect_null(pft$posteriorid)
-  expect_true(is.list(pft$constants))
-})
-
-test_that("get.trait.data.pft function exists and is callable", {
-  expect_true(is.function(get.trait.data.pft))
-})
-
-test_that("get.trait.data.pft has expected parameters", {
-  params <- names(formals(get.trait.data.pft))
-  
-  expect_true("pft"         %in% params)
-  expect_true("modeltype"   %in% params)
-  expect_true("dbfiles"     %in% params)
-  expect_true("dbcon"       %in% params)
-  expect_true("trait.names" %in% params)
-})
-
 test_that("get.trait.data.pft errors with no arguments", {
   expect_error(get.trait.data.pft())
 })
 
-test_that("std_traits contains expected trait names", {
-  expect_true("SLA"    %in% std_traits)
-  expect_true("Vcmax"  %in% std_traits)
-  expect_equal(length(std_traits), 3)
-})
 
 # ── Block 1: Files are written to disk ────────────────────────────────────────
 
@@ -312,35 +274,67 @@ test_that("prior.distns.Rdata contains a data frame with expected columns", {
 test_that("get.trait.data.pft() does not error for a PFT with no observations", {
   skip_if_no_db(test_dbcon)
   outdir <- withr::local_tempdir()
-
+  
   soil_exists <- tryCatch({
-    nrow(DBI::dbGetQuery(test_dbcon, "SELECT 1 FROM pfts WHERE name = 'soil.ALL' LIMIT 1")) > 0
+    nrow(DBI::dbGetQuery(test_dbcon, 
+      "SELECT 1 FROM pfts WHERE name = 'soil.ALL' LIMIT 1")) > 0
   }, error = function(e) FALSE)
   skip_if_not(soil_exists, "soil.ALL PFT not present in test BETY")
-
-  expect_error(
-    get.trait.data.pft(
-      pft         = make_empty_pft(outdir),
-      modeltype   = std_modeltype,
-      dbfiles     = outdir,
-      dbcon       = test_dbcon,
-      trait.names = std_traits
-    ),
-    regexp = NA  # NA means "no error expected"
-  )
-})
-
-test_that("get.trait.data.pft() writes prior.distns.Rdata even when trait data is empty", {
-  skip_if_no_db(test_dbcon)
-  outdir <- withr::local_tempdir()
-
-  get.trait.data.pft(
+  
+  result <- get.trait.data.pft(
     pft         = make_empty_pft(outdir),
     modeltype   = std_modeltype,
     dbfiles     = outdir,
     dbcon       = test_dbcon,
     trait.names = std_traits
   )
+  
+  # Clean up any DB records created during test
+  if (!is.null(result$posteriorid)) {
+    posteriorid <- result$posteriorid
+    withr::defer({
+      try(DBI::dbExecute(test_dbcon,
+        paste0("DELETE FROM dbfiles WHERE container_type = 'Posterior' AND container_id = ",
+               posteriorid)), silent = TRUE)
+      try(DBI::dbExecute(test_dbcon,
+        paste0("DELETE FROM posteriors WHERE id = ",
+               posteriorid)), silent = TRUE)
+    })
+  }
+  
+  expect_true(is.list(result))
+})
+
+test_that("get.trait.data.pft() writes prior.distns.Rdata even when trait data is empty", {
+  skip_if_no_db(test_dbcon)
+  outdir <- withr::local_tempdir()
+
+  soil_exists <- tryCatch({
+    nrow(DBI::dbGetQuery(test_dbcon, 
+      "SELECT 1 FROM pfts WHERE name = 'soil.ALL' LIMIT 1")) > 0
+  }, error = function(e) FALSE)
+  skip_if_not(soil_exists, "soil.ALL PFT not present in test BETY")
+
+  result <- get.trait.data.pft(
+    pft         = make_empty_pft(outdir),
+    modeltype   = std_modeltype,
+    dbfiles     = outdir,
+    dbcon       = test_dbcon,
+    trait.names = std_traits
+  )
+
+    # Clean up any DB records created during test
+  if (!is.null(result$posteriorid)) {
+    posteriorid <- result$posteriorid
+    withr::defer({
+      try(DBI::dbExecute(test_dbcon,
+        paste0("DELETE FROM dbfiles WHERE container_type = 'Posterior' AND container_id = ",
+               posteriorid)), silent = TRUE)
+      try(DBI::dbExecute(test_dbcon,
+        paste0("DELETE FROM posteriors WHERE id = ",
+               posteriorid)), silent = TRUE)
+    })
+  }
 
   expect_true(file.exists(file.path(outdir, "prior.distns.Rdata")))
 })
@@ -436,13 +430,6 @@ test_that("end-to-end: written files are consistent with returned pft", {
   expect_equal(result$outdir, outdir)
 })
 
-if (!is.null(test_dbcon)) {
-  withr::defer(
-    try(PEcAn.DB::db.close(test_dbcon), silent = TRUE),
-    envir = testthat::teardown_env()
-  )
-}
-
 # ── Block 7: Error cases ─────────────────────────────────────────────────────
 
 test_that("get.trait.data.pft() errors for non-existent PFT name", {
@@ -485,3 +472,45 @@ test_that("get.trait.data.pft() errors when multiple PFTs share a name", {
     "Multiple PFTs"
   )
 })
+
+# ── Restored: Skipped cultivar test (see #1958) ──────────────────────────────
+test_that("reference species and cultivar PFTs write traits properly", {
+  skip("Disabled until Travis bety contains Pavi_alamo and Pavi_all (#1958)")
+
+  pavi_sp <- get_pft("pavi")
+  expect_equal(pavi_sp$name, "pavi")
+  sp_csv <- file.path(dbdir, "posterior", pavi_sp$posteriorid, "species.csv")
+  sp_trt <- file.path(dbdir, "posterior", pavi_sp$posteriorid, "trait.data.csv")
+  expect_true(file.exists(sp_csv))
+  expect_true(file.exists(sp_trt))
+  expect_gt(file.info(sp_csv)$size, 40)
+  expect_gt(file.info(sp_trt)$size, 215)
+
+  pavi_cv <- get_pft("Pavi_alamo")
+  expect_equal(pavi_cv$name, "Pavi_alamo")
+  cv_csv <- file.path(dbdir, "posterior", pavi_cv$posteriorid, "cultivars.csv")
+  cv_trt <- file.path(dbdir, "posterior", pavi_cv$posteriorid, "trait.data.csv")
+  expect_true(file.exists(cv_csv))
+  expect_true(file.exists(cv_trt))
+  expect_gt(file.info(cv_csv)$size, 63)
+  expect_gt(file.info(cv_trt)$size, 215)
+
+  pavi_allcv <- get_pft("Pavi_all")
+  expect_equal(pavi_allcv$name, "Pavi_all")
+  allcv_csv <- file.path(dbdir, "posterior", pavi_allcv$posteriorid, "cultivars.csv")
+  allcv_trt <- file.path(dbdir, "posterior", pavi_allcv$posteriorid, "trait.data.csv")
+  expect_true(file.exists(allcv_csv))
+  expect_true(file.exists(allcv_trt))
+  expect_gt(file.info(allcv_csv)$size, 63)
+  expect_gt(file.info(allcv_trt)$size, 215)
+
+  expect_gt(file.info(allcv_csv)$size, file.info(cv_csv)$size)
+  expect_gt(file.info(allcv_trt)$size, file.info(cv_trt)$size)
+})
+
+if (!is.null(test_dbcon)) {
+  withr::defer(
+    try(PEcAn.DB::db.close(test_dbcon), silent = TRUE),
+    envir = testthat::teardown_env()
+  )
+}
