@@ -5,7 +5,7 @@ library(tarchetypes)
 library(crew)
 library(crew.cluster)
 
-root_dir <- here::here("modules/data.land/inst/irrigation-statewide/")
+root_dir <- here::here("modules/data.land/inst/irrigation-statewide")
 logdir <- file.path(root_dir, "_logs")
 dir.create(logdir, showWarnings = FALSE, recursive = TRUE)
 
@@ -210,7 +210,9 @@ list(
     irr_events,
     make_event_df(
       parcel_waterbalance,
-      file.path(event_output_dir, event_filename)
+      file.path(event_output_dir, event_filename),
+      n_ensemble = 20,
+      frac_uncertainty = 0.1
     ),
     format = "file"
   ),
