@@ -282,15 +282,25 @@ calc_water_balance_rice <- function(
 #' `calc_water_balance`, the units here *do* matter -- they should be `mm_day`.
 #'
 #' @param df Data frame with columns: `date`, `location_id`, `etc_mm_day`,
-#' `precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to 0.375).
-#' If a `whc_mm` column is present, it is used as the water holding capacity.
+#' `precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to
+#' 0.375). If a `whc_mm` column is present, it is used as the water holding
+#' capacity.
 #' @param idcol Column name for grouping (typically, `location_id`, `parcel_id`
-#' or similar)
+#' or similar).
 #' @param whc_mm Water holding capacity (mm); ignored if `whc_mm` is a column
 #' in `df`.
-#' @return Data frame with added columns: `W_t`, `irr`, `runoff`
+#' @inheritParams calc_water_balance_rice
+#' @return Data frame with added columns: `W_t` / `pond_depth`, `irr`, `runoff`
 #' @export
-apply_water_balance <- function(df, idcol, whc_mm = 500) {
+apply_water_balance <- function(
+  df,
+  idcol,
+  whc_mm = 500,
+  flood_target = 125,
+  flood_min = 62.5,
+  flood_max = 175,
+  seepage = 2.5
+) {
   need_cols <- c("etc_mm_day", "precip_mm_day", "date", "crop_name")
   missing_cols <- need_cols[!(need_cols %in% colnames(df))]
   default_whc_min_frac <- 0.375
@@ -348,10 +358,10 @@ apply_water_balance <- function(df, idcol, whc_mm = 500) {
       results = tibble::as_tibble(try_wb_rice(
         et = .data$etc_mm_day,
         precip = .data$precip_mm_day,
-        flood_target = 125,
-        flood_min = 62.5,
-        flood_max = 175,
-        seepage = 2.5
+        flood_target = .env$flood_target,
+        flood_min = .env$flood_min,
+        flood_max = .env$flood_max,
+        seepage = .env$seepage
       )),
       .by = dplyr::all_of(idcol)
     ) |>

@@ -4,21 +4,44 @@
 \alias{apply_water_balance}
 \title{Apply water balance calculations to a data frame with multiple sites}
 \usage{
-apply_water_balance(df, idcol, whc_mm = 500)
+apply_water_balance(
+  df,
+  idcol,
+  whc_mm = 500,
+  flood_target = 125,
+  flood_min = 62.5,
+  flood_max = 175,
+  seepage = 2.5
+)
 }
 \arguments{
 \item{df}{Data frame with columns: `date`, `location_id`, `etc_mm_day`,
-`precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to 0.375).
-If a `whc_mm` column is present, it is used as the water holding capacity.}
+`precip_mm_day`, `crop_name`, and `whc_min_frac` (optional, defaults to
+0.375). If a `whc_mm` column is present, it is used as the water holding
+capacity.}
 
 \item{idcol}{Column name for grouping (typically, `location_id`, `parcel_id`
-or similar)}
+or similar).}
 
 \item{whc_mm}{Water holding capacity (mm); ignored if `whc_mm` is a column
 in `df`.}
+
+\item{flood_target}{Numeric scalar. Target ponded water depth.
+Irrigation refills to this level.}
+
+\item{flood_min}{Numeric scalar. Minimum acceptable pond depth before
+irrigation is triggered.}
+
+\item{flood_max}{Numeric scalar. Maximum pond depth before bund
+overflow / runoff occurs.}
+
+\item{seepage}{Numeric scalar. Daily seepage + percolation loss
+Represents losses through the bund and downward percolation
+through the hardpan (if any). Typical range: 1-5 mm/day
+for well-puddled California soils.}
 }
 \value{
-Data frame with added columns: `W_t`, `irr`, `runoff`
+Data frame with added columns: `W_t` / `pond_depth`, `irr`, `runoff`
 }
 \description{
 Groups by location and applies calc_water_balance to each group. Unlike
