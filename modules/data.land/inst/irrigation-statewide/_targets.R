@@ -86,18 +86,19 @@ ctrl_local <- crew_controller_local(
 ctrl_sge <- crew_controller_sge(
   name = "sge",
   workers = n_remote_workers,
+  # TLS causes weird allocator bugs. We're on an internal network, so no TLS is
+  # probably fine.
+  tls = crew::crew_tls(mode = "none"),
   options_cluster = crew_options_sge(
-    envvars = TRUE, # Needed for pixi
     log_output = logdir,
     script_lines = c(
-      # Try to prevent multiple threads
-      "#$ -pe omp 1",
-      "export OMP_NUM_THREADS=1",
-      "export OPENBLAS_NUM_THREADS=1",
-      "export MKL_NUM_THREADS=1",
-      "export RCPP_PARALLEL_NUM_THREADS=1",
-      "export GOTO_NUM_THREADS=1",
-      "export USE_SIMPLE_THREADED_LEVEL3=1"
+      # Activate pixi
+      'eval "$(pixi shell-hook -s bash)"',
+      # Diagnostics
+      "echo 'PIXI environment:'",
+      "env | grep PIXI",
+      "echo 'R .libPaths():'",
+      "Rscript -e '.libPaths()'"
     )
   )
 )
