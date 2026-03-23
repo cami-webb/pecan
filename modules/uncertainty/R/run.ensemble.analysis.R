@@ -1,5 +1,6 @@
 #' Run ensemble analysis on finished model runs
 #'
+#' @md
 #' Loads parsed ensemble model output from disk, computes summary statistics
 #' (mean, median, quantiles), and generates diagnostic plots (histogram,
 #' boxplot, and optionally time series).

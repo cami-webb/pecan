@@ -1,5 +1,6 @@
 ##' Read model output and save parsed results for sensitivity and ensemble analyses
 ##'
+##' @md
 ##' Loads sample metadata and run IDs from disk, reads model output for each
 ##' run, and saves parsed results for downstream analysis by
 ##' [run.sensitivity.analysis()] and [run.ensemble.analysis()].

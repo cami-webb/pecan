@@ -1,5 +1,6 @@
 #' Write model-specific run scripts and configuration files
 #'
+#' @md
 #' Generates run scripts and configuration files for all analyses (ensemble
 #' and/or sensitivity analysis) specified in the provided settings. Delegates
 #' the model-specific config writing to the appropriate `write.config.*`

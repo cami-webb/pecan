@@ -1,5 +1,6 @@
 #' Run sensitivity analysis on finished model runs
 #'
+#' @md
 #' Loads parameter samples and parsed model output from disk, computes
 #' sensitivity coefficients and variance decomposition for each PFT/trait,
 #' and saves results and diagnostic plots.

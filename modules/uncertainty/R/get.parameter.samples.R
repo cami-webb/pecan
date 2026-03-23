@@ -1,5 +1,6 @@
 #' Convert priors / MCMC samples to parameter sample chains
 #'
+#' @md
 #' Loads posterior distributions and MCMC chain results from disk, generates
 #' parameter samples for ensemble and sensitivity analysis runs, and optionally
 #' saves results to `samples.Rdata`. This is the backward-compatible wrapper

@@ -185,6 +185,7 @@ check_consistent <- function(point, prior,
 #' "Workflow" version of run.meta.analysis.pft
 #' #' Run Bayesian meta-analysis for a single PFT (file-based wrapper)
 #'
+#' @md
 #' Thin wrapper around [meta_analysis_standalone()] that reads trait data and
 #' priors from disk, runs the meta-analysis, and saves results back to disk.
 #' Also registers result files in the BETYdb posteriors table.
@@ -340,6 +341,7 @@ run.meta.analysis.pft <- function(pft, iterations, random = TRUE, threshold = 1.
 ##--------------------------------------------------------------------------------------------------##
 ##' Run meta-analysis across all PFTs
 ##'
+##' @md
 ##' Iterates over a list of PFTs and runs [run.meta.analysis.pft()] for each
 ##' one. This is the main entry point called by [runModule.run.meta.analysis()].
 ##'

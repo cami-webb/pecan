@@ -1,5 +1,6 @@
 ##' Get trait data from the database for a single PFT
 ##'
+##' @md
 ##' Queries BETYdb for trait observations and prior distributions for a single
 ##' plant functional type (PFT). Results are saved to `.RData` and `.csv` files
 ##' in the PFT output directory (`pft$outdir`), and also registered in the
