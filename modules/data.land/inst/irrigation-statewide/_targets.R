@@ -24,6 +24,13 @@ proj_defaults <- list(
     n_remote_workers = 15,
     exec_type = "cluster",
     event_filename = "irrigation_10000.parquet"
+  ),
+  all = list(
+    n_parcels = "all",
+    batch_size = 5000,
+    n_remote_workers = 24,
+    exec_type = "cluster",
+    event_filename = "irrigation_all.parquet"
   )
 )
 proj_defaults[["main"]] <- proj_defaults[["small"]]
