@@ -74,8 +74,8 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
       "Trying to parse output manually."
     )
     raw_lines <- readLines(sipnet_out_file)
-    raw_header <- raw_lines[[1]]
-    raw_body <- tail(raw_lines, -1)
+    raw_header <- raw_lines[[1 + skip_n]]
+    raw_body <- tail(raw_lines, -(1 + skip_n))
     # SIPNET output is right-aligned with the column names in the header.
     # We use this to figure out where the numbers end if there are no spaces.
     token_matches <- gregexpr("\\S+", raw_header, perl = TRUE)
@@ -370,7 +370,6 @@ model2netcdf.SIPNET <- function(outdir, sitelat, sitelon, start_date, end_date, 
   }
 } # model2netcdf.SIPNET
 #--------------------------------------------------------------------------------------------------#
-### EOF
 
 # Helper Function 
 
@@ -396,9 +395,3 @@ sipnet2datetime <- function(year, doy, hour){
   
   as.POSIXct(datetime)
 }
-
-
-
-
-
-
