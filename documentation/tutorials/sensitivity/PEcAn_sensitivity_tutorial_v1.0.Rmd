@@ -1,4 +1,4 @@
-```{r seed-setup, include=FALSE}
+```{r setup, include=FALSE}
 set.seed(20260325)
 ```
 

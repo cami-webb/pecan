@@ -63,13 +63,13 @@ install.packages(c('PEcAn.MA', 'PEcAn.settings', 'PEcAn.utils', 'PEcAn.logger'))
 First, we need to load the PEcAn R packages. These packages provide all the functions we'll use to run the workflow.
 
 ```{r libraries}
-set.seed(20260325)
 # Load necessary PEcAn packages
 # library("PEcAn.all") # Alternatively, load all packages if installed
 library("PEcAn.settings")
 library("PEcAn.MA")
 library("PEcAn.utils")
 library("PEcAn.logger")
+set.seed(20260325)
 ```
 
 # Load Data and Configuration
@@ -81,7 +81,6 @@ Instead of using a `pecan.xml` file, we will define the configuration directly i
 We need to load the `trait.data` (observations) and `prior.distns` (priors) for our PFT.
 
 ```{r load-data}
-set.seed(20260325)
 # Define the path to the PFT directory containing the data
 pft_dir <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pft/temperate.coniferous")
 
@@ -113,7 +112,6 @@ Key settings include:
 *   **threshold**: threshold for Gelman-Rubin convergence diagnostic (MGPRF); default is 1.2.
 
 ```{r config}
-set.seed(20260325)
 # Define configuration as a list
 ma_settings <- list(
   iter = 3000,
@@ -130,7 +128,6 @@ ma_settings <- list(
 We use the `meta_analysis_standalone` function to run the analysis. We pass the values from our `ma_settings` list to the function arguments.
 
 ```{r run_meta_analysis}
-set.seed(20260325)
 # Run standalone meta-analysis
 ma_results <- PEcAn.MA::meta_analysis_standalone(
   trait_data = trait.data,
@@ -183,7 +180,6 @@ The `pft` directory contains all the outputs for the Plant Functional Types incl
 We can inspect the `post.distns` element of the results to see the estimated parameters.
 
 ```{r inspect_posteriors}
-set.seed(20260325)
 print(ma_results$post.distns)
 ```
 
@@ -197,7 +193,6 @@ The `plot` function for MCMC objects typically produces two types of plots for e
 2.  **Density Plot**: Shows the estimated posterior probability distribution of the parameter. This represents our updated belief about the parameter value after combining the prior with the data.
 
 ```{r plot_mcmc}
-set.seed(20260325)
 # Adjust plot margins to prevent clipping
 par(mar = c(2, 2, 2, 2))
 
@@ -238,7 +233,6 @@ This approach ensures that all settings are centralized and that outputs are aut
 Use the XML settings file (`pecan.xml`) exactly as in the Demo 1 Basic Run tutorial.
 
 ```{r load-settings}
-set.seed(20260325)
 settings_path <- here::here("documentation/tutorials/Demo_03_Meta_Analysis/pecan.xml")
 
 # Read the settings from the pecan.xml file
@@ -267,7 +261,6 @@ Key tags include:
 The `runModule.run.meta.analysis` function handles the entire process: reading data from the PFT directory (which must be populated by `get.trait.data` in a full workflow), running the analysis, and saving results.
 
 ```{r run_meta_analysis_module, eval = FALSE}
-set.seed(20260325)
 # Run meta-analysis using settings
 PEcAn.MA::runModule.run.meta.analysis(settings)
 ```
@@ -306,7 +299,6 @@ If you encounter a problem with PEcAn that’s not covered in the documentation,
 ### PEcAn package versions.
 
 ```{r version-info}
-set.seed(20260325)
 if (requireNamespace("PEcAn.all", quietly = TRUE)) {
   PEcAn.all::pecan_version()
 } else {
@@ -317,6 +309,5 @@ if (requireNamespace("PEcAn.all", quietly = TRUE)) {
 ### R session information:
 
 ```{r session-info}
-set.seed(20260325)
 sessionInfo()
 ```

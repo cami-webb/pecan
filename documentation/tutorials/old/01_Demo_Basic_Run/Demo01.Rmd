@@ -1,5 +1,4 @@
-```{r seed-setup, include=FALSE}
-set.seed(20260325)
+```{r setup, include=FALSE}
 ```
 
 ## Demo 01: Basic Run PEcAn {#demo-1}
@@ -13,6 +12,7 @@ You can find the source for this tutorial at [https://github.com/PecanProject/pe
 
 ```{r echo = FALSE,warning=FALSE}
 library(knitr)
+set.seed(20260325)
 opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
                fig.align = 'center', out.width = '100%')
 ```
