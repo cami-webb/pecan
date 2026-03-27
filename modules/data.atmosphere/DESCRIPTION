@@ -87,6 +87,9 @@ Remotes:
     github::chuhousen/amerifluxr,
     github::ropensci/geonames,
     github::ropensci-archive/nneo
+Additional_repositories:
+    https://ropensci.r-universe.dev/,
+    https://adokter.r-universe.dev
 License: BSD_3_clause + file LICENSE
 Copyright: Authors
 LazyLoad: yes
