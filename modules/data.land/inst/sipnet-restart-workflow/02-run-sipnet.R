@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
-devtools::load_all("~/projects/pecan/sipnet-events/modules/data.land")
-devtools::load_all("~/projects/pecan/sipnet-events/models/sipnet")
+devtools::load_all("modules/data.land")
+devtools::load_all("models/sipnet")
 
 config <- config::get(file = "modules/data.land/inst/sipnet-restart-workflow/config.yml")
 
@@ -11,6 +11,10 @@ binary <- config[["sipnet_binary"]]
 stopifnot(file.exists(binary))
 
 site_id <- config[["site_id"]]
+dp_data <- read.csv(config[["dp_path"]]) |>
+  dplyr::filter(.data$id == .env$site_id)
+site_lat <- dp_data[["lat"]]
+site_lon <- dp_data[["lon"]]
 
 events_json_file <- fs::path(outdir_root, "events.json")
 events <- jsonlite::read_json(events_json_file, simplifyVector = FALSE)
@@ -50,8 +54,8 @@ settings <- PEcAn.settings::as.Settings(list(
     site = list(
       id = site_id,
       name = site_id,
-      lat = 32.71585,
-      lon = -115.47163
+      lat = site_lat,
+      lon = site_lon
     ),
     start.date = start_date,
     end.date = end_date,
@@ -88,7 +92,7 @@ segments <- tibble::tibble(
 ################################################################################
 
 for (isegment in seq_len(nrow(segments))) {
-  # isegment <- 1
+  message("Running segment ", isegment)
   segment <- segments[isegment, ]
   segment_id <- sprintf("%03d", isegment)
   dstart <- segment[["start_date"]]
@@ -113,30 +117,22 @@ for (isegment in seq_len(nrow(segments))) {
   segment_eventfile <- PEcAn.SIPNET::write.events.SIPNET(eventfile, segment_dir)
 
   metpath <- settings[[c("run", "inputs", "met", "path")]]
-  met_segment_file <- file.path(segment_dir, "met.clim")
 
   # Subset the met to only the dates in this segment. SIPNET does not respect
   # start/end date, only the dates in the .clim file.
-  # TODO: Use `split_inputs.SIPNET` here instead...
-
-  met_orig <- read.table(metpath)
-  met_segment <- met_orig |>
-    # Create a date from the year + DOY
-    dplyr::mutate(date = as.Date(paste0(V2, "-01-01")) + V3) |>
-    dplyr::filter(date >= dstart, date <= dend) |>
-    dplyr::select(-c("date"))
-  write.table(
-    met_segment,
-    met_segment_file,
-    quote = FALSE,
-    sep = "\t",
-    row.names = FALSE,
-    col.names = FALSE
+  met_segment_file <- split_inputs.SIPNET(
+    dstart,
+    dend,
+    metpath,
+    outpath = segment_dir,
+    overwrite = TRUE
   )
 
   # Segment-specific settings
   segment_outdir <- file.path(segment_dir, "out")
   dir.create(segment_outdir, showWarnings = FALSE, recursive = TRUE)
+  segment_outdir_withid <- file.path(segment_outdir, segment_id)
+  # Don't need to create the outdir here because it is created by write.configs
   segment_rundir <- file.path(segment_dir, "run")
   dir.create(segment_rundir, showWarnings = FALSE, recursive = TRUE)
   segment_rundir_withid <- file.path(segment_rundir, segment_id)
@@ -144,8 +140,8 @@ for (isegment in seq_len(nrow(segments))) {
 
   segment_settings <- settings
   segment_settings[["outdir"]] <- segment_outdir
+  segment_settings[["modeloutdir"]] <- segment_outdir
   segment_settings[["rundir"]] <- segment_rundir
-  segment_settings[["modeloutdir"]] <- segment_rundir
   segment_settings[[c("run", "start.date")]] <- dstart
   segment_settings[[c("run", "end.date")]] <- dend
   segment_settings[[c("run", "inputs", "met", "path")]] <- met_segment_file
@@ -175,6 +171,16 @@ for (isegment in seq_len(nrow(segments))) {
   )
 
   runs <- PEcAn.workflow::start_model_runs(segment_settings, write = FALSE)
+
+  model2netcdf.SIPNET(
+    outdir = segment_outdir_withid,
+    sitelat = segment_settings[[c("run", "site", "lat")]],
+    sitelon = segment_settings[[c("run", "site", "lon")]],
+    start_date = dstart,
+    end_date = dend,
+    revision = segment_settings[[c("model", "revision")]],
+    overwrite = TRUE
+  )
 }
 
 # TODO: Post processing. Combine all the segments together and return output in
