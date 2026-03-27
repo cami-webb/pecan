@@ -219,7 +219,8 @@ model_output <- purrr::map2_dfr(
       start.year = NA, end.year = NA,
       variables = NULL,
       dataframe = TRUE,
-      verbose = FALSE
+      verbose = FALSE,
+      print_summary = FALSE
     )
   },
   .id = "run_id"
