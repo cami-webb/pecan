@@ -23,5 +23,5 @@ test_that("co2e function correctly sums across delta SOC, N2O, CH4", {
 })
 
 testthat::test_that("unsupported GWP values error", {
-  testthat::expect_error(co2e(gwp = "BAD"), "'arg' should be one of “AR4”, “AR5”, “AR6”")
+  testthat::expect_error(co2e(gwp = "BAD"), "AR4.*AR5.*AR6")
 })
