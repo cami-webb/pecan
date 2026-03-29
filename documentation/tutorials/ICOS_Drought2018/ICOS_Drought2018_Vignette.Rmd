@@ -1,6 +1,3 @@
-```{r setup, include=FALSE}
-```
-
 ---
 title: "ICOS Drought2018 Vignette"
 author: 
