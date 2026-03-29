@@ -1,6 +1,3 @@
-```{r setup, include=FALSE}
-```
-
 ### Parameter Data Assimilation
 
 
