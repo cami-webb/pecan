@@ -10,16 +10,23 @@
 #'
 #' Converts soil organic carbon (SOC) stock change and CH4/N2O fluxes to
 #' CO2-equivalent emissions using 100-year GWP values.
+# TODO: consider extending to additional GWP time horizons supported by IPCC
+# assessment reports (e.g., 20-year as well as 100-year values).
 #'
-#' @param delta_soc Numeric. Change in soil organic carbon (mass of C.)
-#'   Positive values indicate SOC gain.
+#' @param delta_soc Numeric. Change in soil organic carbon as mass of elemental
+#'   carbon (C).
+#'   Positive values indicate soil carbon gain; negative values indicate loss.
 #' @param ch4 Numeric. Methane emissions as mass of CH4.
 #' @param n2o Numeric. Nitrous oxide emissions as mass of N2O.
 #' @param gwp Character. IPCC report containing GWP values used: "AR4", "AR5", or "AR6".
 #'
-#' @return Numeric. Total CO2-equivalent emissions.
+#' @return Numeric. Total CO2-equivalent emissions as mass of CO2e, expressed
+#'   on the same spatial and temporal basis as the inputs. 
 #'
 #' @details
+#' Inputs may use any mass units, but must be converted to consistent units
+#' and expressed on the same spatial and temporal basis before summing.
+
 #' Equations:
 #'
 #'   CO2e_SOC = -ΔSOC * (44 / 12)
