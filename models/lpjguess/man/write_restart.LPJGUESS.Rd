@@ -32,7 +32,7 @@ write_restart.LPJGUESS(
 
 \item{new.params}{list of parameters to convert between different states}
 
-\item{inputs}{list of model inputs to use in write.configs.SIPNET}
+\item{inputs}{list of model inputs to use in write.configs.LPJGUESS}
 
 \item{RENAME}{flag to either rename output file or not}
 

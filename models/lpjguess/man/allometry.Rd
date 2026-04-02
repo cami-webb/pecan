@@ -35,7 +35,7 @@ allometry(
 
 \item{densindiv}{The density of individuals in the cohort (indiv/m^2)}
 
-\item{age}{The age of the coort}
+\item{age}{The age of the cohort}
 
 \item{fpc}{The folar projective cover}
 
@@ -82,6 +82,6 @@ A named list of updated state variables for the individual/cohort.  The first va
 The LPJ-GUESS allometry function transcribed into R.
 }
 \author{
-Matthew Forrest
+Matthew Forrest, Yinghao Sun
 }
 \keyword{internal}
