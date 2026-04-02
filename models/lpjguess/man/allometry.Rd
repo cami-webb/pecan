@@ -47,7 +47,7 @@ allometry(
 
 \item{k_rp, k_allom1, k_allom2, k_allom3, }{Allometry coefficients (per PFT parameters)}
 
-\item{wooddens}{Wood density (kgC/m^2) (per PFT parameter)}
+\item{wooddens}{Wood density (kgC/m^3) (per PFT parameter)}
 
 \item{crownarea_max}{Maximum allowed crown area (m^2)  (per PFT parameter)}
 

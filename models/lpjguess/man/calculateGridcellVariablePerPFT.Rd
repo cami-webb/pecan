@@ -8,7 +8,7 @@ calculateGridcellVariablePerPFT(
   model.state,
   variable,
   pft.params,
-  min.diam = 5
+  min.diam = 0.5
 )
 }
 \arguments{

@@ -23,24 +23,19 @@ function \code{readStateBinary.LPJGUESS}}
 
 \item{pft.params}{A data.frame containing the parameters for each PFT.  Each row represents one PFT (ordering must be consistent with the vectors below. 
 The names of the columns describe the per-PFT parameter and must include: 
-wooddens, crownarea_max, lifeform (1 = tree, 2 = grass), k_latosa, k_rp, k_allom1,  k_allom2, k_allom3, crownarea_max and sla. 
 wooddens, crownarea_max, lifeform (1 = tree, 2 = grass), k_latosa, k_rp, k_allom1,  k_allom2, k_allom3, crownarea_max and sla.}
 
 \item{dens.initial}{A numeric vector of the initial stand-level stem densities (indiv/m^2) as named numeric vector 
-with one entry per PFT/species, with the names being the PFT/species codes.  These values should be produced
-using state data assimilation from function XXXXXX.}
+with one entry per PFT/species, with the names being the PFT/species codes.}
 
 \item{dens.target}{A numeric vector of the target stand-level stem densities (indiv/m^2) as named numeric vector 
-with one entry per PFT/species, with the names being the PFT/species codes.  These values should be produced
-using state data assimilation from function XXXXXX}
+with one entry per PFT/species, with the names being the PFT/species codes.}
 
-\item{AbvGrndWood.initial}{A numeric vector of the target stand-level above ground wood (kgC/m^2) as named numeric vector 
-with one entry per PFT/species, with the names being the PFT/species codes.  These values should be produced
-using state data assimilation from function XXXXXX}
+\item{AbvGrndWood.initial}{A numeric vector of the initial stand-level above ground wood (kgC/m^2) as named numeric vector 
+with one entry per PFT/species, with the names being the PFT/species codes.}
 
 \item{AbvGrndWood.target}{A numeric vector of the target stand-level above ground wood (kgC/m^2) as named numeric vector 
-with one entry per PFT/species, with the names being the PFT/species codes.  These values should be produced
-using state data assimilation from function XXXXXX}
+with one entry per PFT/species, with the names being the PFT/species codes.}
 
 \item{AbvGrndWood.epsilon}{A single numeric specifying how close the final above ground wood needs to be to the target
 above ground stem biomass for each individual.  eg. 0.05 requires that the final above ground wood is within 5%

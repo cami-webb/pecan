@@ -4,7 +4,7 @@
 \alias{AbvGrndWood}
 \title{AbvGrndWood}
 \usage{
-AbvGrndWood(individual, include.debt = TRUE)
+AbvGrndWood(individual, include.debt = FALSE)
 }
 \arguments{
 \item{individual}{A nested list representing an LPJ-GUESS individual from a binary state file.}

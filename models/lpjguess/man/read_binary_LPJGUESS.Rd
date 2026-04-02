@@ -4,10 +4,12 @@
 \alias{read_binary_LPJGUESS}
 \title{Read Binary File for LPJ-GUESS}
 \usage{
-read_binary_LPJGUESS(outdir, version = "PalEON")
+read_binary_LPJGUESS(outdir, rundir, version = "PalEON")
 }
 \arguments{
-\item{outdir}{The output directory where ".state" and "meta.bin" will be written}
+\item{outdir}{The directory where the .state file is stored (e.g., .../state/1961)}
+
+\item{rundir}{The directory where the corresponding params.ins is stored (e.g., .../run/ENS-00001)}
 
 \item{version}{A character string specifying the LPJ-GUESS version (default is "PalEON").}
 }
