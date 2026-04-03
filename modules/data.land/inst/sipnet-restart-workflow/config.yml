@@ -7,6 +7,7 @@ default:
   dp_path: "/projectnb/dietzelab/ccmmf/management/irrigation/design_points.csv"
   sipnet_binary: "/projectnb/dietzelab/ccmmf/usr/ashiklom/pecan/sipnet/sipnet"
   met_dir: "/projectnb/dietzelab/ccmmf/ensemble/ERA5_SIPNET"
+  ic_dir: "/projectnb/dietzelab/ccmmf/ensemble/IC_files"
   planting_events_dir: "/projectnb/dietzelab/ccmmf/management/event_files"
   mslsp_path: "/projectnb/dietzelab/ccmmf/management/phenology/matched_landiq_mslsp_v4.1"
 
@@ -16,5 +17,6 @@ ashiklom:
   dp_path: !expr path.expand("~/data/design_points.csv")
   sipnet_binary: !expr normalizePath("../_helpers/sipnet/sipnet.master", mustWork = TRUE)
   met_dir: !expr path.expand("~/data/ERA5-site-processed")
+  ic_dir: !expr path.expand("~/data/IC-site")
   planting_events_dir: !expr path.expand("~/data/event-files/planting")
   mslsp_path: !expr path.expand("~/data/matched_landiq_mslsp_v4.1")

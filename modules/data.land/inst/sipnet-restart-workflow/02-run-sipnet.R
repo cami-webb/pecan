@@ -34,8 +34,16 @@ met <- file.path(
 )
 stopifnot(file.exists(met))
 
+icfile <- file.path(
+  config[["ic_dir"]],
+  site_id,
+  glue::glue("IC_site_{site_id}_1.nc")
+)
+stopifnot(file.exists(icfile))
+
 ################################################################################
-outdir <- fs::path(outdir_root, "segments") |> fs::dir_create()
+outdir <- fs::path(outdir_root, "segments")
+unlink(outdir, recursive = TRUE)
 
 settings <- PEcAn.settings::as.Settings(list(
   outdir = file.path(outdir, "out"),
@@ -48,7 +56,13 @@ settings <- PEcAn.settings::as.Settings(list(
   model = list(
     type = "SIPNET",
     binary = binary,
-    revision = "v2"
+    revision = "v2",
+    options = list(
+      GDD = 0,
+      NITROGEN_CYCLE = 0,
+      ANAEROBIC = 0,
+      LITTER_POOL = 1
+    )
   ),
   run = list(
     site = list(
@@ -59,7 +73,10 @@ settings <- PEcAn.settings::as.Settings(list(
     ),
     start.date = start_date,
     end.date = end_date,
-    inputs = list(met = list(path = met))
+    inputs = list(
+      met = list(path = met),
+      poolinitcond = list(path = icfile)
+    )
   ),
   host = list(
     name = "localhost"
@@ -89,7 +106,7 @@ segments <- tibble::tibble(
 ) |>
   dplyr::mutate(
     segment_id = sprintf("%03d", dplyr::row_number()),
-    segment_dir = file.path(outdir, paste0("segment_", segment_id))
+    segment_dir = file.path(fs::path_abs(outdir), paste0("segment_", segment_id))
   )
 
 ################################################################################
@@ -139,6 +156,7 @@ for (isegment in seq_len(nrow(segments))) {
   # Don't need to create the outdir here because it is created by write.configs
   segment_rundir <- file.path(segment_dir, "run")
   dir.create(segment_rundir, showWarnings = FALSE, recursive = TRUE)
+  file.create(file.path(segment_rundir, "README.txt"))
   segment_rundir_withid <- file.path(segment_rundir, runid)
   dir.create(segment_rundir_withid, showWarnings = FALSE, recursive = TRUE)
 
