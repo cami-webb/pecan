@@ -2,7 +2,7 @@
 % Please edit documentation in R/run.meta.analysis.R
 \name{run.meta.analysis}
 \alias{run.meta.analysis}
-\title{Run meta analysis}
+\title{Run meta-analysis across all PFTs}
 \usage{
 run.meta.analysis(
   pfts,
@@ -23,7 +23,7 @@ run.meta.analysis(
 \item{random}{(boolean; default = TRUE) Should random effects be used?}
 
 \item{threshold}{Gelman-Rubin convergence diagnostic, passed on to
-\code{\link{pecan.ma.summary}}}
+\code{\link[=pecan.ma.summary]{pecan.ma.summary()}}}
 
 \item{dbfiles}{(character) directory where previous results are found}
 
@@ -40,13 +40,7 @@ nothing, as side effect saves \code{trait.mcmc} created by
 and post.distns.Rdata, respectively
 }
 \description{
-This will use the following items from settings:
-\itemize{
-\item settings$pfts
-\item settings$database$bety
-\item settings$database$dbfiles
-\item settings$meta.analysis$update
-}
+Run meta-analysis across all PFTs
 }
 \author{
 Shawn Serbin, David LeBauer
