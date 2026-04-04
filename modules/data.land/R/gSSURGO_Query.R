@@ -401,7 +401,7 @@ ssurgo_mukeys_bigbbox <- function(bbox) {
 
 #' Parse responses from the mukey WFS service
 #'
-#' @params resp `httr2` response object from SSURGO mukey WFS API
+#' @param resp `httr2` response object from SSURGO mukey WFS API
 #' @return character vector of mukeys
 parse_mukey_response <- function(resp) {
   resp_text <- httr2::resp_body_string(resp)

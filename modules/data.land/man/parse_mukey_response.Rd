@@ -6,6 +6,9 @@
 \usage{
 parse_mukey_response(resp)
 }
+\arguments{
+\item{resp}{`httr2` response object from SSURGO mukey WFS API}
+}
 \value{
 character vector of mukeys
 }
