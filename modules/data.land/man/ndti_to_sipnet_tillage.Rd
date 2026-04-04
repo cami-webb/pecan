@@ -4,112 +4,45 @@
 \alias{ndti_to_sipnet_tillage}
 \title{Convert fractional NDTI drop to SIPNET tillage effectiveness}
 \usage{
-ndti_to_sipnet_tillage(
-  dates,
-  delta_ndti,
-  no_till_threshold = 0.3,
-  conv_till_threshold = 0.7,
-  max_modifier = 1,
-  method = c("linear", "saturating")
-)
+ndti_to_sipnet_tillage(delta_ndti, no_till_threshold = 0.3, slope = 2.5)
 }
 \arguments{
-\item{dates}{Date vector. Observation dates corresponding to each
-tillage event. Same length as \code{delta_ndti}.}
-
 \item{delta_ndti}{numeric vector. Fractional NDTI drop in \[0, 1\],
 computed as \code{(max_before_min - min_val) / max_before_min}
 from a smoothed NDTI time series over the fallow season.}
 
 \item{no_till_threshold}{numeric scalar. \code{delta_ndti} values at
 or below this threshold are mapped to zero effectiveness (no-till).
-Default 0.30, based on Dietze et al. (pers. comm.).}
+Default 0.30, based on Dietze & Kanee (pers. comm.).}
 
-\item{conv_till_threshold}{numeric scalar. \code{delta_ndti} values
-at or above this threshold are mapped to \code{max_modifier}
-(conventional tillage). Default 0.70.}
-
-\item{max_modifier}{numeric scalar. Maximum \code{tillage_eff_0to1}
-value, corresponding to conventional tillage. Default 1.0. Can be
-lowered to constrain the modeled tillage response without changing
-the shape of the mapping. Useful for sensitivity analysis or when
-field calibration data suggest a lower ceiling.}
-
-\item{method}{character. Functional form of the NDTI-to-effectiveness
-mapping between the two thresholds:
-\describe{
-  \item{\code{"linear"}}{(default) Effectiveness scales linearly
-    with NDTI drop between the two thresholds.}
-  \item{\code{"saturating"}}{Effectiveness follows
-    \code{1 - exp(-3 * x)} between the thresholds, reaching
-    approximately 95\% of \code{max_modifier} at
-    \code{conv_till_threshold}. Appropriate if moderate tillage
-    already produces a near-maximum decomposition response.}
-}}
+\item{slope}{numeric scalar. Slope of the linear response above
+\code{no_till_threshold}. Default 2.5, which produces a ramp from
+0 at \code{delta_ndti = 0.30} to 1 at \code{delta_ndti = 0.70}
+(i.e. \code{1 / (0.70 - 0.30)}). Output is clamped to \[0, 1\].}
 }
 \value{
-A data.frame with columns:
-  \describe{
-    \item{date}{Date. Same as input \code{dates}.}
-    \item{tillage_eff_0to1}{numeric. Tillage effectiveness ready for
-      use as \code{tillage_eff_0to1} in a PEcAn events JSON file.}
-  }
+numeric vector of \code{tillage_eff_0to1} values, same
+  length as \code{delta_ndti}, clamped to \[0, 1\].
+  \code{NA} inputs propagate to \code{NA} outputs.
 }
 \description{
 Maps the fractional NDTI drop produced by the CCMMF NDTI pipeline
-to the \code{tillage_eff_0to1} value used in the PEcAn events JSON
-schema and written to SIPNET \code{events.in} by
+to \code{tillage_eff_0to1} for use in the PEcAn events JSON schema
+and written to SIPNET \code{events.in} by
 \code{\link[PEcAn.SIPNET]{write.events.SIPNET}}.
 }
 \details{
-## Background
-
-The NDTI (Normalized Difference Tillage Index) drops sharply after a
-tillage event as crop residue is incorporated into the soil. The
-fractional drop between the pre-tillage maximum and the post-tillage
-minimum over the fallow season serves as a proxy for tillage intensity.
-
-## Default thresholds
-
-Based on empirical analysis of California cropland NDTI time series
-(Dietze & Kanee, pers. comm.):
-
-\tabular{ll}{
-  \strong{NDTI drop}    \tab \strong{Tillage category} \cr
-  below 0.30            \tab no-till                   \cr
-  0.30 -- 0.70          \tab conservation / reduced    \cr
-  above 0.70            \tab conventional              \cr
-}
-
-The linear default is the most parsimonious assumption given that no
-empirical calibration data are yet available. The \code{method}
-argument and the exposed threshold parameters allow this to be
-updated without changing function signatures once calibration data
-become available (e.g. from SOC or soil respiration measurements).
-
-## NA handling
-
-\code{NA} values in \code{delta_ndti} propagate to
-\code{tillage_eff_0to1} without error.
+NDTI drops after tillage as residue is incorporated into soil.
+The fractional drop over the fallow season is a proxy for tillage
+intensity. Default thresholds are from Dietze & Kanee (pers. comm.).
+The slope parameter can be calibrated once field data (SOC or soil
+respiration) are available.
 }
 \examples{
-dates  <- as.Date(c("2022-03-01", "2022-11-01"))
-drops  <- c(0.25, 0.80)
+ndti_to_sipnet_tillage(c(0.25, 0.50, 0.80))
 
-# Default: linear mapping, thresholds from Dietze & Kanee
-ndti_to_sipnet_tillage(dates, drops)
-
-# Saturating response
-ndti_to_sipnet_tillage(dates, drops, method = "saturating")
-
-# Custom thresholds (site-specific calibration)
-ndti_to_sipnet_tillage(dates, drops,
-  no_till_threshold   = 0.20,
-  conv_till_threshold = 0.60
-)
-
-# Cap maximum response at 0.5 for sensitivity analysis
-ndti_to_sipnet_tillage(dates, drops, max_modifier = 0.5)
+# Custom slope for sensitivity analysis
+ndti_to_sipnet_tillage(c(0.25, 0.50, 0.80), slope = 2.0)
 
 }
 \references{
