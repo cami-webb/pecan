@@ -124,7 +124,7 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     }
   }
   PEcAn.logger::logger.info(paste0("Writing SIPNET configs with input ", template.clim))
-  
+
   # find out where to write run/ouput
   rundir <- file.path(settings$host$rundir, as.character(run.id))
   outdir <- file.path(settings$host$outdir, as.character(run.id))
@@ -132,7 +132,7 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     rundir <- file.path(settings$rundir, as.character(run.id))
     outdir <- file.path(settings$modeloutdir, as.character(run.id))
   }
-  
+
   # create launch script (which will create symlink)
   if (!is.null(settings$model$jobtemplate) && file.exists(settings$model$jobtemplate)) {
     jobsh <- readLines(con = settings$model$jobtemplate, n = -1)

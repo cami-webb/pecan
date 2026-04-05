@@ -58,7 +58,7 @@ generate_joint_ensemble_design <- function(settings,
   if (sobol) {
     ensemble_size <- as.numeric(ensemble_size) * 2
   }
-  ens.sample.method <- settings$ensemble$samplingspace$parameters$method
+  ens.sample.method <- settings$ensemble$samplingspace$parameters$method %||% "uniform"
   design_list <- list()
   sampled_inputs <- list()
   posterior.files <- settings$pfts %>%
