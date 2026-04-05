@@ -1,7 +1,7 @@
 default:
   parcel_id: 39011
   site_id: "cf1c223d4e408116"
-  outdir_root: "modules/data.land/inst/sipnet-restart-workflow/_test"
+  outdir_root: "workflows/sipnet-restart-workflow/_test"
   irrigation_path: "/projectnb/dietzelab/ccmmf/usr/ashiklom/event-outputs/irrigation_10000.parquet"
   parcel_path: "/projectnb/dietzelab/ccmmf/LandIQ-harmonized-v4.1/parcels.gpkg"
   dp_path: "/projectnb/dietzelab/ccmmf/management/irrigation/design_points.csv"
