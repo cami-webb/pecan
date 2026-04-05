@@ -4,9 +4,9 @@ library(PEcAn.data.land)
 # devtools::load_all("modules/data.land")
 devtools::load_all("models/sipnet")
 
-source("modules/data.land/inst/sipnet-restart-workflow/81-utils.R")
+source("workflows/sipnet-restart-workflow/81-utils.R")
 
-config <- config::get(file = "modules/data.land/inst/sipnet-restart-workflow/config.yml")
+config <- config::get(file = "workflows/sipnet-restart-workflow/config.yml")
 
 outdir_root <- config[["outdir_root"]]
 # Cleanup some existing files to have a clean start

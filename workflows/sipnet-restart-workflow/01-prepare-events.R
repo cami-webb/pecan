@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-config <- config::get(file = "modules/data.land/inst/sipnet-restart-workflow/config.yml")
+config <- config::get(file = "workflows/sipnet-restart-workflow/config.yml")
 
 # Pick a parcel from irrigation
 pid <- config[["parcel_id"]]
