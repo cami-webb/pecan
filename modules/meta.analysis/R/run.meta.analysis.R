@@ -206,7 +206,7 @@ check_consistent <- function(point, prior,
 #'     JAGS. Each element has columns `beta.o` (overall mean) and optionally
 #'     `sd.o` (overall SD).}
 #'   \item{`post.distns.MA.Rdata`}{Contains `post.distns`: a data frame with
-#'     one row per trait and columns `distn`, `parama`, `paramb`, `n`}
+#'     one row per trait and columns `distn`, `parama`, `paramb`, `n`
 #'     summarizing the fitted posterior distribution.}
 #'   \item{`post.distns.Rdata`}{Symlink to `post.distns.MA.Rdata`.}
 #'   \item{`jagged.data.Rdata`}{Contains `jagged.data`: a named list of data

@@ -29,7 +29,7 @@
 ##' }
 ##'
 ##' **Downstream contract:** The files `trait.data.Rdata` and
-##' `prior.distns.Rdata` are expected by \code{\link[PEcAn.MA]{run.meta.analysis.pft}}, which
+##' `prior.distns.Rdata` are expected by \code{run.meta.analysis.pft}, which
 ##' loads them from `pft$outdir`. This implicit file-based coupling means
 ##' the two functions must agree on directory path and object names. A future
 ##' refactoring goal is to pass these objects directly via function arguments
