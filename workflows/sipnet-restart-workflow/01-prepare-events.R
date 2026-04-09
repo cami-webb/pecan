@@ -122,19 +122,27 @@ make_all_events <- function(...) {
 # NOTE: This only works if we each event type has either 1 ensemble or the same
 # number of ensembles. For varying names of ensembles, we need a more
 # sophisticated strategy.
-all_events_list <- purrr::pmap(
-  list(list(planting_n), list(harvest_n), irrigation_n_list),
-  make_all_events
+pmap_args <- c(
+  if (length(planting_n) > 0) list(list(planting_n)),
+  if (length(harvest_n) > 0) list(list(harvest_n)),
+  if (length(irrigation_n_list) > 0) irrigation_n_list
 )
+all_events_list <- purrr::pmap(pmap_args, make_all_events)
 
 outdir_root <- config[["outdir_root"]]
 events_dir <- file.path(outdir_root, "events")
+unlink(events_dir, recursive = TRUE)
 dir.create(events_dir, showWarnings = FALSE, recursive = TRUE)
 
 names(all_events_list) <- file.path(
-  events_dir,
-  paste0(gsub("^irr_", "event_", names(irrigation_events_list)), ".json")
+  events_dir, paste0("event_", seq_along(all_events_list), ".json")
 )
+if (length(irrigation_events_list) > 0) {
+  names(all_events_list) <- file.path(
+    events_dir,
+    paste0(gsub("^irr_", "event_", names(irrigation_events_list)), ".json")
+  )
+}
 
 purrr::iwalk(
   all_events_list,
