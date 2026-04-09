@@ -78,6 +78,13 @@
 write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs = NULL, IC = NULL,
                                 restart = NULL, spinup = NULL) {
 
+  if (!is.list(trait.values)) {
+    PEcAn.logger::logger.severe(paste0(
+      "Even though SIPNET only takes one PFT at a time, ",
+      "`trait.values` must be a list with names corresponding to PFTs."
+    ))
+  }
+
   rev_raw <- settings$model$revision
   legacy_v1 <- c("102319", "136", "r136", "ssr", "git")
   if (is.null(rev_raw) || rev_raw %in% legacy_v1) {
