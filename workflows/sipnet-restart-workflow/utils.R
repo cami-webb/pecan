@@ -43,6 +43,8 @@ crop2pft_example <- function(crop_code) {
   # crop_code <- c("F1", "R1", "G2", "F16")
   cls <- substr(crop_code, 1, 1)
   dplyr::case_when(
+    crop_code == "P1" ~ "annual_crop",
+    crop_code == "G2" ~ "annual_crop",
     cls == "D" ~ "temperate.deciduous",
     cls == "F" ~ "annual_crop",
     cls == "G" ~ "grass",
@@ -127,7 +129,6 @@ run_sipnet_segmented <- function(
     segment_settings[[c("run", "start.date")]] <- dstart
     segment_settings[[c("run", "end.date")]] <- dend
     segment_settings[[c("run", "inputs")]] <- segment_inputs
-    segment_settings
     if (is.null(segment_settings[[c("model", "options")]])) {
       segment_settings[[c("model", "options")]] <- list()
     }
@@ -140,7 +141,12 @@ run_sipnet_segmented <- function(
     restart_out <- file.path(segment_rundir, "restart.out")
     segment_settings[[c("model", "options", "RESTART_OUT")]] <- restart_out
 
-    segment_traits <- run_traits[[segment[["pft"]]]]
+    # trait.values must be a list of pfts, even though SIPNET takes only one
+    # PFT as input. However, we can pass soil params through a "soil" PFT.
+    # Here, if the segment PFT is soil, that's what we send. If the segment PFT
+    # is anything else, we send that *and* the soil params.
+    choose_pft <- unique(c(segment[["pft"]], "soil"))
+    segment_traits <- run_traits[choose_pft]
 
     # Write dummy runs file
     writeLines(runid_dummy, file.path(segment_rundir, "runs.txt"))
