@@ -5,38 +5,24 @@ if (FALSE) {
   devtools::install("modules/data.land", upgrade = FALSE)
 }
 
-source("workflows/sipnet-restart-workflow/utils.R")
-
 config <- config::get(file = "workflows/sipnet-restart-workflow/config.yml")
 
-outdir_root <- config[["outdir_root"]]
-
-settings_raw <- PEcAn.settings::read.settings(file.path(outdir_root, "settings.xml"))
-
-# Delete existing outdir so we always start fresh
-unlink(settings_raw$outdir, recursive = TRUE)
-dir.create(settings_raw$outdir, recursive = TRUE, showWarnings = FALSE)
-
-# Get parameter samples for all relevant PFTs
-sens_design <- PEcAn.uncertainty::generate_joint_ensemble_design(
-  settings_raw,
-  settings_raw$ensemble$size
-)
-
-settings <- PEcAn.workflow::runModule.run.write.configs(
-  settings_raw,
-  input_design = sens_design$X
-)
-
-inputs_runs <- file.path(settings$outdir, "runs_manifest.csv") |>
-  read.csv() |>
-  cbind(sens_design[["X"]])
-
-write.csv(inputs_runs, file = file.path(settings$outdir, "inputs_runs.csv"))
-
-# Loop over runs. Within each run, loop over segments. Individual runs should
-# be naively parallelizable and therefore suitable for `clustermq`, etc.
-for (irun in seq_len(nrow(inputs_runs))) {
-  run_row <- inputs_runs[irun, ]
-  run_sipnet_segmented(settings, run_row)
+do_run_sipnet_segmented <- function(irun) {
+  source("workflows/sipnet-restart-workflow/utils.R", local = TRUE)
+  config <- config::get(file = "workflows/sipnet-restart-workflow/config.yml")
+  settings <- PEcAn.settings::read.settings(file.path(config[["outdir_root"]], "settings.xml"))
+  inputs_runs <- read.csv(file.path(settings$outdir, "inputs_runs.csv"))
+  run_sipnet_segmented(settings, inputs_runs[irun, ])  # nolint
 }
+
+# Run in parallel using crew
+nworkers <- pmin(config[["n_ensemble"]], parallel::detectCores())
+controller <- crew::crew_controller_local(workers = nworkers)
+crew_results <- controller$map(
+  command = do_run_sipnet_segmented(irun),
+  iterate = list(irun = seq_len(config[["n_ensemble"]])),
+  data = list(settings = settings, do_run_sipnet_segmented = do_run_sipnet_segmented)
+)
+
+# Or, to run sequentially:
+# for (i in seq_len(config[["n_ensemble"]])) do_run_sipnet_segmented(i)   # nolint

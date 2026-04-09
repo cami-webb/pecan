@@ -128,4 +128,25 @@ settings_raw <- PEcAn.settings::as.Settings(list(
   )
 ))
 
-PEcAn.settings::write.settings(settings_raw, "settings.xml", outdir_root)
+# Delete existing outdir so we always start fresh
+unlink(settings_raw$outdir, recursive = TRUE)
+dir.create(settings_raw$outdir, recursive = TRUE, showWarnings = FALSE)
+
+# Get parameter samples for all relevant PFTs
+sens_design <- PEcAn.uncertainty::generate_joint_ensemble_design(
+  settings_raw,
+  settings_raw$ensemble$size
+)
+
+settings <- PEcAn.workflow::runModule.run.write.configs(
+  settings_raw,
+  input_design = sens_design$X
+)
+
+inputs_runs <- file.path(settings$outdir, "runs_manifest.csv") |>
+  read.csv() |>
+  cbind(sens_design[["X"]])
+
+write.csv(inputs_runs, file = file.path(settings$outdir, "inputs_runs.csv"))
+
+PEcAn.settings::write.settings(settings, "settings.xml", outdir_root)
