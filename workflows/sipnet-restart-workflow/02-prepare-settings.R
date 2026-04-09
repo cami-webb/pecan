@@ -39,9 +39,15 @@ all_dates <- events |>
 start_date <- min(all_dates)
 end_date <- max(all_dates)
 
-metfiles <- file.path(config[["met_dir"]], site_id) |>
+met_dir <- sprintf(
+  "%sN_%sW",
+  format(round(abs(site_lat) * 2) / 2, nsmall = 0, drop0trailing = TRUE),
+  format(round(abs(site_lon) * 2) / 2, nsmall = 0, drop0trailing = TRUE)
+)
+metfiles <- file.path(config[["met_dir"]], met_dir) |>
   list.files("ERA5\\..*\\.clim", full.names = TRUE) |>
   as.list()
+stopifnot(length(metfiles) > 0)
 names(metfiles) <- paste0("path", seq_along(metfiles))
 
 icfiles <- file.path(config[["ic_dir"]], site_id) |>
