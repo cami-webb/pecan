@@ -21,7 +21,7 @@ controller <- crew::crew_controller_local(workers = nworkers)
 crew_results <- controller$map(
   command = do_run_sipnet_segmented(irun),
   iterate = list(irun = seq_len(config[["n_ensemble"]])),
-  data = list(settings = settings, do_run_sipnet_segmented = do_run_sipnet_segmented)
+  data = list(do_run_sipnet_segmented = do_run_sipnet_segmented)
 )
 
 # Or, to run sequentially:
