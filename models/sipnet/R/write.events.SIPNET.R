@@ -44,8 +44,10 @@
 #' @export
 write.events.SIPNET <- function(events_json, outdir) {
     # Validate input JSON against PEcAn events schema
+    # TRUE = valid; FALSE = invalid; NA = jsonvalidate package not installed,
+    # proceed without complaining
     valid <- PEcAn.data.land::validate_events_json(events_json, verbose = FALSE)
-    if (!valid) {
+    if (isFALSE(valid)) {
         PEcAn.logger::logger.error(
             "Invalid events file. More details may be available by calling",
             "PEcAn.data.land::validate_events_json(", shQuote(events_json), ")"
