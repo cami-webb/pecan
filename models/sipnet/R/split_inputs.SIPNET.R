@@ -1,5 +1,25 @@
 #!/usr/bin/env Rscript
 
+#' Split SIPNET inputs into multiple files based on start and end time
+#'
+#' Subset each SIPNET input file and write a new file containing values `>=
+#' start.time` and `<= end.time` (note: `end.time` is inclusive!)
+#'
+#' NOTE that sipnet met files contain dates _and_ times, while sipnet event
+#' files contain only dates. Comparing a datetime to a date will coerce the
+#' date to midnight UTC.
+#'
+#' @param start.time Start date or datetime for splitting
+#' @param stop.time End date or datetime for splitting
+#' @param inputs Named `inputs` list as provided by PEcAn `settings`. Must have
+#' structure like:
+#' `list(met = list(path = "path/to/sipnet.clim"), events = list(path = "path/to/events.in"), ...)`
+#'
+#' @inheritParams split_sipnet_met
+#' @author Alexey Shiklomanov
+#'
+#' @return Modified `inputs` list with all `path` entries replaced with new
+#' paths (suitable for inserting back into `settings$run$inputs`).
 #' @export
 split_inputs.SIPNET <- function(start.time, stop.time, inputs, overwrite = FALSE, outpath = NULL) {
   result <- inputs
@@ -25,11 +45,12 @@ split_inputs.SIPNET <- function(start.time, stop.time, inputs, overwrite = FALSE
   result
 }
 
+#' Split sipnet `events.in` files according to start and stop date
+#'
+#' @param eventfile Path to `events.in` file.
+#' @inheritParams split_inputs.SIPNET
 split_sipnet_events <- function(start.time, stop.time, eventfile, overwrite = FALSE, outpath = FALSE) {
   # Read events.in
-  # eventfile <- sipnet_eventfile
-  # start.time <- dstart
-  # stop.time <- dend
   prefix <- sub(".in", "", basename(eventfile), fixed = TRUE)
   outpath <- outpath %||% dirname(eventfile)
   dir.create(outpath, recursive = TRUE, showWarnings = FALSE)
@@ -58,7 +79,7 @@ split_sipnet_events <- function(start.time, stop.time, eventfile, overwrite = FA
   doys_in <- vapply(events_in_list, \(x) as.integer(x[[2]]), integer(1))
   # Not using sipnet2datetime here because it returns times with time zones,
   # which could cause subtle timezone-related bugs
-  dates_in <- as.Date(sprintf("%d-01-01", years_in)) + doys_in
+  dates_in <- as.Date(sprintf("%d-01-01", years_in)) + (doys_in - 1)
   idx_keep <- (dates_in >= start.time) & (dates_in <= stop.time)
   if (length(idx_keep) == 0) {
     PEcAn.logger::logger.warn("No events to keep, so `events.in` will be empty")
@@ -68,20 +89,17 @@ split_sipnet_events <- function(start.time, stop.time, eventfile, overwrite = FA
   invisible(outfile)
 }
 
-## split clim file into smaller time units to use in KF
-##' @author Mike Dietze and Ann Raiho
-##' 
+##' split sipnet clim file based on start and end time
+##'
+##' @author Mike Dietze, Ann Raiho, Alexey Shiklomanov
+##'
 ##' @param start.time start date and time for each SDA ensemble
 ##' @param stop.time stop date and time for each SDA ensemble
-##' @param inputs list of model inputs to use in write.configs.SIPNET
-##' @param overwrite Default FALSE
-##' @param outpath if specified, write output to a new directory. Default NULL writes back to the directory being read
-##' @description Splits climate met for SIPNET
-##' 
-##' @return file split up climate file
-##' @importFrom rlang .data
-##' @importFrom dplyr %>%
-##' @export
+##' @param met path to sipnet clim file to be split 
+##' @param overwrite if `TRUE`, overwrite existing target file (Default `FALSE`)
+##' @param outpath if specified, write output to a new directory. Default `NULL` writes back to the directory being read
+##'
+##' @return path to split up climate file
 split_sipnet_met <- function(start.time, stop.time, met, overwrite = FALSE, outpath = NULL) {
   start.time <- coerce_to_datetime(start.time)
   stop.time <- coerce_to_datetime(stop.time)
