@@ -4,7 +4,12 @@
 \alias{validate_events_json}
 \title{Validate PEcAn events JSON against schema v0.1.0}
 \usage{
-validate_events_json(events_json, schema_version = "0.1.1", verbose = TRUE, max_errs = 50)
+validate_events_json(
+  events_json,
+  schema_version = "0.1.1",
+  verbose = TRUE,
+  max_errs = 50
+)
 }
 \arguments{
 \item{events_json}{character. Path to the JSON file to validate.}
