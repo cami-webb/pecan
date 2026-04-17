@@ -172,7 +172,9 @@ write_segment_configs <- function(
 
     segment_inputs <- PEcAn.SIPNET::split_inputs.SIPNET(
       dstart,
-      dend,
+      # NOTE: In split_inputs, end.time is *not* inclusive.
+      # But `dend` *is* inclusive. So `+1` as a workaround here.
+      (dend + 1),
       run_settings$run$inputs,
       overwrite = TRUE,
       outpath = segment_dir

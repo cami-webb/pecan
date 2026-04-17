@@ -30,7 +30,7 @@ Modified \code{inputs} list with all \code{path} entries replaced with new
 paths (suitable for inserting back into \code{settings$run$inputs}).
 }
 \description{
-Subset each SIPNET input file and write a new file containing values \verb{>= start.time} and \verb{<= end.time} (note: \code{end.time} is inclusive!)
+Subset each SIPNET input file and write a new file containing values \verb{>= start.time} and \verb{< end.time} (note: end time is \emph{not} inclusive)
 }
 \details{
 NOTE that sipnet met files contain dates \emph{and} times, while sipnet event

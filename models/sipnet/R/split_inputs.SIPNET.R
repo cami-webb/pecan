@@ -3,7 +3,7 @@
 #' Split SIPNET inputs into multiple files based on start and end time
 #'
 #' Subset each SIPNET input file and write a new file containing values `>=
-#' start.time` and `<= end.time` (note: `end.time` is inclusive!)
+#' start.time` and `< end.time` (note: end time is *not* inclusive)
 #'
 #' NOTE that sipnet met files contain dates _and_ times, while sipnet event
 #' files contain only dates. Comparing a datetime to a date will coerce the
@@ -80,7 +80,7 @@ split_sipnet_events <- function(start.time, stop.time, eventfile, overwrite = FA
   # Not using sipnet2datetime here because it returns times with time zones,
   # which could cause subtle timezone-related bugs
   dates_in <- as.Date(sprintf("%d-01-01", years_in)) + (doys_in - 1)
-  idx_keep <- (dates_in >= start.time) & (dates_in <= stop.time)
+  idx_keep <- (dates_in >= start.time) & (dates_in < stop.time)
   if (length(idx_keep) == 0) {
     PEcAn.logger::logger.warn("No events to keep, so `events.in` will be empty")
   }
@@ -95,7 +95,7 @@ split_sipnet_events <- function(start.time, stop.time, eventfile, overwrite = FA
 ##'
 ##' @param start.time start date and time at which to start extraction
 ##' @param stop.time stop date and time at which to stop extraction
-##' @param met path to sipnet clim file to be split 
+##' @param met path to sipnet clim file to be split
 ##' @param overwrite if `TRUE`, overwrite existing target file (Default `FALSE`)
 ##' @param outpath if specified, write output to a new directory. Default `NULL` writes back to the directory being read
 ##'
