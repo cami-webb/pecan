@@ -1,6 +1,6 @@
 test_that("non-planting events are ignored", {
   dat <- dplyr::tribble(
-    ~site_id, ~date, ~event_type, ~crop,
+    ~site_id, ~date, ~event_type, ~crop_code,
     "a", "2016-01-01", "planting", "almond",
     "a", "2016-05-01", "irrigation", NA_character_,
     "a", "2017-01-01", "planting", "almond",
@@ -14,7 +14,7 @@ test_that("non-planting events are ignored", {
 
 test_that("nonconsecutive runs of the same crop counted separately", {
   dat <- dplyr::tribble(
-    ~site_id, ~date, ~event_type, ~crop,
+    ~site_id, ~date, ~event_type, ~crop_code,
     "b", "2016-03-01", "planting", "tomato",
     "b", "2017-03-05", "planting", "tomato",
     "b", "2018-04-15", "planting", "potato",
@@ -27,7 +27,7 @@ test_that("nonconsecutive runs of the same crop counted separately", {
 
 test_that("sites are counted separately", {
   dat <- dplyr::tribble(
-    ~site_id, ~date, ~event_type, ~crop,
+    ~site_id, ~date, ~event_type, ~crop_code,
     "a", "2016-03-01", "planting", "grape",
     "b", "2016-03-01", "planting", "grape",
     "c", "2023-03-01", "planting", "grape",
@@ -45,5 +45,5 @@ test_that("reads from JSON", {
   )
   res <- events_to_crop_cycle_starts(path)
   expect_equal(res$date, "2022-02-19")
-  expect_equal(res$crop, "EX1")
+  expect_equal(res$crop_code, "EX1")
 })
