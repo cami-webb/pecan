@@ -36,7 +36,6 @@ planting_dates <- events |>
   purrr::keep(\(x) x$event_type == "planting") |>
   purrr::map_chr("date") |>
   as.Date()
-start_date <- min(planting_dates)
 
 harvest_dates <- events |>
   purrr::pluck(1, "events") |>
@@ -44,7 +43,10 @@ harvest_dates <- events |>
   purrr::map_chr("date") |>
   as.Date()
 
-# Run through the end of the year post harvest
+# Start Jan 1 of the year of the first planting
+start_date <- lubridate::make_date(lubridate::year(min(planting_dates)), 1, 1)
+
+# End Dec 31 of the year of the last harvest
 end_date <- lubridate::make_date(lubridate::year(max(harvest_dates)), 12, 31)
 
 met_dir <- sprintf(
