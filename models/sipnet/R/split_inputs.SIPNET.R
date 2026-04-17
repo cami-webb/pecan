@@ -158,8 +158,8 @@ coerce_to_datetime <- function(x) {
   xname <- deparse(substitute(x))
   if (!inherits(x, "Date")) {
     PEcAn.logger::logger.severe(
-      "Invalid ", xname, " : ", x,
-      " (class: ", class(x), ")"
+      "Invalid", xname, ":", x,
+      "(class:", class(x), ")"
     )
   }
   PEcAn.logger::logger.debug(
