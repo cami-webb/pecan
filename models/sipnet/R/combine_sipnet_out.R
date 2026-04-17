@@ -24,7 +24,7 @@ combine_sipnet_out <- function(directory, outfile, files = NULL) {
     # pass `files` directly to this function.
     files <- sort(list.files(directory, "sipnet\\.out", full.names = TRUE, recursive = TRUE))
   }
-  if (!(length(files) > 0)) {
+  if (length(files) == 0) {
     PEcAn.logger::logger.severe("No files provided; nothing to combine.")
   }
   flist <- lapply(files, read_sipnet_out)
