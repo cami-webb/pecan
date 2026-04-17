@@ -39,8 +39,10 @@ subset_paths <- function(settings, path_nums) {
   settings
 }
 
+# TODO: We need a better, consistent implementation of this. However, this is
+# OK as an example of a function that implements the capabilities needed for
+# `write_segment_configs`.
 crop2pft_example <- function(crop_code) {
-  # crop_code <- c("F1", "R1", "G2", "F16")
   cls <- substr(crop_code, 1, 1)
   dplyr::case_when(
     crop_code == "P1" ~ "annual_crop",
