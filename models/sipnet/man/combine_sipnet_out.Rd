@@ -12,9 +12,9 @@ provide either this or an explicit vector of \code{files}.}
 
 \item{outfile}{File to which combined \code{sipnet.out} will be written}
 
-\item{files}{(optional) Explicit vector of paths to \code{sipnet.out} files to
-combine. Note that files need not be named \code{sipnet.out}, but they must be
-readable with \code{\link[=read_sipnet_out]{read_sipnet_out()}}.}
+\item{files}{Optional vector of paths to files to combine. All must be
+readable with \code{\link[=read_sipnet_out]{read_sipnet_out()}}. If \code{NULL} (default), looks for files
+named \code{sipnet.out} in \code{directory} and its subdirectories, recursively.}
 }
 \value{
 \code{outfile} (path to output file), invisibly

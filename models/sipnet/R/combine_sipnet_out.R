@@ -5,9 +5,9 @@
 #' @param directory Parent directory to search for `sipnet.out` files. You must
 #' provide either this or an explicit vector of `files`.
 #' @param outfile File to which combined `sipnet.out` will be written
-#' @param files (optional) Explicit vector of paths to `sipnet.out` files to
-#' combine. Note that files need not be named `sipnet.out`, but they must be
-#' readable with [read_sipnet_out()].
+#' @param files Optional vector of paths to files to combine. All must be
+#' readable with [read_sipnet_out()]. If `NULL` (default), looks for files
+#' named `sipnet.out` in `directory` and its subdirectories, recursively.
 #'
 #' @return `outfile` (path to output file), invisibly
 #' @export
