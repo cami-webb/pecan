@@ -44,6 +44,6 @@ test_that("reads from JSON", {
     package = "PEcAn.data.land"
   )
   res <- events_to_crop_cycle_starts(path)
-  expect_equal(res$date, "2022-02-19")
-  expect_equal(res$crop_code, "EX1")
+  expect_equal(res$date, as.Date("2022-02-19"))
+  expect_equal(res$crop_code, "Mo17")
 })
