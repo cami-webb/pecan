@@ -64,8 +64,10 @@
 #'
 #' @param defaults nested list of named constant parameter values. The
 #' structure is `list(list(constants = list(trait1 = <value>, trait2 = <value>, ...)))`.
-#' Only `defaults[[1]]$constants` is used; all other elements are silently ignored. 
-#' @param trait.values vector of samples for a given trait
+#' Only `defaults[[1]]$constants` is used; all other elements are silently ignored.
+#' @param trait.values named list of trait values for each PFT. SIPNET can
+#'  handle only one vegetation PFT, and an optional "soil" PFT for soil constants.
+#'  `trait.values` that do not fit this format will throw a warning.
 #' @param settings PEcAn settings object
 #' @param run.id run ID
 #' @param inputs list of model inputs
@@ -82,6 +84,16 @@ write.config.SIPNET <- function(defaults, trait.values, settings, run.id, inputs
     PEcAn.logger::logger.severe(paste0(
       "Even though SIPNET only takes one PFT at a time, ",
       "`trait.values` must be a list with names corresponding to PFTs."
+    ))
+  }
+
+  if (
+    (length(trait.values) > 2) ||
+      (length(trait.values) == 2 && !("soil" %in% names(trait.values)))
+  ) {
+    PEcAn.logger::logger.warn(paste0(
+      "SIPNET can only handle one vegetation PFT and one optional soil PFT. ",
+      "Passing multiple vegetation PFTs may lead to unexpected behavior."
     ))
   }
 
