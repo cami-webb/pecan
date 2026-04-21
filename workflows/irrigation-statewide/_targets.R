@@ -5,7 +5,7 @@ library(tarchetypes)
 library(crew)
 library(crew.cluster)
 
-root_dir <- here::here("modules/data.land/inst/irrigation-statewide")
+root_dir <- here::here("workflows/irrigation-statewide")
 logdir <- file.path(root_dir, "_logs")
 dir.create(logdir, showWarnings = FALSE, recursive = TRUE)
 
@@ -29,7 +29,6 @@ n_remote_workers <- config[["n_remote_workers"]]
 n_local_workers <- as.integer(Sys.getenv("NSLOTS", 1))
 exec_type <- config[["exec_type"]]
 stopifnot(exec_type %in% c("cluster", "local"))
-event_output_dir <- config[["event_output_dir"]]
 event_filename <- config[["event_filename"]]
 n_irr_ensemble <- config[["n_irr_ensemble"]]
 
@@ -43,7 +42,7 @@ message(glue::glue(
     "{n_remote_workers} workers.\n"
   },
   "Output will be saved to ",
-  "{file.path(event_output_dir, event_filename)}\n",
+  "{file.path(config[['event_output_dir']], event_filename)}\n",
   "Targets output will be stored in ", tar_config_get("store")
 ))
 

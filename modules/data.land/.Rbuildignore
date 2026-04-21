@@ -2,4 +2,3 @@ contrib
 data-raw
 ^docs$
 .*venv/
-.*/_targets.*/

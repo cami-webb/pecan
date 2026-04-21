@@ -19,5 +19,5 @@ all:
   n_parcels: null   # `null` means "all"
   batch_size: 5000
   n_remote_workers: 60
-  exec_type: "local"
+  exec_type: "cluster"
   event_filename: "irrigation_all"
