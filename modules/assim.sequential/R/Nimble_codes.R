@@ -205,18 +205,22 @@ GEF.MultiSite.Nimble <-  nimbleCode({
       }
     }
   } else if (q.type == 3) {#Vector Q
-    for (i in 1:YN) {
-      #sample Q.
+    for (i in 1:N) {
+      # 1. Sample Q for the state variable (i)
       q[i] ~ dgamma(shape = aq[i], rate = bq[i])
+      
+      # 2. Sample the latent state for the variable using its q[i]
+      X[i] ~ dnorm(X.mod[i], sd = 1/sqrt(q[i]))
+    }
+    
+    # 3. OBSERVATION MODEL (Completely separate from the 'i' loop!)
+    # Loop strictly over the total number of observations (j)
+    for (j in 1:YN) {
+      # y.ind[j] tells the model which X state this observation belongs to
       if (length(H) == 1) {
-        X[i]  ~ dnorm(X.mod[H], sd = 1/sqrt(q[i]))
-        #likelihood
-        y.censored[i] ~ dnorm(X[i], sd = 1/sqrt(r[i, i]))
+        y.censored[j] ~ dnorm(X[H], sd = 1/sqrt(r[j, j]))
       } else {
-        #sample latent variable X.
-        X[i]  ~ dnorm(X.mod[H[i]], sd = 1/sqrt(q[i]))
-        #likelihood
-        y.censored[i] ~ dnorm(X[i], sd = 1/sqrt(r[i, i]))
+        y.censored[j] ~ dnorm(X[H[j]], sd = 1/sqrt(r[j, j]))
       }
     }
   } else if (q.type == 4) {#Wishart Q
