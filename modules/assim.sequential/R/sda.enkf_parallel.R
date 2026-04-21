@@ -20,8 +20,12 @@
 #' `MCMC.args` include lists for controling the MCMC sampling process (iteration, nchains, burnin, and nthin.).
 #' `merge_nc` determine if we want to merge all netCDF files across sites and ensembles.
 #' If it's set as `TRUE`, we will then combine all netCDF files into the `merged_nc` folder within the `outdir`.
-#' @param debias List: R list containing the covariance directory, the start time point, 
-#' and if we want to include the `residual.lag` as additional covariate.
+#' @param debias List: R list containing 
+#' the covariance directory (`cov.dir`), 
+#' start year (`start.year`), 
+#' start time point (`t.start`),
+#' if we want to include the `residual.lag` as additional covariate,
+#' and the ML function (`fun`).
 #' covariance directory should include GeoTIFF files named by year.
 #' start time point is numeric input which decide when to start the debiasing feature.
 #' `residual.lag` is either TRUE or FALSE.
@@ -43,7 +47,11 @@ sda.enkf_local <- function(settings,
                                         forceRun = TRUE,
                                         MCMC.args = NULL,
                                         merge_nc = TRUE),
-                           debias = list(cov.dir = NULL, t.start = NULL, residual.lag = NULL)) {
+                           debias = list(cov.dir = NULL, 
+                                         start.year = NULL, 
+                                         t.start = NULL, 
+                                         residual.lag = NULL, 
+                                         fun = NULL)) {
   # grab cores from settings.
   cores <- as.numeric(settings$state.data.assimilation$batch.settings$general.job$cores)
   # if we didn't assign number of CPUs in the settings.
@@ -375,7 +383,7 @@ sda.enkf_local <- function(settings,
     # start debiasing.
     debias.out <- NULL
     if (!is.null(debias$t.start)) {
-      if (obs.year >= debias$t.start) {
+      if (obs.year >= debias$start.year) {
         PEcAn.logger::logger.info("Start debiasing!")
         debias.out <- sda.bias.correction(settings = settings, 
                                           t = t, 
@@ -386,7 +394,7 @@ sda.enkf_local <- function(settings,
                                           state.interval = state.interval, 
                                           cov.dir = debias$cov.dir, 
                                           residual.lag = debias$residual.lag, 
-                                          py.init = .get_debias_mod)
+                                          py.init = debias$fun)
         X <- debias.out$X
       }
     }
@@ -542,9 +550,15 @@ sda.enkf_local <- function(settings,
 #' `MCMC.args` include lists for controling the MCMC sampling process (iteration, nchains, burnin, and nthin.).
 #' @param block.index list of site ids for each block, default is NULL. This is used when the localization turns on.
 #' Please keep using the default value because the localization feature is still in development.
-#' @param debias List: R list containing the covariance directory and the start year.
+#' @param debias List: R list containing 
+#' the covariance directory (`cov.dir`), 
+#' start year (`start.year`), 
+#' start time point (`t.start`),
+#' if we want to include the `residual.lag` as additional covariate,
+#' and the ML function (`fun`).
 #' covariance directory should include GeoTIFF files named by year.
-#' start year is numeric input which decide when to start the debiasing feature.
+#' start time point is numeric input which decide when to start the debiasing feature.
+#' `residual.lag` is either TRUE or FALSE.
 #' @param prefix character: the desired folder name to store the outputs.
 #' 
 #' @author Dongchen Zhang
@@ -559,7 +573,11 @@ qsub_sda <- function(settings,
                      outdir, 
                      control, 
                      block.index = NULL,
-                     debias = list(cov.dir = NULL, start.year = NULL),
+                     debias = list(cov.dir = NULL, 
+                                   start.year = NULL, 
+                                   t.start = NULL, 
+                                   residual.lag = NULL, 
+                                   fun = NULL),
                      prefix = "batch") {
   # read from settings.
   L <- length(settings)
@@ -595,7 +613,7 @@ qsub_sda <- function(settings,
   dir.create(batch.folder)
   # loop over sub-folders.
   folder.paths <- job.ids <- rep(NA, num.folder)
-  PEcAn.logger::logger.info(paste("Submitting", num.folder, "jobs."))
+  PEcAn.logger::logger.info(paste("Creating", num.folder, "jobs."))
   # setup progress bar.
   pb <- utils::txtProgressBar(min=1, max=num.folder, style=3)
   on.exit(close(pb), add = TRUE)
@@ -653,23 +671,6 @@ qsub_sda <- function(settings,
                                         "    \" | R --no-save")
                              jobsh <- gsub("@FOLDER_PATH@", folder.path, jobsh)
                              writeLines(jobsh, con = file.path(folder.path, "job.sh"))
-                             # qsub command.
-                             qsub <- qsub.cmd
-                             if (grepl("NAME", qsub.cmd, fixed = TRUE)) {
-                               qsub <- gsub("@NAME@", paste0("Job-", i), qsub)
-                             }
-                             if (grepl("STDOUT", qsub.cmd, fixed = TRUE)) {
-                               qsub <- gsub("@STDOUT@", file.path(folder.path, "stdout.log"), qsub)
-                             }
-                             if (grepl("STDERR", qsub.cmd, fixed = TRUE)) {
-                               qsub <- gsub("@STDERR@", file.path(folder.path, "stderr.log"), qsub)
-                             }
-                             if (grepl("CORES", qsub.cmd, fixed = TRUE)) {
-                               qsub <- gsub("@CORES@", cores, qsub)
-                             }
-                             qsub <- strsplit(qsub, " (?=([^\"']*\"[^\"']*\")*[^\"']*$)", perl = TRUE)
-                             cmd <- qsub[[1]]
-                             out <- system2(cmd, file.path(folder.path, "job.sh"), stdout = TRUE, stderr = TRUE)
                            }
 }
 
@@ -732,4 +733,131 @@ sda_assemble <- function (batch.folder, outdir) {
   names(forecast.all) <- times
   # save results.
   save(list = c("analysis.all", "forecast.all"), file = file.path(outdir, "sda.all.forecast.analysis.Rdata"))
+}
+
+##' This function can help to assemble sda outputs (analysis and forecasts) from each job execution.
+##' @title sda_assemble
+##' @param username character: username for the HPC.
+##' @return list: number of jobs and vector of job ids.
+##' @author Dongchen Zhang.
+check.qsub.job.info <- function (username) {
+  cmd <- paste("qstat", "-u", username)
+  # job-info
+  job_info <- system(cmd, intern = T)
+  job_info <- job_info[-c(1:2)] # remove the top two lines.
+  
+  # grab the job number from the job name.
+  job_num <- job_info %>% purrr::map(function(job) {
+    temp <- strsplit(job, " ")[[1]][3]
+    gsub("[^0-9]", "", temp)
+  }) %>% unlist %>% as.numeric() %>% na.omit() %>% sort
+  
+  list(tot.num = length(job_info), job.id = job_num)
+}
+
+##' This function can help to assemble sda outputs (analysis and forecasts) from each job execution.
+##' @title sda_assemble
+##' @param batch.folder character: path where the SDA batch jobs stored.
+##' @param username character: username for the HPC.
+##' @param outdir character: path where to stored the assembled results. Default is NULL.
+##' @param past.job.ids vector: vector of the past submitted job ids. Default is NULL.
+##' @param max.job: numeric: maximum allowance for the number of running jobs on HPC.
+##' @param prefix character: file name to be determined if a job is finished or not.
+##' @param resources list: computation resources (time, memory, cores) when used to submit jobs.
+##' @return vector or numeric: return -1 when all jobs are finished; 
+##' return vector of submitted job ids when there is any job that is not finished.
+##' @author Dongchen Zhang.
+##' @export
+sda.qsub.job.submission <- function (batch.folder, 
+                                     username, 
+                                     outdir = NULL, 
+                                     past.job.ids = NULL, 
+                                     max.job = 20, 
+                                     prefix = "sda.all.forecast.analysis.Rdata", 
+                                     resources = list(hour = 24, 
+                                                      memory = "4G",
+                                                      ncpu = 28)) {
+  # check how many jobs are running.
+  job_info <- check.qsub.job.info(username)
+  # calculate the maximum number of jobs can be submitted.
+  remaining.num <- max.job - job_info$tot.num
+  # if we want to record the submitted job ids from the beginning.
+  if (is.null(past.job.ids)) {
+    past.job.ids <- job_info$job.id
+  }
+  # grab the total unfinished folders within the batch folder.
+  folders <- list.files(batch.folder, full.names = T)
+  fail.folders <- folders %>% purrr::map(function(f){
+    if(!file.exists(file.path(f, prefix))) {
+      return(f)
+    }
+  }) %>% unlist
+  # if all jobs are completed.
+  if (length(fail.folders) == 0) {
+    PEcAn.logger::logger.info("All jobs are finished!")
+    PEcAn.logger::logger.info("Assembling SDA results!")
+    if (!is.null(outdir)) {
+      rdata.file <- file.path(outdir, "sda.all.forecast.analysis.Rdata")
+    } else {
+      rdata.file <- file.path(batch.folder, "sda.all.forecast.analysis.Rdata")
+    }
+    PEcAn.logger::logger.info(paste("The results will be saved to", rdata.file))
+    sda_assemble(batch.folder, outdir)
+    # TODO: merge all NC files to the outdir.
+    return(-1)
+  }
+  # find failed job ids.
+  fail.job.ids <- gsub("[^0-9]", "", basename(fail.folders)) %>% 
+    as.numeric() %>% na.omit()
+  # find folders that are not currently running.
+  remaining.folders <- fail.folders[which(!fail.job.ids %in% job_info$job.id)]
+  # if we haven't reach the max.job and still have jobs to be submitted.
+  if (remaining.num > 0 & length(remaining.folders) > 0) {
+    # if the available job submission number is greater 
+    # than the number of jobs need to be submitted.
+    if (remaining.num >= length(remaining.folders)) {
+      qsub.folders <- remaining.folders
+    } else {
+      qsub.folders <- remaining.folders[seq_len(remaining.num)]
+    }
+    # submission.
+    past.job.ids <- c(past.job.ids, gsub("[^0-9]", "", basename(qsub.folders))) %>% as.numeric() %>% sort
+    out <- qsub.folders %>% furrr::future_map(function(f){
+      # delete files if they exist.
+      system(paste0("rm -rf ", file.path(f, "run")))
+      system(paste0("rm -rf ", file.path(f, "out")))
+      system(paste0("rm -rf ", file.path(f, "Extracted_met")))
+      unlink(list.files(f, pattern = "sda.output*", full.names = T))
+      unlink(list.files(f, pattern = "*.log", full.names = T))
+      # register qsub command.
+      qsub <- "qsub -l h_rt=@H@:00:00 -l mem_per_core=@M@ -l buyin -pe omp @CORES@ -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash"
+      qsub <- gsub("@NAME@", basename(f), qsub)
+      qsub <- gsub("@STDOUT@", file.path(f, "stdout.log"), qsub)
+      qsub <- gsub("@STDERR@", file.path(f, "stderr.log"), qsub)
+      qsub <- gsub("@H@", resources$hour, qsub)
+      qsub <- gsub("@M@", resources$memory, qsub)
+      qsub <- gsub("@CORES@", resources$ncpu, qsub)
+      qsub <- strsplit(qsub, " (?=([^\"']*\"[^\"']*\")*[^\"']*$)", perl = TRUE)
+      cmd <- qsub[[1]]
+      system2(cmd, file.path(f, "job.sh"), stdout = TRUE, stderr = TRUE)
+    })
+    PEcAn.logger::logger.info(length(qsub.folders), "jobs submitted!")
+    if (any(duplicated(past.job.ids))) {
+      PEcAn.logger::logger.info("Jobs", sort(unique(past.job.ids[duplicated(past.job.ids)])), "were submitted more than once. Please check them!")
+    }
+    return(past.job.ids)
+  } else if (remaining.num <= 0 & length(remaining.folders) > 0) {
+    PEcAn.logger::logger.info("The current number of running jobs reaches the maximum!")
+    PEcAn.logger::logger.info(paste("There are", length(remaining.folders), "jobs need to be running"))
+    if (any(duplicated(past.job.ids))) {
+      PEcAn.logger::logger.info("Jobs", sort(unique(past.job.ids[duplicated(past.job.ids)])), "were submitted more than once. Please check them!")
+    }
+    return(past.job.ids)
+  } else if (length(job_info$job.id) > 0) {
+    PEcAn.logger::logger.info("All",  length(job_info$job.id), "jobs are currently running!")
+    if (any(duplicated(past.job.ids))) {
+      PEcAn.logger::logger.info("Jobs", sort(unique(past.job.ids[duplicated(past.job.ids)])), "were submitted more than once. Please check them!")
+    }
+    return(past.job.ids)
+  }
 }
