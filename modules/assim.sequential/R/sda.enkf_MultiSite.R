@@ -510,7 +510,7 @@ sda.enkf.multisite <- function(settings,
     # start debiasing.
     debias.out <- NULL
     if (!is.null(debias$t.start)) {
-      if (obs.year >= debias$t.start) {
+      if (obs.year >= debias$start.year) {
         PEcAn.logger::logger.info("Start debiasing!")
         debias.out <- sda.bias.correction(settings = settings, 
                                           t = t, 
@@ -521,7 +521,7 @@ sda.enkf.multisite <- function(settings,
                                           state.interval = state.interval, 
                                           cov.dir = debias$cov.dir, 
                                           residual.lag = debias$residual.lag, 
-                                          py.init = .get_debias_mod)
+                                          py.init = debias$fun)
         X <- debias.out$X
       }
     }
