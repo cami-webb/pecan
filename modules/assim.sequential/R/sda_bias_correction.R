@@ -209,7 +209,7 @@ sda.bias.correction <- function (settings,
     # assemble extractions.
     # prepare training data.
     dat.train <- list(cov.train, X.train, res.lag.train, res)
-    dat.train <- dat.train[!sapply(dat.train, is.null)] %>% do.call(cbind, .)
+    dat.train <- do.call(cbind, dat.train[!sapply(dat.train, is.null)])
     dat.train <- dat.train[stats::complete.cases(dat.train),]
     colnames(dat.train) <- c(cov.names, "res")
     # skip if there is no training data.
@@ -227,7 +227,7 @@ sda.bias.correction <- function (settings,
     }
     # prepare predicting data.
     dat.pred <- list(cov.pred, X.pred, res.lag.pred)
-    dat.pred <- dat.pred[!sapply(dat.pred, is.null)] %>% do.call(cbind, .)
+    dat.pred <- do.call(cbind, dat.pred[!sapply(dat.pred, is.null)])
     pred.complete.inds <- which(stats::complete.cases(dat.pred))
     # grab index that satisfy both non-NA and inds conditions.
     pred.complete.inds <- intersect(pred.complete.inds, inds)
