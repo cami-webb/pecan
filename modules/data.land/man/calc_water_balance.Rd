@@ -54,12 +54,10 @@ This function operates in *relative* WHC space, where:
 - `w = whc` represents field capacity (maximum plant-available water)
 - `whc = (field_capacity - wilting_point) * rooting_depth` (the plant-available range)
 
-The handling of rice here is crude and primitive: setting `whc_min_frac` =
-1.0 (as set in `crop_whc` for rice) means a near-constant need for
-irrigation to balance ET + seepage, which roughly mimics the behavior of
-maintaining a standing flood. However, proper treatment of rice requires
-maintaining a field *above* field capacity, and has other complications.
-These will be implemented in the future.
+Although this function can be used as a crude approximation of rice
+irrigation (by setting `whc_min_frac = 1.0`), we recommend using
+[calc_water_balance_rice()] instead, which explicitly tracks rice pond
+depth, implements seepage, etc.
 }
 \examples{
 # Calculate WHC from field capacity, wilting point, and rooting depth

@@ -11,12 +11,10 @@
 #' - `w = whc` represents field capacity (maximum plant-available water)
 #' - `whc = (field_capacity - wilting_point) * rooting_depth` (the plant-available range)
 #'
-#' The handling of rice here is crude and primitive: setting `whc_min_frac` =
-#' 1.0 (as set in `crop_whc` for rice) means a near-constant need for
-#' irrigation to balance ET + seepage, which roughly mimics the behavior of
-#' maintaining a standing flood. However, proper treatment of rice requires
-#' maintaining a field *above* field capacity, and has other complications.
-#' These will be implemented in the future.
+#' Although this function can be used as a crude approximation of rice
+#' irrigation (by setting `whc_min_frac = 1.0`), we recommend using
+#' [calc_water_balance_rice()] instead, which explicitly tracks rice pond
+#' depth, implements seepage, etc.
 #'
 #' @param et Vector of evapotranspiration values (distance / time)
 #' @param precip Vector of precipitation values (distance / time)
@@ -148,11 +146,8 @@ calc_water_balance <- function(
 #' Models the water balance of a flooded rice system with a two-layer
 #' structure: a ponded water layer above a saturated soil profile. This is
 #' physically distinct from the upland soil water balance in
-#' calc_water_balance(). Water is managed to maintain a target flood depth,
+#' [calc_water_balance()]. Water is managed to maintain a target flood depth,
 #' with support for mid-season drainage events.
-#'
-#' State variable:
-#'   - pond_depth: depth of standing water above the soil surface
 #'
 #' The soil profile is assumed to be continuously saturated during flooded
 #' periods, so plant-available soil water is not tracked separately. ET is
@@ -162,9 +157,9 @@ calc_water_balance <- function(
 #' refill to flood_target. Runoff (bund overflow) occurs when pond_depth
 #' exceeds flood_max.
 #'
-#' Mid-season drainage is specified as a logical vector (drain[t] = TRUE means
-#' the field is intentionally drained on day t). During drainage days, the
-#' pond is drawn down to pond_depth = 0 and irrigation is suppressed. This
+#' Mid-season drainage is specified as a logical vector (`drain[t] = TRUE`
+#' means the field is intentionally drained on day t). During drainage days,
+#' the pond is drawn down to pond_depth = 0 and irrigation is suppressed. This
 #' represents practices such as weed control or pre-harvest drainage.
 #'
 #' @param et        Numeric vector. Daily reference ET. During flooded

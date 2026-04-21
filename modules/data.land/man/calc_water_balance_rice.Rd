@@ -55,13 +55,10 @@ A list with numeric vectors of length n:
 Models the water balance of a flooded rice system with a two-layer
 structure: a ponded water layer above a saturated soil profile. This is
 physically distinct from the upland soil water balance in
-calc_water_balance(). Water is managed to maintain a target flood depth,
+[calc_water_balance()]. Water is managed to maintain a target flood depth,
 with support for mid-season drainage events.
 }
 \details{
-State variable:
-  - pond_depth: depth of standing water above the soil surface
-
 The soil profile is assumed to be continuously saturated during flooded
 periods, so plant-available soil water is not tracked separately. ET is
 applied directly to the pond layer (open-water ET during flooded periods).
@@ -70,8 +67,8 @@ Irrigation is triggered when pond_depth falls below flood_min. Farmers
 refill to flood_target. Runoff (bund overflow) occurs when pond_depth
 exceeds flood_max.
 
-Mid-season drainage is specified as a logical vector (drain[t] = TRUE means
-the field is intentionally drained on day t). During drainage days, the
-pond is drawn down to pond_depth = 0 and irrigation is suppressed. This
+Mid-season drainage is specified as a logical vector (`drain[t] = TRUE`
+means the field is intentionally drained on day t). During drainage days,
+the pond is drawn down to pond_depth = 0 and irrigation is suppressed. This
 represents practices such as weed control or pre-harvest drainage.
 }
