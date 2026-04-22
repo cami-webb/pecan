@@ -75,7 +75,7 @@ run.sensitivity.analysis <- function(settings,
     if (!is.character(pfts)) {
       PEcAn.logger::logger.severe("Please supply a character vector for `pfts`")
     }
-    if (!pfts %in% purrr::map_chr(settings$pfts, "name")) {
+    if (any(!pfts %in% purrr::map_chr(settings$pfts, "name"))) {
       PEcAn.logger::logger.severe("`pfts` must be a subset of the PFTs defined in `settings`")
     }
   }

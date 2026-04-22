@@ -85,8 +85,8 @@ get.results <- function(settings, sa.ensemble.id = NULL, ens.ensemble.id = NULL,
     # Only handling one variable at a time for now
     if (length(variables.sa) >= 1) {
       for(variable.sa in variables.sa){
-        PEcAn.logger::logger.warn(paste0("Currently performing sensitivity analysis on variable ", 
-                                         variable.sa, ")"))
+        PEcAn.logger::logger.warn(paste0("Currently performing sensitivity analysis on variable ",
+                                         variable.sa))
         
         # if an expression is provided, convert.expr returns names of the variables accordingly
         # if a derivation is not requested it returns the variable name as is
