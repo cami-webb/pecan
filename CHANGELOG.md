@@ -25,6 +25,8 @@ For more information about this file see also [Keep a Changelog](http://keepacha
 - Added `PEcAn.data.land::to_co2e()` for converting SOC change, CH4, and N2O to CO2-equivalent emissions using IPCC Global Warming Potential values.
 
 ### Fixed
+- Added note to DEV-INTRO.md documenting Traefik workaround for Apple Silicon (ARM64) Macs: use `traefik:v2.11` with `platform: linux/arm64` to fix 404 errors (#3910)
+- Fixed `web/08-finished.php`: show database info instead of "Still running" when workflow folder doesn't exist locally (#3501).
 
 ### Changed
 - Updated Docker architecture documentation to match current docker-compose.yml: removed portainer/minio/thredds, added rstudio/api sections, updated service lists and volumes (#3268).
@@ -38,6 +40,7 @@ For more information about this file see also [Keep a Changelog](http://keepacha
   `MCMCpack`, `mvtnorm`, `neonUtilities`, `neonstore`, `PEcAn.benchmark`,
   `PEcAn.visualization`, `rjags`, `sirt`, and `sp` from `Imports` to
   `Suggests` (@omkarrr2533, #3599).
+- Management events specified via `events.json` are now required to specify a crop code for each planting event, so that models can know when to restart with a different PFT (#3828, #3836).
 
 
 
