@@ -4,7 +4,7 @@ default:
   n_remote_workers: 1
   exec_type: "local"
   event_filename: "irrigation_1000"
-  n_irr_ensembe: 20
+  n_irr_ensemble: 20
 
 small:
 
