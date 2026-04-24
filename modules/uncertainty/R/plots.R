@@ -56,6 +56,24 @@ plot_variance_decomposition <- function(plot.inputs,
 
   dat <- tidyr::pivot_longer(dat, c(-"rowname", -"roworder"))
 
+  # Set point and line weight
+  # (`element_geom` didn't exist before ggplot 4.0, `fatten` is deprecated after)
+  lollipops <- function() {
+    if (packageVersion("ggplot2") >= "4.0.0") {
+      list(
+        ggplot2::geom_pointrange(),
+        ggplot2::theme(
+          geom = ggplot2::element_geom(
+            pointsize = ggplot2::rel(3),
+            linewidth = ggplot2::rel(1.25)
+          )
+        )
+      )
+    } else {
+      ggplot2::geom_pointrange(fatten = 10)
+    }
+  }
+
   ggplot2::ggplot(dat) +
     ggplot2::aes(
       y = reorder(rowname, roworder),
@@ -63,7 +81,6 @@ plot_variance_decomposition <- function(plot.inputs,
       xmin = 0,
       xmax = value
     ) +
-    ggplot2::geom_pointrange() +
     ggplot2::facet_wrap(~name, scales = "free_x") +
     ggplot2::theme_classic() +
     ggplot2::theme(
@@ -73,14 +90,13 @@ plot_variance_decomposition <- function(plot.inputs,
       axis.ticks = ggplot2::element_blank(),
       axis.title.x = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
-      geom = ggplot2::element_geom(pointsize = ggplot2::rel(3),
-                                   linewidth = ggplot2::rel(1.25)),
       panel.border = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
       panel.spacing = ggplot2::unit(1, "lines"),
       strip.background = ggplot2::element_blank(),
       strip.text = ggplot2::element_text(size = fontsize$title)
-    )
+    ) +
+    lollipops()
 }
 
 
