@@ -60,17 +60,20 @@ plot_variance_decomposition <- function(plot.inputs,
   # (`element_geom` didn't exist before ggplot 4.0, `fatten` is deprecated after)
   lollipops <- function() {
     if (utils::packageVersion("ggplot2") >= "4.0.0") {
-      list(
+
+      # getExportedValue is to quiet an R CMD check "missing or unexported object"
+      #   warning when checked on a system with ggplot2 < 4.0.
+      # Never mind that the if skips this whole block on those systems...
+      elem_geom = getExportedValue(ns = "ggplot2", name = "element_geom")
+
+      return(list(
         ggplot2::geom_pointrange(),
         ggplot2::theme(
-          geom = ggplot2::element_geom(
-            pointsize = ggplot2::rel(3),
-            linewidth = ggplot2::rel(1.25)
-          )
-        )
-      )
+          geom = elem_geom(pointsize = ggplot2::rel(3),
+                           linewidth = ggplot2::rel(1.25)))
+      ))
     } else {
-      ggplot2::geom_pointrange(fatten = 10)
+      return(ggplot2::geom_pointrange(fatten = 10))
     }
   }
 
