@@ -59,7 +59,7 @@ plot_variance_decomposition <- function(plot.inputs,
   # Set point and line weight
   # (`element_geom` didn't exist before ggplot 4.0, `fatten` is deprecated after)
   lollipops <- function() {
-    if (packageVersion("ggplot2") >= "4.0.0") {
+    if (utils::packageVersion("ggplot2") >= "4.0.0") {
       list(
         ggplot2::geom_pointrange(),
         ggplot2::theme(
@@ -76,10 +76,10 @@ plot_variance_decomposition <- function(plot.inputs,
 
   ggplot2::ggplot(dat) +
     ggplot2::aes(
-      y = reorder(rowname, roworder),
-      x = value,
+      y = stats::reorder(.data$rowname, .data$roworder),
+      x = .data$value,
       xmin = 0,
-      xmax = value
+      xmax = .data$value
     ) +
     ggplot2::facet_wrap(~name, scales = "free_x") +
     ggplot2::theme_classic() +
