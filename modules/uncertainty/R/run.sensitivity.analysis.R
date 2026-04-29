@@ -251,9 +251,9 @@ run.sensitivity.analysis <- function(settings,
                                       end.year = end.year)
 
         grDevices::pdf(fname, width = 11, height = 8)
-        plot_variance_decomposition(
+        print(plot_variance_decomposition(
           sensitivity.results[[pft$name]]$variance.decomposition.output
-        )
+        ))
         grDevices::dev.off()
       }
     }
