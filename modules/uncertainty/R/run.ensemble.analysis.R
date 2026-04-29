@@ -176,7 +176,12 @@ run.ensemble.analysis <- function(settings, plot.timeseries = NA, ensemble.id = 
 } # run.ensemble.analysis
 
 
-##' @export
+#' Run ensemble analyses across all sites in settings
+#'
+#' @param settings PEcAn settings object
+#' @param ... arguments passed on to run.ensemble.analysis
+#'
+#' @export
 runModule.run.ensemble.analysis <- function(settings, ...) {
   if (PEcAn.settings::is.MultiSettings(settings)) {
     return(PEcAn.settings::papply(settings, runModule.run.ensemble.analysis, ...))
