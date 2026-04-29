@@ -70,7 +70,6 @@ run.sensitivity.analysis <- function(settings,
                                      end.year = NULL,
                                      pfts = NULL,
                                      ...) {
-
   if (!"sensitivity.analysis" %in% names(settings)) {
     # nothing to do
     return()
@@ -97,7 +96,7 @@ run.sensitivity.analysis <- function(settings,
     PEcAn.logger::logger.severe("No variables for sensitivity analysis!")
   }
   if (is.null(pfts)) {
-    #extract just pft names
+    # extract just pft names
     pfts <- purrr::map_chr(settings$pfts, "name")
     if (!is.null(settings$run$site$site.pft)) {
       pfts <- pfts[pfts %in% settings$run$site$site.pft]
