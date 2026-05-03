@@ -189,7 +189,7 @@ Here is an example:
 ```json
 [
   {
-    "pecan_events_version": 0.1.2",
+    "pecan_events_version": "0.1.2",
     "site_id": "EX1",
     "events": [
       {"event_type": "leafon", "date": "2025-04-05"},
