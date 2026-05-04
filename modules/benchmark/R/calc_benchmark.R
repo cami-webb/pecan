@@ -28,9 +28,11 @@ calc_benchmark <- function(settings, bety, start_year = NA, end_year = NA) {
 
     # Retrieve/create benchmark ensemble database record
     bm.ensemble <- dplyr::tbl(bety,'benchmarks_ensembles') %>%
-      filter(.data$reference_run_id == settings$benchmarking$reference_run_id,
-             .data$ensemble_id %in% ensemble$id,  # ensemble$id has more than one element
-             .data$model_id == settings$model$id) %>%
+      dplyr::filter(
+        .data$reference_run_id == settings$benchmarking$reference_run_id,
+        .data$ensemble_id %in% ensemble$id,  # ensemble$id has more than one element
+        .data$model_id == settings$model$id
+      ) %>%
       dplyr::collect()
 
     if(dim(bm.ensemble)[1] == 0){
