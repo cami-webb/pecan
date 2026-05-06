@@ -29,15 +29,12 @@ As I write this I think the schema may need to change to require a crop or
 PFT identifier be specified for every planting event.
 }
 \examples{
-# Not currently runnable because file does not list crop in planting events.
-# Revisit after deciding if schema update is warranted.
-\dontrun{
 evts <- system.file(
   "events_fixtures/events_site1_site2.json",
   package = "PEcAn.data.land"
 )
 events_to_crop_cycle_starts(evts)
-}
+
 }
 \author{
 Chris Black
