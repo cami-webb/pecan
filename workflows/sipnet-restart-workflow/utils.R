@@ -106,14 +106,22 @@ segment_dataframe <- function(run_settings) {
       end_date = dplyr::lead(.data$start_date - 1, default = run_end),
     )
 
+  if(nrow(segments) == 0) {
+    # No restarts to be scheduled
+    return(segments)
+  }
+
   # If we start *before* the first planting, add a segment for that.
   if (run_start < min(segments[["start_date"]])) {
     first_segment <- tibble::tibble(
-      crop_cycle_id = 0,
       site_id = segments[["site_id"]][[1]],
       start_date = run_start,
       end_date = segments[["start_date"]][[1]] - 1,
-      crop_code = NA_character_
+      crop_code = NA_character_,
+      # Brittle assumption alert:
+      # Expects site.pft to be a list with names `veg`, `soil`.
+      # Nothing else in PEcAn enforces these names.
+      pft = run_settings$run$site$site.pft$veg %||% NA_character_
     )
     segments <- dplyr::bind_rows(first_segment, segments)
   }
@@ -162,9 +170,18 @@ write_segment_configs <- function(
   i_param <- run_row[["param"]] %||% 1
   run_traits <- lapply(ensemble_samples, \(dat) dat[i_param, ])
 
-  segments <- segment_dataframe(run_settings) |>
+  segments <- segment_dataframe(run_settings)
+
+  if (nrow(segments) == 0) {
+    # No restarts needed. Return path to unaltered full-run script.
+    return(file.path(run_dir, "job.sh"))
+  }
+
+  segments <- segments |>
+    # Adds an all-NA pft column if needed without clobbering one that exists already
+    dplyr::bind_rows(tibble::tibble(pft = character())) |>
     dplyr::mutate(
-      pft = crop2pft(.data$crop_code),
+      pft = dplyr::coalesce(.data$pft, crop2pft(.data$crop_code)),
       segment_dir = file.path(segment_rootdir, sprintf("segment_%s", .data$segment_id))
     )
   write.csv(segments, file = file.path(run_dir, "segments.csv"), row.names = FALSE)
