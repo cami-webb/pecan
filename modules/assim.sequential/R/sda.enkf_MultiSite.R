@@ -114,11 +114,12 @@ sda.enkf.multisite <- function(settings,
   if(multi.site.flag){
     conf.settings<-settings
     site.ids <- sapply(as.list(conf.settings), function(s) s$run$site$id) |> as.character()
-        # a matrix ready to be sent to spDistsN1 in sp package - first col is the long second is the lat and row names are the site ids
-        site.locs <- do.call(rbind, lapply(as.list(conf.settings), function(s) {
-          c(Lon = as.numeric(s$run$site$lon), Lat = as.numeric(s$run$site$lat))
-        }))
-        rownames(site.locs) <- site.ids
+    # a matrix ready to be sent to spDistsN1 in sp package - first col is the long second is the lat and row names are the site ids
+    site.locs <- do.call(rbind, lapply(as.list(conf.settings), function(s) {
+      c(Lon = as.numeric(s$run$site$lon), Lat = as.numeric(s$run$site$lat))
+    }))
+    rownames(site.locs) <- site.ids
+
     #Finding the distance between the sites
     distances <- sp::spDists(site.locs, longlat = TRUE)
     #turn that into a blocked matrix format
